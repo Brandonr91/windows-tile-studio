@@ -1,0 +1,12 @@
+/bin/
+*.log
+layout.txt
+geometry.txt
+selector-preview.png
+settings.xml
+settings.xml.*
+runtime-state.xml
+runtime-state.xml.*
+*-test-result.txt
+*-test-error.txt
+
