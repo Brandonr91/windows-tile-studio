@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="562" viewBox="0 0 980 562" role="img" aria-label="Windows Tile Studio custom layout flyout illustration">
+<rect width="980" height="562" rx="10" fill="#181c23"/><g font-family="Segoe UI,Arial,sans-serif" fill="#fff"><text x="25" y="40" font-size="22" font-weight="600">Choose a layout and zone</text><text x="25" y="70" fill="#aab8cc" font-size="14">Ctrl+Alt+Win+Space · click a zone to place your selected window</text>
+<rect x="18" y="98" width="298" height="185" fill="#23272f"/><text x="32" y="124" font-size="15">Six windows</text>
+<rect x="34" y="150" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="77" y="178" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="124" y="150" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="167" y="178" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="214" y="150" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="257" y="178" text-anchor="middle" dominant-baseline="central" font-size="14">3</text>
+<rect x="34" y="210" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="77" y="238" text-anchor="middle" dominant-baseline="central" font-size="14">4</text>
+<rect x="124" y="210" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="167" y="238" text-anchor="middle" dominant-baseline="central" font-size="14">5</text>
+<rect x="214" y="210" width="86" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="257" y="238" text-anchor="middle" dominant-baseline="central" font-size="14">6</text>
+<rect x="334" y="98" width="298" height="185" fill="#23272f"/><text x="348" y="124" font-size="15">Two columns</text>
+<rect x="350" y="150" width="131" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="415.5" y="208" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="485" y="150" width="131" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="550.5" y="208" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="650" y="98" width="298" height="185" fill="#23272f"/><text x="664" y="124" font-size="15">Four windows</text>
+<rect x="666" y="150" width="131" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="731.5" y="178" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="801" y="150" width="131" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="866.5" y="178" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="666" y="210" width="131" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="731.5" y="238" text-anchor="middle" dominant-baseline="central" font-size="14">3</text>
+<rect x="801" y="210" width="131" height="56" fill="#3f4754" stroke="#5b6b81"/><text x="866.5" y="238" text-anchor="middle" dominant-baseline="central" font-size="14">4</text>
+<rect x="18" y="301" width="298" height="185" fill="#23272f"/><text x="32" y="327" font-size="15">Three columns</text>
+<rect x="34" y="353" width="86" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="77" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="124" y="353" width="86" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="167" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="214" y="353" width="86" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="257" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">3</text>
+<rect x="334" y="301" width="298" height="185" fill="#23272f"/><text x="348" y="327" font-size="15">Two columns, three rows</text>
+<rect x="350" y="353" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="415.5" y="371" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="485" y="353" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="550.5" y="371" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="350" y="393" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="415.5" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">3</text>
+<rect x="485" y="393" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="550.5" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">4</text>
+<rect x="350" y="433" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="415.5" y="451" text-anchor="middle" dominant-baseline="central" font-size="14">5</text>
+<rect x="485" y="433" width="131" height="36" fill="#3f4754" stroke="#5b6b81"/><text x="550.5" y="451" text-anchor="middle" dominant-baseline="central" font-size="14">6</text>
+<rect x="650" y="301" width="298" height="185" fill="#23272f"/><text x="664" y="327" font-size="15">Wide center</text>
+<rect x="666" y="353" width="63.5" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="697.75" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">1</text>
+<rect x="733.5" y="353" width="131" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="799" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">2</text>
+<rect x="868.5" y="353" width="63.5" height="116" fill="#3f4754" stroke="#5b6b81"/><text x="900.25" y="411" text-anchor="middle" dominant-baseline="central" font-size="14">3</text>
+<rect x="21" y="515" width="266" height="32" fill="#2b3442" stroke="#506077"/><text x="34" y="537" font-size="14">Manage layouts &amp; hotkeys</text><text x="950" y="537" text-anchor="end" font-size="14" fill="#a0aec2">Esc or click outside to close</text></g></svg>
