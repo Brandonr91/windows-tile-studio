@@ -97,6 +97,8 @@ them to its resizing group.
 - Drag a shared **top/bottom edge** to resize that column's two windows.
 - Each column keeps its own row divider. A horizontal boundary does not move
   the row dividers in other columns.
+- Height dragging affects only the two windows sharing that boundary, from
+  either side. Width dragging preserves each window's existing height.
 - Moving a window away releases its slot. Snap it again to reconnect it.
 
 The launch scripts save profiles, proportions, and hotkeys in `data/settings.xml`.

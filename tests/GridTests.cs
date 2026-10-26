@@ -35,11 +35,15 @@ class GridTests {
             var heights=profile.Columns.Select(col=>col.Rows.ToArray()).ToArray();
             var width=before; if(c>0) width.L+=40; else width.R-=40;
             g.Adjust(slot,before,width);
+            Check(g.HeightAffectedSlots.Length==0,"Width-only resize claimed a height boundary");
             for(int k=0;k<heights.Length;k++) Check(heights[k].SequenceEqual(profile.Columns[k].Rows),"Column resizing changed a row divider");
             Cover(g);
             before=g.RectFor(slot); var height=before; if(r>0) height.T+=30; else height.B+=30;
             var widths=profile.Columns.Select(col=>col.Width).ToArray();
-            g.Adjust(slot,before,height);
+            bool heightChanged=g.Adjust(slot,before,height);
+            Check(g.WidthAffectedSlots.Length==0,"Height-only resize claimed a width boundary");
+            Check(g.HeightAffectedSlots.Length==(heightChanged?2:0),"A height boundary did not own exactly two windows");
+            foreach(int affected in g.HeightAffectedSlots) { int affectedColumn,affectedRow; g.Locate(affected,out affectedColumn,out affectedRow); Check(affectedColumn==c,"Height scope reached a flanking column"); }
             Check(widths.SequenceEqual(profile.Columns.Select(col=>col.Width)),"Row resizing changed column widths");
             for(int k=0;k<heights.Length;k++) if(k!=c) Check(heights[k].SequenceEqual(profile.Columns[k].Rows),"Unrelated column row dividers moved");
             Cover(g);
@@ -51,6 +55,7 @@ class GridTests {
             if(c>0) after.L+=random.Next(-5000,5000); else after.R+=random.Next(-5000,5000);
             if(r>0) after.T+=random.Next(-3000,3000); else after.B+=random.Next(-3000,3000);
             g.Adjust(slot,before,after); Cover(g);
+            Check(g.HeightAffectedSlots.Length<=2,"An adjustment resized more than one height pair");
         }
     }
     static void Config(string root) {
@@ -74,12 +79,21 @@ class GridTests {
         var migrated=AppSettings.Defaults(); SettingsStore.MigrateLegacy(legacy,migrated); migrated.Validate();
         Check(Math.Abs(migrated.Profiles[0].Columns[1].Width-0.4)<1e-9 && migrated.Profiles[0].Columns[1].Rows[0]==0.6,"Legacy ratios did not migrate");
     }
+    static void HeightPair() {
+        var profile=LayoutProfile.Create("pair","Pair isolation",1,3); var model=new LayoutModel(profile){Work=new SixSlotSnap.RECT{L=0,T=0,R=1500,B=2160}};
+        var top=model.RectFor(0); var middle=model.RectFor(1); var proposed=middle; proposed.T-=30; proposed.B+=70;
+        Check(model.Adjust(1,middle,proposed),"Middle-row resize was ignored");
+        Check(model.HeightAffectedSlots.SequenceEqual(new[]{1,2}),"A two-edge app adjustment affected more than the selected adjacent pair");
+        var unchanged=model.RectFor(0); Check(top.T==unchanged.T && top.B==unchanged.B,"Height adjustment moved the uninvolved third window");
+        Cover(model);
+    }
     static int Main() {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
             for(int c=1;c<=4;c++) for(int r=1;r<=4;r++) Exercise(LayoutProfile.Create("test","Test",c,r),0,0);
             var ragged=LayoutProfile.Create("ragged","Mixed column rows",3,2); ragged.Columns[1].Rows.Add(1); ragged.Columns[2].Rows.RemoveAt(1); Exercise(ragged,-5120,-2160);
             Config(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            HeightPair();
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }

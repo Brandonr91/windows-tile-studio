@@ -22,6 +22,9 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Shared left/right boundaries connect neighboring columns in both rows.
 - Each column has its own independent top/bottom divider. Never move all
   three horizontal dividers merely because they happen to be aligned.
+- Scope height resizing to exactly the adjacent pair. Preserve actual starting
+  heights elsewhere, including during width resizing and settling. Extra native
+  group events must not transfer resize ownership to a flanking window.
 - Preserve physical-pixel DPI handling and invisible-frame compensation.
 - Keep the visual selector nonactivating and retain clean hotkey cleanup.
 - The flyout stays open until selection, outside click, Escape, or its toggle

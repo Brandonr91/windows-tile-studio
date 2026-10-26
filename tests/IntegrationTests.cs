@@ -108,6 +108,36 @@ class IntegrationTests {
             for(int other=0;other<3;other++) if(other!=c) Check(after.Profile.Columns[other].Rows.SequenceEqual(previous.Profile.Columns[other].Rows),"Unrelated row divider moved");
         }
         passed.Add("All six linked: both edges of middle column from both rows; all independent row dividers from both sides.");
+        // Give the left pair an actual height that differs from its saved
+        // model, as can happen after native window management. A resize in
+        // the middle column must preserve those actual bounds, not reapply
+        // a stale whole-grid height to the flanking pair.
+        var leftTop=Bounds(forms[0].Handle); var leftBottom=Bounds(forms[3].Handle);
+        leftTop.B-=105; leftBottom.T=leftTop.B; Move(0,leftTop); Move(3,leftBottom); Pump(100);
+        var heightBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();
+        NotifyWinEvent(10,forms[1].Handle,0,0); Pump(100); var middleHeight=Bounds(forms[1].Handle); middleHeight.B+=60; Move(1,middleHeight); Pump(180);
+        NotifyWinEvent(11,forms[1].Handle,0,0); Pump(450);
+        foreach(int i in new[]{0,2,3,5}) { var actual=Bounds(forms[i].Handle); Check(actual.T==heightBaseline[i].T && actual.B==heightBaseline[i].B,"Height drag reset a flanking pair to stale saved heights"); }
+        heightBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();
+        NotifyWinEvent(10,forms[1].Handle,0,0); Pump(100); var middleWidth=Bounds(forms[1].Handle); middleWidth.L+=35; Move(1,middleWidth); Pump(180);
+        NotifyWinEvent(11,forms[1].Handle,0,0); Pump(450);
+        for(int i=0;i<6;i++) { var actual=Bounds(forms[i].Handle); Check(actual.T==heightBaseline[i].T && actual.B==heightBaseline[i].B,"Width drag changed a window's independent height"); }
+        Command(SixSlotSnap.SnapCommand,1,forms[0].Handle); Command(SixSlotSnap.SnapCommand,4,forms[3].Handle); CheckAll();
+        passed.Add("Height resizing preserves actual flanking heights even when saved ratios are stale; width resizing preserves all existing heights.");
+
+        heightBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray(); var beforeGrouped=Model();
+        NotifyWinEvent(10,forms[1].Handle,0,0); Pump(100);
+        var sourceHeight=Bounds(forms[1].Handle); sourceHeight.B+=55; Move(1,sourceHeight); Pump(100);
+        // Simulate native Snap grouping resizing both flanks and emitting
+        // a second start/end. It must not hijack the active middle pair.
+        NotifyWinEvent(10,forms[0].Handle,0,0);
+        foreach(int flank in new[]{0,2}) { var upper=Bounds(forms[flank].Handle); var lower=Bounds(forms[flank+3].Handle); upper.B+=80; lower.T=upper.B; Move(flank,upper); Move(flank+3,lower); }
+        Pump(180); NotifyWinEvent(11,forms[0].Handle,0,0); Pump(80);
+        sourceHeight=Bounds(forms[1].Handle); sourceHeight.B+=20; Move(1,sourceHeight); Pump(180);
+        NotifyWinEvent(11,forms[1].Handle,0,0); Pump(450); CheckAll();
+        foreach(int i in new[]{0,2,3,5}) { var actual=Bounds(forms[i].Handle); Check(actual.T==heightBaseline[i].T && actual.B==heightBaseline[i].B,"Grouped native height movement reached a flanking pair"); }
+        var afterGrouped=Model(); foreach(int c in new[]{0,2}) Check(afterGrouped.Profile.Columns[c].Rows.SequenceEqual(beforeGrouped.Profile.Columns[c].Rows),"Grouped native events changed a flanking column's row ratios");
+        passed.Add("Native-style grouped flanking resizes are corrected; extra neighbor start/end events cannot take ownership of the active height pair.");
         Focus(forms[0].Handle); Check(NativeMethods.GetForegroundWindow()==forms[0].Handle,"Test window could not acquire foreground");
         Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Flyout did not open"); Pump(2200);
         Check(Open(),"Flyout disappeared without a selection or outside click"); Check(NativeMethods.GetForegroundWindow()==forms[0].Handle,"Flyout took foreground focus");
@@ -129,7 +159,7 @@ class IntegrationTests {
         using(var holder=new Form()) using(var blocker=new Form()) using(var registry=new HotkeyRegistry(holder.Handle)) {
             var baseline=AppSettings.Defaults(); foreach(var key in baseline.SlotShortcuts) key.Key=Keys.None;
             baseline.FlyoutShortcut.Key=Keys.F23; string error;
-            Check(registry.Replace(baseline,out error),"Could not install isolated hotkey baseline: "+error);
+            Check(registry.Replace(baseline,out error),"Could not install isolated hotkey heightBaseline: "+error);
             Check(NativeMethods.RegisterHotKey(blocker.Handle,800,0x4000|(uint)baseline.FlyoutShortcut.Modifiers,(uint)Keys.F24),"Could not reserve conflict test key");
             try {
                 var conflict=baseline.Clone(); conflict.FlyoutShortcut.Key=Keys.F24;
