@@ -1,0 +1,75 @@
+using System;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+
+public class NonactivatingForm : Form {
+    protected override bool ShowWithoutActivation { get { return true; } }
+    protected override CreateParams CreateParams { get { var p=base.CreateParams; p.ExStyle|=0x08000080; return p; } }
+    protected override void WndProc(ref Message m) { if(m.Msg==0x21) { m.Result=new IntPtr(3); return; } base.WndProc(ref m); }
+    [DllImport("user32.dll")] static extern bool ShowWindow(IntPtr window,int command);
+    public void ShowUnfocused() { Show(); ShowWindow(Handle,4); }
+}
+
+public class LayoutCard : UserControl {
+    public Action<string,int> ZoneSelected;
+    readonly LayoutProfile profile;
+    readonly double scale;
+    public LayoutCard(LayoutProfile source,bool active,double dpiScale) {
+        profile=source.Clone(); scale=dpiScale;
+        Width=S(238); Height=S(148); Margin=new Padding(S(7));
+        BackColor=active?Color.FromArgb(43,55,71):Color.FromArgb(35,39,47);
+        AccessibleName=profile.Name+" layout";
+        var title=new Label{Text=profile.Name,AutoEllipsis=true,ForeColor=Color.White,Bounds=new Rectangle(S(10),S(8),Width-S(20),S(23))}; Controls.Add(title);
+        var model=new LayoutModel(profile); model.Work=new SixSlotSnap.RECT{L=S(10),T=S(39),R=Width-S(10),B=Height-S(12)};
+        for(int i=0;i<profile.SlotCount;i++) {
+            int slot=i; var r=model.RectFor(i);
+            int padX=Math.Min(S(2),Math.Max(0,(r.R-r.L-1)/3)),padY=Math.Min(S(2),Math.Max(0,(r.B-r.T-1)/3));
+            var button=new Button{Text=r.B-r.T>=S(16)?(i+1).ToString():"",AccessibleName=profile.Name+" zone "+(i+1),TabStop=false,FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(63,71,84),Bounds=new Rectangle(r.L+padX,r.T+padY,Math.Max(1,r.R-r.L-2*padX),Math.Max(1,r.B-r.T-2*padY))};
+            button.FlatAppearance.BorderColor=Color.FromArgb(91,107,129); button.FlatAppearance.MouseOverBackColor=Color.FromArgb(44,116,181);
+            button.Click+=delegate { if(ZoneSelected!=null) ZoneSelected(profile.Id,slot); };
+            Controls.Add(button);
+        }
+    }
+    int S(int n) { return (int)Math.Round(n*scale); }
+}
+
+public class SnapFlyout : NonactivatingForm {
+    public Action<string,int> ZoneSelected;
+    public Action ManageRequested;
+    public Action DismissRequested;
+    public SnapFlyout(AppSettings settings,string target,double scale,int availableWidth,int availableHeight) {
+        Text="Six Slot Snap — choose a layout";
+        FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
+        BackColor=Color.FromArgb(24,28,35); ForeColor=Color.White; Font=new Font("Segoe UI",9);
+        AccessibleName="Six Slot Snap layout flyout";
+        Func<int,int> s=n=>(int)Math.Round(n*scale);
+        int count=settings.Profiles.Count,columns=Math.Max(1,Math.Min(3,(availableWidth-s(32))/s(252)));
+        Width=Math.Min(availableWidth-s(16),s(columns*252+28));
+        Height=Math.Min(availableHeight-s(32),s(126+Math.Min(3,(int)Math.Ceiling(count/(double)columns))*162));
+        var header=new Label{Text="Choose a layout and zone",Font=new Font("Segoe UI",12,FontStyle.Bold),Bounds=new Rectangle(s(18),s(12),Width-s(70),s(28))}; Controls.Add(header);
+        var close=new Button{Text="×",AccessibleName="Close layout flyout",FlatStyle=FlatStyle.Flat,Bounds=new Rectangle(Width-s(46),s(10),s(30),s(28)),ForeColor=Color.White,BackColor=BackColor,TabStop=false}; close.FlatAppearance.BorderSize=0; close.Click+=delegate { if(DismissRequested!=null) DismissRequested(); }; Controls.Add(close);
+        Controls.Add(new Label{Text="Place "+target+" · "+settings.FlyoutShortcut+" opens this panel",ForeColor=Color.FromArgb(170,184,204),AutoEllipsis=true,Bounds=new Rectangle(s(18),s(43),Width-s(36),s(22))});
+        var cards=new FlowLayoutPanel{Bounds=new Rectangle(s(7),s(71),Width-s(14),Height-s(119)),AutoScroll=true,WrapContents=true,BackColor=BackColor};
+        foreach(var profile in settings.Profiles) {
+            var card=new LayoutCard(profile,profile.Id==settings.ActiveProfileId,scale);
+            card.ZoneSelected=delegate(string id,int slot) { if(ZoneSelected!=null) ZoneSelected(id,slot); }; cards.Controls.Add(card);
+        }
+        Controls.Add(cards);
+        var manage=new Button{Text="Manage layouts & hotkeys",UseMnemonic=false,AccessibleName="Manage layouts and hotkeys",FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(43,52,66),Bounds=new Rectangle(s(17),Height-s(40),s(214),s(28)),TabStop=false};
+        manage.FlatAppearance.BorderColor=Color.FromArgb(80,96,119); manage.Click+=delegate { if(ManageRequested!=null) ManageRequested(); }; Controls.Add(manage);
+        Controls.Add(new Label{Text="Esc or click outside to close",ForeColor=Color.FromArgb(160,174,194),TextAlign=ContentAlignment.MiddleRight,Bounds=new Rectangle(s(240),Height-s(39),Width-s(257),s(26))});
+    }
+}
+
+public class LauncherTab : NonactivatingForm {
+    public Action OpenRequested;
+    public LauncherTab(string shortcut,double scale) {
+        Text="Six Slot Snap — layout button";
+        FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
+        Width=(int)(270*scale); Height=(int)(27*scale); BackColor=Color.FromArgb(33,39,49); ForeColor=Color.FromArgb(210,222,239); Font=new Font("Segoe UI",9); AccessibleName="Open custom Snap layouts";
+        var label=new Label{Dock=DockStyle.Fill,Text="Layouts  ·  "+shortcut,TextAlign=ContentAlignment.MiddleCenter,Cursor=Cursors.Hand,AccessibleName="Open custom Snap layouts"};
+        label.Click+=delegate { if(OpenRequested!=null) OpenRequested(); }; Controls.Add(label);
+    }
+}
