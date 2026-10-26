@@ -27,7 +27,7 @@ class IntegrationTests {
     static Form[] forms;
     static void Pump(int milliseconds) { var end=DateTime.UtcNow.AddMilliseconds(milliseconds); while(DateTime.UtcNow<end) { Application.DoEvents(); Thread.Sleep(10); } }
     static void Check(bool good,string text) { if(!good) throw new Exception(text); }
-    static void Wait(Func<bool> ready,string error) { var end=DateTime.UtcNow.AddSeconds(8); while(DateTime.UtcNow<end) { Application.DoEvents(); try { if(ready()) return; } catch(IOException) {} catch(System.Xml.XmlException) {} Thread.Sleep(20); } throw new Exception(error); }
+    static void Wait(Func<bool> ready,string error,int seconds=8) { var end=DateTime.UtcNow.AddSeconds(seconds); while(DateTime.UtcNow<end) { Application.DoEvents(); try { if(ready()) return; } catch(IOException) {} catch(System.Xml.XmlException) {} Thread.Sleep(20); } throw new Exception(error); }
     static XElement State() { return XElement.Load(Path.Combine(data,"runtime-state.xml")); }
     static bool Open() { return (bool)State().Attribute("flyoutVisible"); }
     static void Command(int message,int value,IntPtr target) { Check(NativeMethods.PostMessage(receiver,message,new IntPtr(value),target),"Could not send controller command"); Pump(160); }
@@ -76,13 +76,22 @@ class IntegrationTests {
         }
         passed.Add("Settings UI adds a layout, preserves its name through grid changes, and saves a 2-column/3-row profile.");
     }
-    static void Run(string directory) {
+    static void Run(string directory,string hostedScript) {
         data=directory; Directory.CreateDirectory(data);
         Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before integration tests.");
         var settings=AppSettings.Defaults(); settings.ShowLauncherTab=false; SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
         forms=new Form[6]; for(int i=0;i<6;i++) { forms[i]=new Form{Text="Six Slot Snap disposable test "+(i+1),StartPosition=FormStartPosition.Manual,Location=new Point(200+20*i,250+20*i),Size=new Size(450,350)}; forms[i].Show(); NativeMethods.ShowWindow(forms[i].Handle,4); }
-        controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
-        Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Controller did not start; inspect its log.");
+        if(hostedScript==null) {
+            controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+        } else {
+            string powershell=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");
+            controller=Process.Start(new ProcessStartInfo(powershell,"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true});
+            controller.ErrorDataReceived+=delegate(object sender,DataReceivedEventArgs e) { if(e.Data!=null) try { File.AppendAllText(Path.Combine(data,"host-stderr.txt"),e.Data+Environment.NewLine); } catch(IOException) {} };
+            controller.OutputDataReceived+=delegate(object sender,DataReceivedEventArgs e) { if(e.Data!=null) try { File.AppendAllText(Path.Combine(data,"host-stdout.txt"),e.Data+Environment.NewLine); } catch(IOException) {} };
+            controller.BeginErrorReadLine(); controller.BeginOutputReadLine();
+            passed.Add("Controller hosted inside Windows PowerShell with no standalone application EXE required.");
+        }
+        Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Controller did not start; inspect its log and host-stderr.txt.",hostedScript==null?8:20);
         receiver=new IntPtr((long)State().Attribute("controller")); Check(receiver!=IntPtr.Zero,"Controller handle missing");
         for(int i=0;i<6;i++) Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle);
         CheckAll(); Check(State().Elements("Zone").Count()==6,"Not all six zones were assigned"); passed.Add("Six external-process test windows placed and tracked.");
@@ -135,7 +144,8 @@ class IntegrationTests {
     [STAThread] static int Main(string[] args) {
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); Application.EnableVisualStyles();
         string directory=args.Length>0?args[0]:Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"integration-data");
-        try { Run(directory); Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0; }
+        string hostedScript=null; int hosted=Array.IndexOf(args,"--hosted"); if(hosted>=0 && hosted+1<args.Length) hostedScript=Path.GetFullPath(args[hosted+1]);
+        try { Run(directory,hostedScript); Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0; }
         catch(Exception e) { Directory.CreateDirectory(directory); File.WriteAllText(Path.Combine(directory,"integration-error.txt"),e.ToString()); Console.Error.WriteLine(e); return 1; }
         finally {
             if(controller!=null && !controller.HasExited) { NativeMethods.PostMessage(receiver,SixSlotSnap.QuitCommand,IntPtr.Zero,IntPtr.Zero); if(!controller.WaitForExit(3000)) controller.Kill(); }

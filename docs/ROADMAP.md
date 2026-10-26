@@ -25,6 +25,18 @@ particular release date.
 - Add keyboard navigation inside the flyout; the basic flyout currently uses
   mouse selection, Escape, and configurable direct zone shortcuts.
 
+## Launch-mode polish — implemented locally
+
+- Windows PowerShell-hosted mode, with no standalone application EXE generated.
+- GitHub source downloader with versioned code folders and persistent data.
+- An explicit hosted/compiled mode choice and a no-launch installation option.
+- Offline install/update/path tests and a live GitHub source-download test.
+- Full cross-process desktop integration coverage against the hosted controller.
+
+See [launch modes](LAUNCHING.md). The hosted source files must be published
+before a GitHub-hosted installation can retrieve that mode. Local hosted use
+is already available. The original `six-slot-snap` repository is unchanged.
+
 ## Polished version
 
 - More visual proportion editing and better settings presentation.

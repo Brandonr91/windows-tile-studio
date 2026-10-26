@@ -9,6 +9,12 @@ Run `./Build.ps1 -Test` on Windows. It compiles all `src/*.cs` files with the lo
 .NET Framework C# compiler and runs geometry tests without moving desktop windows.
 Do not introduce external packages or replace this build path without a reason.
 
+`Start-Hosted.cmd` runs the same C# source through Windows PowerShell 5.1
+Add-Type, with no OutputAssembly or standalone application EXE. Keep hosted
+mode STA and pass an explicit data directory to the application entry point.
+Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
+5.1; `-Network` is an opt-in public GitHub source download without launch.
+
 ## Behavior to preserve
 
 - Preserve the default six-slot, three-column/two-row layout. Additional saved
@@ -36,6 +42,11 @@ unless the user requests it. Prefer a small reviewable change.
 It launches a separate controller with disposable windows and isolated settings.
 It does not adopt existing apps. Use it for changes affecting targeting,
 native resize events, hotkey cleanup, or the settings editor.
+
+`./Build.ps1 -HostedIntegration` runs the same suite against the PowerShell
+host. Use `-HostedSourceRoot` for a clean source-only controller fixture.
+Keep installer cleanup bounded to its own fresh staging directory; never
+delete or replace user data when switching source versions.
 
 ## Repository hygiene
 

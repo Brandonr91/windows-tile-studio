@@ -39,6 +39,12 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
+The launch-mode polish branch adds **Start-Hosted.cmd**, which runs the
+controller inside Windows PowerShell without generating a standalone app EXE,
+and **Get-FromGitHub.ps1**, which installs source into versioned local folders.
+See [launch modes](docs/LAUNCHING.md) for instructions, publication requirements,
+and tests. The compiled mode below remains available.
+
 Download or clone this repository into a writable folder, then double-click
 **Start.cmd**. The first launch compiles the source using the .NET Framework
 C# compiler included on compatible Windows installations. The build produces
@@ -93,8 +99,9 @@ them to its resizing group.
   the row dividers in other columns.
 - Moving a window away releases its slot. Snap it again to reconnect it.
 
-The controller saves profiles, proportions, and hotkeys in `bin/settings.xml`.
-It keeps the previous file in `bin/settings.xml.bak` when replacing settings.
+The launch scripts save profiles, proportions, and hotkeys in `data/settings.xml`.
+The previous file is kept in `data/settings.xml.bak` when replacing settings.
+Earlier portable builds used `bin/`; their settings are imported on first use.
 An invalid settings file is preserved while defaults run; a warning explains
 the recovery. When the controller starts, it
 reconnects windows already occupying the saved columns. Current complementary
@@ -168,7 +175,7 @@ Actual desktop checks also verified a customized global hotkey, outside-click
 dismissal, Escape, and saving a custom layout and shortcut through the GUI.
 
 Before reporting a resizing problem, include the app names, display scaling,
-which edge was dragged, and the relevant lines from `bin/status.log`.
+which edge was dragged, and the relevant lines from the data folder's `status.log`.
 
 ## Recreate or expand it with Codex
 
