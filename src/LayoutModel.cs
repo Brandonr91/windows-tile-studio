@@ -42,6 +42,8 @@ public class LayoutProfile {
 public class LayoutModel {
     public SixSlotSnap.RECT Work;
     public LayoutProfile Profile;
+    public int[] WidthAffectedSlots=new int[0];
+    public int[] HeightAffectedSlots=new int[0];
     public LayoutModel(LayoutProfile profile) { Profile=profile; }
     public bool Locate(int slot,out int column,out int row) {
         int index=0,max=Profile.Columns.Max(c=>c.Rows.Count);
@@ -72,19 +74,33 @@ public class LayoutModel {
         parts[boundary-1]=split-start; parts[boundary]=end-split; return true;
     }
     public bool Adjust(int slot,SixSlotSnap.RECT before,SixSlotSnap.RECT after) {
+        WidthAffectedSlots=new int[0]; HeightAffectedSlots=new int[0];
         int c,r,w=Work.R-Work.L,h=Work.B-Work.T;
         if(!Locate(slot,out c,out r) || w<=0 || h<=0) return false;
         bool changed=false; var widths=Profile.Columns.Select(v=>v.Width).ToList();
+        var widthSlots=new HashSet<int>(); var heightSlots=new HashSet<int>();
+        Action<int> markWidth=delegate(int boundary) {
+            for(int column=boundary-1;column<=boundary;column++) for(int row=0;row<Profile.Columns[column].Rows.Count;row++) widthSlots.Add(IndexOf(column,row));
+        };
         if(Math.Abs((after.R-after.L)-(before.R-before.L))>1) {
-            if(Math.Abs(after.L-before.L)>1) changed|=Boundary(widths,c,(after.L-Work.L)/(double)w,400.0/w);
-            if(Math.Abs(after.R-before.R)>1) changed|=Boundary(widths,c+1,(after.R-Work.L)/(double)w,400.0/w);
+            if(Math.Abs(after.L-before.L)>1 && Boundary(widths,c,(after.L-Work.L)/(double)w,400.0/w)) { changed=true; markWidth(c); }
+            if(Math.Abs(after.R-before.R)>1 && Boundary(widths,c+1,(after.R-Work.L)/(double)w,400.0/w)) { changed=true; markWidth(c+1); }
         }
         for(int i=0;i<widths.Count;i++) Profile.Columns[i].Width=widths[i];
         var rows=Profile.Columns[c].Rows;
         if(Math.Abs((after.B-after.T)-(before.B-before.T))>1) {
-            if(Math.Abs(after.T-before.T)>1) changed|=Boundary(rows,r,(after.T-Work.T)/(double)h,200.0/h);
-            if(Math.Abs(after.B-before.B)>1) changed|=Boundary(rows,r+1,(after.B-Work.T)/(double)h,200.0/h);
+            bool top=r>0 && Math.Abs(after.T-before.T)>1;
+            bool bottom=r<rows.Count-1 && Math.Abs(after.B-before.B)>1;
+            // A height drag owns one boundary and exactly its adjacent pair,
+            // including when an app adjusts both edges while enforcing its size.
+            bool useTop=top && (!bottom || Math.Abs(after.T-before.T)>Math.Abs(after.B-before.B));
+            int boundary=useTop?r:r+1;
+            double desired=useTop?(after.T-Work.T)/(double)h:(after.B-Work.T)/(double)h;
+            if((top||bottom) && Boundary(rows,boundary,desired,200.0/h)) {
+                changed=true; heightSlots.Add(IndexOf(c,boundary-1)); heightSlots.Add(IndexOf(c,boundary));
+            }
         }
+        WidthAffectedSlots=widthSlots.OrderBy(i=>i).ToArray(); HeightAffectedSlots=heightSlots.OrderBy(i=>i).ToArray();
         return changed;
     }
 }
