@@ -1,5 +1,36 @@
 # Handoff
 
+## Latest verification: prior-phase audit
+
+2026-10-27, user requested a check of all prior phases. Starting from `d8852bf`,
+the first compiled suite passed but hosted repetitions exposed an intermittent
+lost final resize sample. `UpdateDrag` read a fresh rectangle after applying
+neighbors and advanced bookkeeping over movement that had never been modeled.
+It now advances only to the rectangle used for that sample. The new synchronous
+neighbor-triggered source-movement regression fails against isolated pre-fix
+`d8852bf` and passes after correction in both launch modes. Release diagnostics
+record frame coordinates in the existing local log.
+
+Final `Build.ps1 -Test -Integration -HostedIntegration`: PASS, 186297 pure checks
+plus both native suites and their compatibility/recovery subcases. Added direct
+all-direction navigation/clamp/layout-wrap checks pass. PowerShell 5.1 legacy
+supersession and source-hosting/installer suites PASS. See the full
+[phase audit](docs/PHASE-AUDIT.md) for each function's actual coverage and limits.
+An experimental supplemental in-process harness was inconclusive/stopped and
+removed; its launcher checks are not accepted verification. Live launcher drag,
+About/reset confirmation, physical multi-monitor/docking/sleep, elevated/hung
+apps and every physical event timing remain manual/beta coverage.
+
+Daily hosted source updated with the correction; restarted with all six original
+assignments recovered and no recovery warning. Preserve data. Pre-audit settings
+and runtime snapshot: `work/phase-audit-20261027-134223`. Reports are under
+`outputs/windows-tile-studio-all-phases-*.txt`, outside Git; full accepted run is
+`windows-tile-studio-all-phases-corrected-regression.txt`, and the baseline
+expected failure is `windows-tile-studio-all-phases-before-fix.txt`. Source packages
+refreshed after the audit commit. No public push or new phase implemented.
+Resume the user's latest request after reading actual Git/runtime state; phase 5
+remains the next planned development phase, not part of this audit.
+
 ## Current checkpoint: phase 4
 
 2026-10-27, following `9785a92`. Phase 4 core is implemented locally as

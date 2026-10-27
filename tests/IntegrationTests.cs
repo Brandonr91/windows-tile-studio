@@ -67,6 +67,15 @@ class IntegrationTests {
         return null;
     }
     static void TestEditor() {
+        using(var navigation=new SnapFlyout(AppSettings.Defaults(),"Disposable target",1.25,5120,2160)) {
+            string selected=null;int zone=-1;navigation.ZoneSelected=delegate(string id,int slot){selected=id;zone=slot;};
+            foreach(var key in new[]{Keys.Right,Keys.Down,Keys.Left,Keys.Up,Keys.Left,Keys.Up}) navigation.Navigate(key,false);
+            navigation.Navigate(Keys.Enter,false);Check(selected=="six-grid" && zone==0,"Four-way flyout navigation/edge clamp failed");
+            for(int i=0;i<6;i++) navigation.Navigate(Keys.Tab,false);
+            navigation.Navigate(Keys.Enter,false);Check(selected=="six-grid" && zone==0,"Forward layout wrap failed");
+            navigation.Navigate(Keys.Tab,true);navigation.Navigate(Keys.Enter,false);Check(selected=="wide-center" && zone==0,"Reverse layout wrap failed");
+        }
+        passed.Add("Direct flyout navigation checks all four directions, edge clamping, and forward/reverse layout wrapping.");
         var original=AppSettings.Defaults(); bool saved=false;
         original.LauncherPositionSet=true; original.LauncherX=456; original.LauncherY=789;
         using(var cancelled=new SnapSettingsForm(original)) {
@@ -271,11 +280,25 @@ class IntegrationTests {
         }
         CheckAll();passed.Add("Display/work-area and synthetic resume notifications refresh live inventory without moving six assigned windows on unchanged hardware; no OS settings or power state changed.");
         for(int row=0;row<2;row++) for(int edge=0;edge<2;edge++) {
+            scenario="shared width row "+row+" edge "+edge;
             int index=1+row*3; var beforeModel=Model(); var beforeRows=beforeModel.Profile.Columns.Select(c=>c.Rows.ToArray()).ToArray();
             BeginResize(forms[index].Handle); Pump(100); var r=Bounds(forms[index].Handle); if(edge==0) r.L+=50; else r.R-=45; Move(index,r); Pump(180);
             NotifyWinEvent(11,forms[index].Handle,0,0); Pump(450); CheckAll(); var after=Model();
             for(int c=0;c<3;c++) Check(after.Profile.Columns[c].Rows.SequenceEqual(beforeRows[c]),"Width resize changed an independent row divider");
         }
+        scenario="source moves again during neighbor placement";
+        bool armed=true,secondMove=false;int finalLeft=0;
+        EventHandler moveDuringApply=delegate {
+            if(!armed) return;armed=false;var next=Bounds(forms[1].Handle);next.L+=25;finalLeft=next.L;Move(1,next);secondMove=true;
+        };
+        forms[0].SizeChanged+=moveDuringApply;
+        try {
+            BeginResize(forms[1].Handle);Pump(100);var firstMove=Bounds(forms[1].Handle);firstMove.L+=35;Move(1,firstMove);
+            Wait(()=>secondMove,"Neighbor did not trigger the concurrent source move");Pump(220);
+            NotifyWinEvent(11,forms[1].Handle,0,0);Pump(450);CheckAll();
+            Check(Bounds(forms[1].Handle).L==finalLeft,"Movement during neighbor placement was consumed without being applied");
+        } finally {forms[0].SizeChanged-=moveDuringApply;}
+        passed.Add("A source move during synchronous neighbor placement is processed on the next sample instead of lost.");
         for(int c=0;c<3;c++) for(int side=0;side<2;side++) {
             int index=c+side*3; var previous=Model();
             BeginResize(forms[index].Handle); Pump(100); var r=Bounds(forms[index].Handle); if(side==0) r.B+=75; else r.T-=35; Move(index,r); Pump(180);

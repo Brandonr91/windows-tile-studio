@@ -63,6 +63,7 @@ Follow the user's current priority before this suggested ordering.
 | Implemented with hardware verification gap | Per-monitor state and display/resume recovery. | Phase 4 adds independent sessions, debounced fresh inventory and same-monitor verified reflow. Only one physical display available; real mixed-DPI/docking/sleep tests remain. |
 | Implemented limitation | Geometry-based recovery may ambiguously adopt overlapping windows; no app restart restoration. | `RecoverAssignments` enumeration and current HWND array only. |
 | Resolved within regression scope | A long drag could accumulate multiple height pairs across opposite-edge samples. | Phase 3 pins the first observed height boundary for the whole gesture; three-row opposite-edge and all four-row divider-side cases pass. |
+| Resolved, before/after regression covered | A final resize movement could be consumed during neighbor placement and release or misalign the source. | Prior-phase audit fixes bookkeeping to use the processed sample. Regression fails against pre-fix d8852bf and passes compiled/hosted; see docs/PHASE-AUDIT.md. |
 | Verification gap | Native grouping, unusual frames, mixed DPI and competing tilers may behave differently from synthetic test timing. | Run controlled compatibility cases; do not equate the current suite with universal compatibility. |
 | Operational limitation | Hosted source edits and compiled source edits do not update a running process automatically. | Restart the host; explicitly rebuild compiled mode. Do not test stale code. |
 

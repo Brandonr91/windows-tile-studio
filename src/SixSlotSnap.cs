@@ -379,7 +379,10 @@ public class SixSlotSnap : ApplicationContext {
         }
         if(grid.ConstraintBlocked) { AbortResize(); return; }
         if(changed) ApplyResizeFrames(false);
-        if(dragging!=IntPtr.Zero) NativeMethods.VisibleRect(dragging,out lastDrag);
+        // Advance only to the frame used for this adjustment. The app may move
+        // again while we update neighbors; a fresh read here would consume that
+        // movement without applying it, dropping the final edge change.
+        if(dragging!=IntPtr.Zero) lastDrag=current;
     }
     void CompleteResize() {
         if(dragging==IntPtr.Zero || !resizeEnding || resizeProbe==null || !resizeProbe.Applied) return;
@@ -388,7 +391,11 @@ public class SixSlotSnap : ApplicationContext {
             if(!PlaceWindow(window,resizeBaseline[slot],true,false)) { AbortResize(); return; }
             FitIssue("This divider reached its size limit. Choose a larger layout or adjust another boundary.",true);
         }
-        if(slot>=0 && (NativeMethods.IsZoomed(window)||(!changed && !resizeAttempted && NativeMethods.VisibleRect(window,out actual) && !Near(actual,grid.RectFor(slot))))) assigned[slot]=IntPtr.Zero;
+        if(slot>=0 && (NativeMethods.IsZoomed(window)||(!changed && !resizeAttempted && NativeMethods.VisibleRect(window,out actual) && !Near(actual,grid.RectFor(slot))))) {
+            NativeMethods.VisibleRect(window,out actual);
+            Log("Released moved/maximized resize source in zone "+(slot+1)+"; attempted="+resizeAttempted+"; baseline="+resizeBaseline[slot].L+","+resizeBaseline[slot].T+","+resizeBaseline[slot].R+","+resizeBaseline[slot].B+"; last="+lastDrag.L+","+lastDrag.T+","+lastDrag.R+","+lastDrag.B+"; actual="+actual.L+","+actual.T+","+actual.R+","+actual.B);
+            assigned[slot]=IntPtr.Zero;
+        }
         dragging=IntPtr.Zero; resizeEnding=false;
         if(changed) { ApplyResizeFrames(true); SaveSettings(); settlePasses=0; settleTimer.Start(); }
         WriteState();

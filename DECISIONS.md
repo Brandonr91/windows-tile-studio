@@ -59,7 +59,7 @@ are explicitly labeled. Consult actual source before relying on them.
 - Hosted binaries are not code-signed releases. Archive hashes record downloaded
   bytes and version identity; they are not a substitute for signing.
 
-## Proposed, not yet decided or implemented
+## Phase 4 decision update
 
 Phase 4 supersedes D10's single-work-area limitation: per-monitor sessions retain
 selected layouts, geometry and transient assignment arrays. Windows device-interface
@@ -75,6 +75,17 @@ HWND ownership and reconnect performs optional geometry recovery. No automatic
 cross-screen return, app relaunch, service or startup changes. Single-display
 native notification tests plus pure topology cases do not establish physical
 mixed-DPI/docking/sleep coverage. See [display checkpoint](docs/DISPLAYS.md).
+
+## Prior-phase audit decision update
+
+Advance drag history only to the source rectangle used for model calculation,
+never a newer rectangle read after synchronous neighbor placement. The latter
+could consume unapplied movement and incorrectly release the source. The new
+neighbor-triggered regression fails on d8852bf and passes with this correction.
+Keep inconclusive supplemental harness runs separate from accepted verification;
+see docs/PHASE-AUDIT.md for the matrix and physical/manual coverage gaps.
+
+## Proposed, not yet implemented
 
 App-specific minimum-size negotiation and per-monitor persistence are implemented
 in phases 3–4 within documented limits. A graphical divider editor,

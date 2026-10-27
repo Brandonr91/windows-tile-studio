@@ -78,6 +78,13 @@ at release, and three 100 ms settling passes apply the same scopes. Explicit
 snap, profile/settings changes and proportion reset cancel stale sessions.
 Whole-grid `ApplyLayout` is retained for explicit reflow/reset, not live dragging.
 
+The prior-phase audit reproduced a race when the source moved again during
+synchronous neighbor placement. `lastDrag` now advances only to the sampled
+rectangle used for the adjustment; resampling afterward could silently consume
+the unprocessed movement. An external disposable neighbor-triggered regression
+fails on pre-fix `d8852bf` and passes in both launch modes after correction.
+See [audit evidence](docs/PHASE-AUDIT.md).
+
 Snap checks advertised minimums before moving and verifies the resulting visible
 frame within two physical pixels before recording assignment. Rejected frames
 request restoration of previous outer bounds. Failed snaps do not first switch

@@ -6,6 +6,11 @@ is not implemented functionality or permission to enable startup automatically.
 Complete and verify one reviewable phase at a time. This plan does not schedule
 background work or promise dates. Preserve independent height pairs throughout.
 
+2026-10-27 [prior-phase audit](PHASE-AUDIT.md): one lost-sample resize race
+corrected with a before/after reproduction; both compiled and hosted full suites,
+legacy restoration and source-launcher checks pass. Hardware/manual UI coverage
+gaps remain explicit; this does not implement phase 5.
+
 | Phase | Scope | Completion gate | Status |
 | --- | --- | --- | --- |
 | 1. Everyday controls and identity | Settings organization, launcher reset/visibility, consistent visible branding, tray version/About. | Appearance save/cancel works, no unnecessary window reflow, existing resize/flyout tests pass. | Implemented and verified locally as `0.3.0-preview.1`; not published. |

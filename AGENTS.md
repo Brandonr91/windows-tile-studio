@@ -48,6 +48,10 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Scope height resizing to exactly the adjacent pair. Preserve actual starting
   heights elsewhere, including during width resizing and settling. Extra native
   group events must not transfer resize ownership to a flanking window.
+- Advance resize bookkeeping only to the source rectangle used for that sample.
+  A fresh source read after applying neighbors can silently consume movement
+  that occurred during synchronous placement. Retain the neighbor-triggered
+  concurrent-source regression in the integration suite.
 - Preserve physical-pixel DPI handling and invisible-frame compensation.
 - Set and restore physical-pixel DPI context on background geometry-probe
   threads too. Never combine virtualized GetWindowRect with physical DWM bounds.
