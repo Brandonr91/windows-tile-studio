@@ -1,6 +1,7 @@
 # Architecture
 
-Inspected 2026-10-26 against local application baseline `48b96b2`.
+Inspected 2026-10-26; base application `48b96b2`, plus the clock-area draggable
+launcher change following context checkpoint `1aac7f3`.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
 
@@ -30,7 +31,7 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/SixSlotSnap.cs` | Win32 interop, application context, tray, target validation, placement, recovery, resize sessions, timers, hotkeys, IPC, CLI entry point. |
 | `src/LayoutModel.cs` | Profiles, normalized column/row weights, row-major slot mapping, rectangles, independent boundary changes and affected-slot sets. |
 | `src/Settings.cs` | Shortcut validation, six presets, configuration schema version 1, XML load/save/backup and legacy import. |
-| `src/Flyout.cs` | Nonactivating flyout, layout cards, zone highlight/navigation, top-center launcher tab. |
+| `src/Flyout.cs` | Nonactivating flyout, layout cards, zone highlight/navigation, draggable clock-area launcher bar. |
 | `src/SettingsForm.cs` | Draft-based layout/weight editor, preview and shortcut dialog; validation before applying/saving. |
 
 ## Geometry and resize ownership
@@ -71,6 +72,16 @@ is persisted. A change of monitor work area clears assignments; no per-monitor
 state or display-change subscription is implemented.
 
 ## Flyout, keyboard and command flow
+
+The persistent launcher defaults to the bottom-right of the primary taskbar's
+monitor work area, with an 8-DPI-scaled-pixel gap, above the clock area rather
+than over taskbar controls. `StartPosition.Manual` prevents Windows overriding
+that location. Left-button capture distinguishes a click from a drag using the
+system drag threshold. Dragging changes the bar's location, not app assignments;
+release saves `LauncherPositionSet`, `LauncherX`, `LauncherY` in schema-1 settings.
+Older settings omit these fields and receive the new default. Clone and XML
+round-trip preserve them. Restored/dragged bounds are clamped to a screen's work
+area; this does not add full display-change or mixed-DPI migration support.
 
 The flyout uses a nonactivating topmost tool window. It retains the external
 target HWND and returns selection to that target. Arrows choose a zone using

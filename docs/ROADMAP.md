@@ -39,6 +39,8 @@ particular release date.
   Enter to place, with temporary registration cleanup and conflict rollback.
 - Pair-only height changes, preserving actual flanking heights during width
   resizing and correcting unwanted native group changes.
+- Persistent Layouts bar near the taskbar clock; drag it to move, click to open,
+  with saved position and work-area clamping.
 
 See [launch modes](LAUNCHING.md). Hosted installations require a revision
 containing the hosted launchers. The original `six-slot-snap` repository

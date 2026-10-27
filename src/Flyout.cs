@@ -105,11 +105,35 @@ public class SnapFlyout : NonactivatingForm {
 
 public class LauncherTab : NonactivatingForm {
     public Action OpenRequested;
+    public Action<Point> PositionChanged;
+    Point pressPoint,startLocation;
+    bool pressed,moved;
+    public static Point ClampPosition(Point point,Size size,Rectangle work) {
+        return new Point(Math.Max(work.Left,Math.Min(point.X,work.Right-size.Width)),Math.Max(work.Top,Math.Min(point.Y,work.Bottom-size.Height)));
+    }
     public LauncherTab(string shortcut,double scale) {
         Text="Six Slot Snap — layout button";
+        StartPosition=FormStartPosition.Manual;
         FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
         Width=(int)(270*scale); Height=(int)(27*scale); BackColor=Color.FromArgb(33,39,49); ForeColor=Color.FromArgb(210,222,239); Font=new Font("Segoe UI",9); AccessibleName="Open custom Snap layouts";
-        var label=new Label{Dock=DockStyle.Fill,Text="Layouts  ·  "+shortcut,TextAlign=ContentAlignment.MiddleCenter,Cursor=Cursors.Hand,AccessibleName="Open custom Snap layouts"};
-        label.Click+=delegate { if(OpenRequested!=null) OpenRequested(); }; Controls.Add(label);
+        var label=new Label{Dock=DockStyle.Fill,Text="Layouts  ·  "+shortcut,TextAlign=ContentAlignment.MiddleCenter,Cursor=Cursors.SizeAll,AccessibleName="Open custom Snap layouts; drag to move"};
+        label.MouseDown+=delegate(object sender,MouseEventArgs e) {
+            if(e.Button!=MouseButtons.Left) return;
+            pressed=true; moved=false; pressPoint=Cursor.Position; startLocation=Location; label.Capture=true;
+        };
+        label.MouseMove+=delegate {
+            if(!pressed) return; Point current=Cursor.Position;
+            if(!moved && Math.Abs(current.X-pressPoint.X)<SystemInformation.DragSize.Width/2 && Math.Abs(current.Y-pressPoint.Y)<SystemInformation.DragSize.Height/2) return;
+            moved=true;
+            Location=ClampPosition(new Point(startLocation.X+current.X-pressPoint.X,startLocation.Y+current.Y-pressPoint.Y),Size,Screen.FromPoint(current).WorkingArea);
+        };
+        label.MouseUp+=delegate(object sender,MouseEventArgs e) {
+            if(e.Button!=MouseButtons.Left || !pressed) return;
+            pressed=false; label.Capture=false;
+            if(moved) { if(PositionChanged!=null) PositionChanged(Location); }
+            else if(OpenRequested!=null) OpenRequested();
+        };
+        label.MouseCaptureChanged+=delegate { if(pressed && !label.Capture) { pressed=false; if(moved && PositionChanged!=null) PositionChanged(Location); } };
+        Controls.Add(label);
     }
 }

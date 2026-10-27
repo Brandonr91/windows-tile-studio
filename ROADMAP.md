@@ -8,13 +8,17 @@ without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping 
 ## Completed and verified within recorded test scope
 
 - Basic preview: six starter profiles, configurable layouts/weights/hotkeys,
-  persistent nonactivating flyout and top launcher, linked widths and independent
+  persistent nonactivating flyout and launcher, linked widths and independent
   row dividers, XML backup/recovery and legacy import.
 - First polish: pair-only height resizing, preservation of actual flanking heights
   and width-only heights, native-style group correction, keyboard highlight and
   arrows/Tab/Shift+Tab/Enter, temporary hotkey cleanup and conflict rollback.
 - Source delivery: PowerShell-hosted mode, optional compiled mode, versioned
   GitHub downloader, persistent data and offline archive support.
+- Launcher placement update: clock-area default, drag-to-move with click/drag
+  distinction, saved coordinates and work-area clamping. Geometry/settings
+  checks and disposable-bar mouse input verified; broader display-change handling
+  remains planned.
 - Geometry/configuration, disposable-window desktop and launcher test suites.
   A fresh public-source download and hosted validation passed in the previous
   development turn. See HANDOFF for revision/evidence limits.
@@ -48,4 +52,6 @@ Follow the user's current priority before this suggested ordering.
 | Verification gap | Native grouping, unusual frames, mixed DPI and competing tilers may behave differently from synthetic test timing. | Run controlled compatibility cases; do not equate the current suite with universal compatibility. |
 | Operational limitation | Hosted source edits and compiled source edits do not update a running process automatically. | Restart the host; explicitly rebuild compiled mode. Do not test stale code. |
 
-No new application defect was reproduced during the documentation-only task.
+The earlier documentation-only task did not reproduce a new application defect.
+The launcher update subsequently corrected Windows' default initial-position
+override by explicitly using manual positioning.

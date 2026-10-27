@@ -64,6 +64,12 @@ class GridTests {
         string warning; var loaded=SettingsStore.Load(path,out warning);
         Check(warning==null && loaded.Profiles.Count==6,"Settings round trip failed");
         Check(loaded.FlyoutShortcut.ToString()=="Ctrl+Alt+Win+Space","Flyout default changed");
+        Check(!loaded.LauncherPositionSet,"Old/default settings must use the clock-area launcher position");
+        s.LauncherPositionSet=true; s.LauncherX=-1200; s.LauncherY=800;
+        var positionCopy=s.Clone(); SettingsStore.Save(path,positionCopy); loaded=SettingsStore.Load(path,out warning);
+        Check(warning==null && loaded.LauncherPositionSet && loaded.LauncherX==-1200 && loaded.LauncherY==800,"Dragged launcher position did not survive clone/save/load");
+        var constrained=LauncherTab.ClampPosition(new System.Drawing.Point(-3000,3000),new System.Drawing.Size(340,34),new System.Drawing.Rectangle(-1920,0,1920,1040));
+        Check(constrained.X==-1920 && constrained.Y==1006,"Launcher was not kept inside a negative-origin work area");
         var candidate=s.Clone(); candidate.SlotShortcuts[0]=candidate.FlyoutShortcut.Clone(); Reject(candidate.Validate,"Duplicate shortcut accepted");
         candidate=s.Clone(); candidate.Profiles[0].Columns[0].Width=double.NaN; Reject(candidate.Validate,"NaN weight accepted");
         candidate=s.Clone(); candidate.FlyoutShortcut=new Shortcut(); Reject(candidate.Validate,"Unreachable flyout accepted");

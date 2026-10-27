@@ -75,7 +75,9 @@ Click a zone in any layout to place that window there. The panel stays open
 until you select a zone, click outside, press **Esc**, or repeat the shortcut.
 The target window remains the one selected when you opened the flyout.
 
-The small **Layouts** button at the top center opens the same panel. It can
+The small **Layouts** bar near the taskbar clock opens the same panel. Hold
+the left mouse button anywhere on the bar and drag to move it; its position
+is remembered across restarts. It sits above the taskbar by default. It can
 be hidden in settings. You can also use **Ctrl+Alt+1** through **Ctrl+Alt+9**
 to place the active window in a numbered zone of the current layout.
 The default six-window layout is numbered as follows:

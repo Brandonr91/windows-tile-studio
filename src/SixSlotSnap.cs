@@ -237,9 +237,15 @@ public class SixSlotSnap : ApplicationContext {
     double DpiScale(IntPtr target) { uint dpi=NativeMethods.GetDpiForWindow(target); return dpi==0?1:dpi/96.0; }
     void RefreshLauncher() {
         if(launcher!=null) { launcher.Dispose(); launcher=null; } if(!settings.ShowLauncherTab) return;
-        var m=NativeMethods.Monitor(NativeMethods.GetForegroundWindow()); launcher=new LauncherTab(settings.FlyoutShortcut.ToString(),DpiScale(NativeMethods.GetForegroundWindow()));
+        IntPtr taskbar=NativeMethods.FindWindow("Shell_TrayWnd",null);
+        IntPtr anchor=taskbar==IntPtr.Zero?NativeMethods.GetForegroundWindow():taskbar;
+        var m=NativeMethods.Monitor(anchor); double scale=DpiScale(anchor); launcher=new LauncherTab(settings.FlyoutShortcut.ToString(),scale);
         launcher.OpenRequested=delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); };
-        launcher.Location=new Point(m.Work.L+(m.Work.R-m.Work.L-launcher.Width)/2,m.Work.T+3); if(flyout==null) launcher.ShowUnfocused();
+        launcher.PositionChanged=delegate(Point location) { settings.LauncherPositionSet=true; settings.LauncherX=location.X; settings.LauncherY=location.Y; SaveSettings(); };
+        int gap=Math.Max(4,(int)(8*scale));
+        Point position=settings.LauncherPositionSet?new Point(settings.LauncherX,settings.LauncherY):new Point(m.Work.R-launcher.Width-gap,m.Work.B-launcher.Height-gap);
+        Rectangle work=settings.LauncherPositionSet?Screen.FromPoint(position).WorkingArea:Rectangle.FromLTRB(m.Work.L,m.Work.T,m.Work.R,m.Work.B);
+        launcher.Location=LauncherTab.ClampPosition(position,launcher.Size,work); if(flyout==null) launcher.ShowUnfocused();
     }
     public void OpenFlyout(IntPtr target,string onlyProfile) {
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }

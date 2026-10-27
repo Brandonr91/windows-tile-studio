@@ -50,6 +50,9 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
   group events must not transfer resize ownership to a flanking window.
 - Preserve physical-pixel DPI handling and invisible-frame compensation.
 - Keep the visual selector nonactivating and retain clean hotkey cleanup.
+- Default the persistent Layouts bar near the taskbar clock (above the primary
+  taskbar's right end). Dragging the bar moves it without opening the selector;
+  normal clicks open it. Preserve saved position and keep restored bounds visible.
 - The flyout stays open until selection, outside click, Escape, or its toggle
   shortcut; switching foreground apps also dismisses it. Preserve the original
   target; never snap the flyout itself.

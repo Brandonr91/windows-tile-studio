@@ -1,8 +1,30 @@
 # Handoff
 
-Last context inspection: 2026-10-26 (America/Chicago). Application baseline:
-local `48b96b2` on `feature/polish-launchers`. This task establishes persistent
-context only; it does not change application behavior or resume feature development.
+Last update: 2026-10-26 (America/Chicago), following context checkpoint
+`1aac7f3` on `feature/polish-launchers`. Latest request: move the persistent
+Layouts bar near the taskbar clock and make it movable.
+
+## Latest completed change
+
+The bar defaults just above the primary taskbar's right end. Left-drag moves it
+without opening the flyout; normal click still opens it. New optional schema-1
+settings fields preserve its coordinates; restored/dragged bounds are clamped
+to the screen work area. Manual StartPosition fixes Windows overriding the
+initial location. This is launcher placement, not full display-change recovery.
+
+`Build.ps1 -Test` passed 186126 checks, including launcher position cloning/XML
+round-trip and negative-origin clamping. `Build.ps1 -HostedIntegration` passed
+the existing six-window suite. After the final manual-position correction,
+geometry tests passed again. A disposable launcher using the production mouse
+handlers received actual drag and click input: drag callbacks fired without
+an open callback, then a normal click fired the open callback. Its test-only
+taskbar visibility differed from the production nonactivating tool window.
+
+The updated source is installed in the daily hosted delivery; all six slots
+recovered. User data was preserved, with a local fallback under
+`work/launcher-position-fallback`. This change and context docs are local only;
+public main still predates the context checkpoint unless independently updated.
+Next: gather user feedback on placement; only continue roadmap work when asked.
 
 ## Read before continuing
 
@@ -36,9 +58,10 @@ delivery, with its own `data/`. Editing the checkout does not update that copy.
 There are older `six-slot-snap` folders and verification clones: do not mistake
 them for the development repository or push from them.
 
-The last runtime snapshot showed a PowerShell-hosted controller with all six
-zones occupied in profile `six-grid`, flyout closed. This inspection did not
-stop, restart, move, or resize those apps. Process IDs and HWNDs are transient;
+The latest runtime snapshot showed a PowerShell-hosted controller with all six
+zones occupied in profile `six-grid`, flyout closed. The launcher change paused
+and restarted the daily controller for isolated testing and deployment. Process
+IDs and HWNDs are transient;
 re-read the runtime XML, verify the live process/command line, and confirm its
 source/data location before interacting. Preserve daily `data/settings.xml`.
 
@@ -62,8 +85,8 @@ changes; do not rely only on a saved PASS file or stale integration-error file.
 Latest keyboard coverage does not prove all arrows/layout shapes, all native
 mouse timing, app minimums, privilege levels or multi-monitor behavior.
 
-The context-only task reviewed code and existing evidence; it did not rerun
-desktop tests or make new compatibility claims.
+The earlier context-only task reviewed existing evidence. New launcher-change
+verification is recorded above; no new broad compatibility claim is made.
 
 ## Exact next steps
 
@@ -73,8 +96,8 @@ desktop tests or make new compatibility claims.
    the original repository or independent public commits.
 2. Resume the user's latest request. With no new feature priority, use the
    proposed order in root ROADMAP: first add a disposable-window reproduction
-   for minimum-size and 3-row resize ownership. Do not change behavior in this
-   context-documentation task.
+   for minimum-size and 3-row resize ownership. The launcher request is complete;
+   do not automatically begin unrelated functionality.
 3. For code changes, run `./Build.ps1 -Test`. It does not move desktop windows.
    For resize/flyout/hotkey changes, arrange a controlled pause of the daily
    controller and run `./Build.ps1 -HostedIntegration` with isolated data;

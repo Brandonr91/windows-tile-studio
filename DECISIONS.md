@@ -18,6 +18,7 @@ are explicitly labeled. Consult actual source before relying on them.
 | D10 | Implemented limitation | Recover assignments from current visible geometry, keep only one active work area. | No saved app identities, no workspace restore, no per-monitor layout database. Those require future design/migration work. |
 | D11 | Established requirement | No AI service at runtime; changes and startup behavior remain local and explicit. | No telemetry or automatic startup. Network use belongs to the opt-in source downloader. No scheduled development was created. |
 | D12 | Process requirement | Verify the source and desktop behavior separately; preserve authoritative context across sessions. | Read AGENTS and context records after compaction; update docs with meaningful changes. Distinguish test evidence from planned or unverified behavior. |
+| D13 | User requirement, implemented 2026-10-26 | Move the persistent Layouts bar from top center to near the taskbar clock and make it draggable. | Default above the primary taskbar's right end, outside the clock's controls. A normal click opens the selector; a drag moves only the bar and saves coordinates. Manual initial positioning and screen clamping prevent default-position overrides/offscreen restoration. This supersedes the original top-center launcher placement. |
 
 ## Resolved failures and tradeoffs
 

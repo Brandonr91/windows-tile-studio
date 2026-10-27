@@ -36,6 +36,8 @@ public class AppSettings {
     public int Version=1;
     public string ActiveProfileId="six-grid";
     public bool ShowLauncherTab=true;
+    public bool LauncherPositionSet;
+    public int LauncherX,LauncherY;
     public Shortcut FlyoutShortcut=new Shortcut{Modifiers=ShortcutModifiers.Control|ShortcutModifiers.Alt|ShortcutModifiers.Windows,Key=Keys.Space};
     public List<Shortcut> SlotShortcuts=new List<Shortcut>();
     public List<LayoutProfile> Profiles=new List<LayoutProfile>();
@@ -51,7 +53,7 @@ public class AppSettings {
         for(int i=0;i<16;i++) s.SlotShortcuts.Add(i<9?new Shortcut{Modifiers=ShortcutModifiers.Control|ShortcutModifiers.Alt,Key=(Keys)((int)Keys.D1+i)}:new Shortcut());
         return s;
     }
-    public AppSettings Clone() { return new AppSettings{Version=Version,ActiveProfileId=ActiveProfileId,ShowLauncherTab=ShowLauncherTab,FlyoutShortcut=FlyoutShortcut.Clone(),SlotShortcuts=SlotShortcuts.Select(s=>s.Clone()).ToList(),Profiles=Profiles.Select(p=>p.Clone()).ToList()}; }
+    public AppSettings Clone() { return new AppSettings{Version=Version,ActiveProfileId=ActiveProfileId,ShowLauncherTab=ShowLauncherTab,LauncherPositionSet=LauncherPositionSet,LauncherX=LauncherX,LauncherY=LauncherY,FlyoutShortcut=FlyoutShortcut.Clone(),SlotShortcuts=SlotShortcuts.Select(s=>s.Clone()).ToList(),Profiles=Profiles.Select(p=>p.Clone()).ToList()}; }
     public void Validate() {
         if(Version!=1) throw new ArgumentException("This settings version is not supported.");
         if(Profiles==null || Profiles.Count<1 || Profiles.Count>12 || Profiles.Any(p=>p==null)) throw new ArgumentException("Keep between 1 and 12 layouts.");
