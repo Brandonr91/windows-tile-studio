@@ -29,7 +29,13 @@ public class ShortcutDialog : Form {
 
 public class SnapSettingsForm : Form {
     public Func<AppSettings,string> SaveRequested;
+    public Func<string,string,bool> ConfirmAction;
+    public Action<string,string> ReportError;
     public readonly AppSettings Draft;
+    readonly Dictionary<string,Stack<LayoutProfile>> gridHistory=new Dictionary<string,Stack<LayoutProfile>>();
+    bool dirty,savedSuccessfully;
+    bool Confirm(string title,string message) { return ConfirmAction!=null?ConfirmAction(title,message):MessageBox.Show(this,message,title,MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes; }
+    void Error(string title,string message) { if(ReportError!=null) ReportError(title,message); else MessageBox.Show(this,message,title,MessageBoxButtons.OK,MessageBoxIcon.Warning); }
     readonly ListBox layouts=new ListBox();
     readonly TextBox name=new TextBox();
     readonly NumericUpDown columns=new NumericUpDown{Minimum=1,Maximum=4};
@@ -40,11 +46,18 @@ public class SnapSettingsForm : Form {
     readonly CheckBox launcher=new CheckBox{Text="Show the floating Layouts bar",AutoSize=true};
     LayoutProfile selected;
     bool refreshing;
-    public SnapSettingsForm(AppSettings source) {
+    public SnapSettingsForm(AppSettings source,string recoveryNotice=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
         var tabs=new TabControl{Dock=DockStyle.Fill}; Controls.Add(tabs);
         var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); var appearancePage=new TabPage("Appearance"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,appearancePage});
+        TabPage recoveryPage=null;
+        if(!string.IsNullOrEmpty(recoveryNotice)) {
+            recoveryPage=new TabPage("Recovery"); tabs.TabPages.Add(recoveryPage);
+            recoveryPage.Controls.Add(new Label{Text="Settings need your attention",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,25)});
+            recoveryPage.Controls.Add(new TextBox{Text=recoveryNotice+"\r\n\r\nYour existing settings file has not been replaced. Review the layouts and shortcuts, then Save changes. The tray menu remains available. Cancel keeps the existing file.",Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,Bounds=new Rectangle(24,65,810,280),AccessibleName="Settings recovery details"});
+            var editHotkeys=new Button{Text="Review hotkeys",Bounds=new Rectangle(24,370,180,34)}; editHotkeys.Click+=delegate { tabs.SelectedTab=shortcutPage; }; recoveryPage.Controls.Add(editHotkeys);
+        }
         var footer=new Panel{Dock=DockStyle.Bottom,Height=57}; Controls.Add(footer); tabs.BringToFront();
         var save=new Button{Text="Save changes",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(742,12,140,32)}; footer.Controls.Add(save);
         var cancel=new Button{Text="Cancel",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(636,12,96,32),DialogResult=DialogResult.Cancel}; footer.Controls.Add(cancel); CancelButton=cancel;
@@ -60,6 +73,12 @@ public class SnapSettingsForm : Form {
         proportions.Columns.Add(new DataGridViewTextBoxColumn{Name="width",HeaderText="Width weight",FillWeight=75}); proportions.Columns.Add(new DataGridViewTextBoxColumn{Name="rows",HeaderText="Row weights, separated by commas",FillWeight=180}); layoutPage.Controls.Add(proportions);
         layoutPage.Controls.Add(new Label{Text="Examples: widths 1, 2, 1 create a wider center; rows 2, 1 create a taller top window.",Bounds=new Rectangle(250,258,605,38)});
         var update=new Button{Text="Update preview",Bounds=new Rectangle(250,302,170,30)}; layoutPage.Controls.Add(update);
+        var undoGrid=new Button{Text="Undo grid change",AccessibleName="Undo last grid change",Bounds=new Rectangle(440,302,190,30)};
+        undoGrid.Click+=delegate {
+            Stack<LayoutProfile> history;
+            if(selected==null || !gridHistory.TryGetValue(selected.Id,out history) || history.Count==0) return;
+            selected.Columns=history.Pop().Columns.Select(c=>c.Clone()).ToList(); dirty=true; FillEditor();
+        }; layoutPage.Controls.Add(undoGrid);
         preview.Bounds=new Rectangle(250,344,300,172); preview.BackColor=Color.FromArgb(24,28,35); layoutPage.Controls.Add(preview);
         layoutPage.Controls.Add(new Label{Text="Each column keeps its own row dividers.\n\nPicking a zone in another layout moves only the selected window. Re-snap other windows to link them to that layout.",Bounds=new Rectangle(570,350,270,130)});
         appearancePage.Controls.Add(new Label{Text="Layouts bar",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,26)});
@@ -67,7 +86,7 @@ public class SnapSettingsForm : Form {
         appearancePage.Controls.Add(new Label{Text="Click the bar to choose a layout. Hold the left mouse button and drag to move it.\nIts position is remembered. The default location is near the taskbar clock.",Bounds=new Rectangle(24,104,800,50)});
         var positionStatus=new Label{Text=Draft.LauncherPositionSet?"Position: custom":"Position: default near clock",Bounds=new Rectangle(24,174,500,25),AccessibleName="Launcher position status"}; appearancePage.Controls.Add(positionStatus);
         var resetPosition=new Button{Text="Reset bar position",Bounds=new Rectangle(24,212,190,34),AccessibleName="Reset Layouts bar position"};
-        resetPosition.Click+=delegate { Draft.LauncherPositionSet=false; positionStatus.Text="Position: default near clock (applied when saved)"; }; appearancePage.Controls.Add(resetPosition);
+        resetPosition.Click+=delegate { Draft.LauncherPositionSet=false; dirty=true; positionStatus.Text="Position: default near clock (applied when saved)"; }; appearancePage.Controls.Add(resetPosition);
         appearancePage.Controls.Add(new Label{Text="Appearance changes apply when you choose Save changes.\nCancel leaves the running bar unchanged. You can always open layouts with your hotkey or tray menu.",Bounds=new Rectangle(24,274,800,56)});
         appearancePage.Controls.Add(new Label{Text="Windows Tile Studio  "+SixSlotSnap.ProductVersion,AutoSize=true,Location=new Point(24,375)});
         shortcuts.Dock=DockStyle.Fill; shortcuts.AllowUserToAddRows=false; shortcuts.AllowUserToDeleteRows=false; shortcuts.RowHeadersVisible=false; shortcuts.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill; shortcuts.AccessibleName="Global hotkey assignments";
@@ -85,15 +104,21 @@ public class SnapSettingsForm : Form {
             if(Draft.Profiles.Count>=12) { MessageBox.Show(this,"The basic version supports up to 12 layouts."); return; }
             int n=1; while(Draft.Profiles.Any(p=>p.Name=="Custom "+n)) n++;
             var created=LayoutProfile.Create(Guid.NewGuid().ToString("N"),"Custom "+n,3,2); Draft.Profiles.Add(created); RefreshList(created); RefreshShortcuts();
+            dirty=true;
         };
         remove.Click+=delegate {
             if(selected==null || Draft.Profiles.Count<=1) return;
+            if(!Confirm("Remove layout?","Remove '"+selected.Name+"' from this draft? This takes effect only when you save.")) return;
             Draft.Profiles.Remove(selected); selected=null; RefreshList(Draft.Profiles[0]); RefreshShortcuts();
+            dirty=true;
         };
         reshape.Click+=delegate {
             if(selected==null) return;
             int nextColumns=(int)columns.Value,nextRows=(int)rows.Value;
             if(!ReadEditor()) return;
+            if(!Confirm("Replace grid?","Replace this layout's current grid and proportions with equal-sized cells? You can use Undo grid change before saving.")) return;
+            if(!gridHistory.ContainsKey(selected.Id)) gridHistory[selected.Id]=new Stack<LayoutProfile>();
+            gridHistory[selected.Id].Push(selected.Clone()); dirty=true;
             selected.Columns=LayoutProfile.Create("temporary","temporary",nextColumns,nextRows).Columns;
             RefreshList(selected); RefreshShortcuts();
         };
@@ -101,18 +126,27 @@ public class SnapSettingsForm : Form {
         save.Click+=delegate {
             if(!ReadEditor()) return;
             Draft.ShowLauncherTab=launcher.Checked;
-            try { Draft.Validate(); string error=SaveRequested==null?null:SaveRequested(Draft); if(error!=null) { MessageBox.Show(this,error,"Changes were not saved",MessageBoxButtons.OK,MessageBoxIcon.Warning); return; } DialogResult=DialogResult.OK; Close(); }
-            catch(Exception e) { MessageBox.Show(this,e.Message,"Check settings",MessageBoxButtons.OK,MessageBoxIcon.Warning); }
+            try { Draft.Validate(); string error=SaveRequested==null?null:SaveRequested(Draft); if(error!=null) { Error("Changes were not saved",error+"\n\nYour edits are still open. Correct the problem and try Save again, or Cancel."); return; } savedSuccessfully=true; DialogResult=DialogResult.OK; Close(); }
+            catch(Exception e) { Error("Check settings",e.Message+"\n\nYour edits are still open; correct the values and try again."); }
         };
         RefreshList(Draft.Profiles.First(p=>p.Id==Draft.ActiveProfileId)); RefreshShortcuts();
+        name.TextChanged+=delegate { if(!refreshing) dirty=true; }; columns.ValueChanged+=delegate { if(!refreshing) dirty=true; }; rows.ValueChanged+=delegate { if(!refreshing) dirty=true; };
+        proportions.CellValueChanged+=delegate { if(!refreshing) dirty=true; }; launcher.CheckedChanged+=delegate { dirty=true; };
+        FormClosing+=delegate(object sender,FormClosingEventArgs e) {
+            proportions.EndEdit();
+            if(!savedSuccessfully && dirty && !Confirm("Discard unsaved changes?","Discard the changes in this settings window? Choose No to keep editing.")) { e.Cancel=true; DialogResult=DialogResult.None; }
+        };
+        if(recoveryPage!=null) tabs.SelectedTab=recoveryPage;
     }
     void RefreshList(LayoutProfile select) { refreshing=true; layouts.DataSource=null; layouts.DataSource=Draft.Profiles; layouts.SelectedItem=select; selected=select; refreshing=false; FillEditor(); }
     void FillEditor() {
         if(selected==null) return;
+        bool previousRefresh=refreshing; refreshing=true;
         name.Text=selected.Name; columns.Value=selected.Columns.Count; rows.Value=selected.Columns[0].Rows.Count;
         proportions.Rows.Clear(); for(int i=0;i<selected.Columns.Count;i++) proportions.Rows.Add(i+1,selected.Columns[i].Width.ToString("0.########",CultureInfo.InvariantCulture),string.Join(", ",selected.Columns[i].Rows.Select(v=>v.ToString("0.########",CultureInfo.InvariantCulture))));
         while(preview.Controls.Count>0) preview.Controls[0].Dispose();
         var card=new LayoutCard(selected,true,1); card.Dock=DockStyle.Fill; card.ZoneSelected=delegate {}; preview.Controls.Add(card);
+        refreshing=previousRefresh;
     }
     bool ReadEditor() {
         if(selected==null) return true;
@@ -124,7 +158,7 @@ public class SnapSettingsForm : Form {
                 copy.Columns.Add(new ColumnDefinition{Width=width,Rows=weights});
             }
             copy.Validate(); selected.Name=copy.Name; selected.Columns=copy.Columns; return true;
-        } catch(Exception e) { MessageBox.Show(this,e.Message,"Check layout",MessageBoxButtons.OK,MessageBoxIcon.Warning); return false; }
+        } catch(Exception e) { Error("Check layout",e.Message+"\n\nCheck the layout name and positive, comma-separated proportions. Your edits have not been saved."); return false; }
     }
     void RefreshShortcuts() {
         shortcuts.Rows.Clear(); shortcuts.Rows.Add("Open layout flyout",Draft.FlyoutShortcut);
@@ -132,7 +166,7 @@ public class SnapSettingsForm : Form {
         foreach(var p in Draft.Profiles) shortcuts.Rows.Add("Open "+p.Name+" layout",p.Shortcut);
     }
     Shortcut GetShortcut(int row) { if(row==0) return Draft.FlyoutShortcut; if(row<=16) return Draft.SlotShortcuts[row-1]; return Draft.Profiles[row-17].Shortcut; }
-    void SetShortcut(int row,Shortcut value) { if(row==0) Draft.FlyoutShortcut=value; else if(row<=16) Draft.SlotShortcuts[row-1]=value; else Draft.Profiles[row-17].Shortcut=value; RefreshShortcuts(); }
+    void SetShortcut(int row,Shortcut value) { if(row==0) Draft.FlyoutShortcut=value; else if(row<=16) Draft.SlotShortcuts[row-1]=value; else Draft.Profiles[row-17].Shortcut=value; dirty=true; RefreshShortcuts(); }
     void EditShortcut(object sender,DataGridViewCellEventArgs e) {
         if(e.RowIndex<0 || e.ColumnIndex<2) return;
         if(e.ColumnIndex==3) { if(e.RowIndex==0) { MessageBox.Show(this,"Keep a shortcut assigned to open the flyout."); return; } SetShortcut(e.RowIndex,new Shortcut()); return; }

@@ -65,6 +65,13 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Appearance-only and shortcut/name-only saves must not reflow managed app
   windows. Keep appearance edits draft-only until Save; launcher reset from
   the tray is immediate and must not reset layout proportions.
+- Protect changed drafts on close; require confirmation for grid replacement,
+  removal and live proportion reset. Keep grid undo local to the draft.
+- Startup shortcut conflicts must leave tray/recovery settings usable without
+  replacing the user's file or keeping partial candidate registrations. Failed
+  saves restore actual prior bindings, including an empty recovery binding set.
+- Keep standalone legacy restoration usable if manager source is missing;
+  verify original/guard hashes before replacing any executable.
 - Use the Windows Tile Studio tray name and owned six-tile icon. Dispose its
   native icon resources on exit. Legacy supersession is opt-in per folder:
   preserve the original EXE, stop only that exact selected executable, support

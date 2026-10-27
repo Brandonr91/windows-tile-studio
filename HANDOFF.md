@@ -1,5 +1,36 @@
 # Handoff
 
+## Current checkpoint: phase 2
+
+2026-10-26 following `c56b6a7`. Phase 2 is implemented locally as
+`0.3.0-preview.2`: discard/keep-editing close protection; grid replacement/removal
+confirmation and pre-save grid undo; live proportions reset confirmation;
+actionable save errors retaining the draft; startup Recovery page for hotkey
+conflicts and corrupt settings without replacing the file. Failed save rollback
+uses actual registered binding snapshots, including an empty recovery set.
+
+Legacy supersession now supplies standalone Restore-SixSlotSnap.cmd/.ps1 helpers
+and actionable missing-source guidance. Setup supports enable/disable/enable
+with identical original backup and Windows PowerShell 5.1 XML assignment.
+Both local opted-in legacy folders were refreshed with the updated guard/helpers.
+
+Validation: 186129 geometry/configuration checks pass, including blocked-save
+byte preservation. Hosted six-window/editor suite passes; startup-conflict and
+corrupt-file subcases launch the compiled controller with isolated data and
+verify recovery UI, unchanged file and clean exit. Editor tests cover keep/discard,
+confirmed/rejected grid replacement, undo and failed-save retention. Confirmation
+answers are injected for deterministic editor tests; tray reset dialog was not
+manually clicked. Supersession/standalone restore tests pass under Windows
+PowerShell 5.1. Recovery screen rendered and inspected.
+
+During development the new tests exposed a modal-close exit check and a test
+reader file-share race; both were fixed and the suite rerun successfully.
+Final source deployed to daily hosted delivery; runtime reports preview.2,
+recoveryRequired=false and six assignments. Source fallback and settings snapshot
+are under `work/phase-two-fallback`. Changes remain local until publication.
+Next: phase 3 compatibility and responsiveness, using disposable minimum-size
+and 3-row cases before changing resize behavior; see the phase plan.
+
 ## Current phase checkpoint
 
 2026-10-26, following `d3a430f`. User requested phased polishing, including

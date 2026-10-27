@@ -47,6 +47,16 @@ public class HotkeyRegistry : IDisposable {
     readonly IntPtr window;
     Dictionary<int,Shortcut> registered=new Dictionary<int,Shortcut>();
     public HotkeyRegistry(IntPtr handle) { window=handle; }
+    public Dictionary<int,Shortcut> Snapshot() { return registered.ToDictionary(p=>p.Key,p=>p.Value.Clone()); }
+    public string Restore(Dictionary<int,Shortcut> previous) {
+        foreach(int id in registered.Keys) NativeMethods.UnregisterHotKey(window,id);
+        registered=new Dictionary<int,Shortcut>(); string error=null;
+        foreach(var pair in previous) {
+            if(NativeMethods.RegisterHotKey(window,pair.Key,0x4000|(uint)pair.Value.Modifiers,(uint)pair.Value.Key)) registered.Add(pair.Key,pair.Value.Clone());
+            else error="A previous shortcut could not be restored: "+pair.Value+". Open Hotkeys and choose an available combination.";
+        }
+        return error;
+    }
     public static Dictionary<int,Shortcut> Bindings(AppSettings settings) {
         var result=new Dictionary<int,Shortcut>(); result.Add(100,settings.FlyoutShortcut);
         for(int i=0;i<16;i++) if(settings.SlotShortcuts[i].Enabled) result.Add(i+1,settings.SlotShortcuts[i]);
@@ -73,7 +83,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.1";
+    public const string ProductVersion="0.3.0-preview.2";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -124,6 +134,7 @@ public class SixSlotSnap : ApplicationContext {
     SnapSettingsForm settingsForm;
     readonly bool recover;
     bool preserveInvalidSettings;
+    string recoveryNotice;
     class CommandWindow : NativeWindow {
         public Action<int,IntPtr,IntPtr> Received;
         public CommandWindow() { CreateHandle(new CreateParams{Caption=ControllerCaption}); }
@@ -143,7 +154,7 @@ public class SixSlotSnap : ApplicationContext {
     void SaveSettings() { if(preserveInvalidSettings) return; try { SettingsStore.Save(settingsPath,settings); } catch(Exception e) { Log("Settings save failed: "+e.Message); } }
     void WriteState() {
         try {
-            var root=new XElement("Runtime",new XAttribute("pid",Process.GetCurrentProcess().Id),new XAttribute("controller",receiver.Handle.ToInt64()),new XAttribute("profile",settings.ActiveProfileId),new XAttribute("flyoutVisible",flyout!=null && flyout.Visible),new XAttribute("flyoutHandle",flyout==null?0:flyout.Handle.ToInt64()),new XAttribute("target",targetWindow.ToInt64()),new XAttribute("flyoutShortcut",settings.FlyoutShortcut));
+            var root=new XElement("Runtime",new XAttribute("pid",Process.GetCurrentProcess().Id),new XAttribute("version",ProductVersion),new XAttribute("recoveryRequired",recoveryNotice!=null),new XAttribute("controller",receiver.Handle.ToInt64()),new XAttribute("profile",settings.ActiveProfileId),new XAttribute("flyoutVisible",flyout!=null && flyout.Visible),new XAttribute("flyoutHandle",flyout==null?0:flyout.Handle.ToInt64()),new XAttribute("target",targetWindow.ToInt64()),new XAttribute("flyoutShortcut",settings.FlyoutShortcut));
             for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]!=IntPtr.Zero) root.Add(new XElement("Zone",new XAttribute("number",i+1),new XAttribute("window",assigned[i].ToInt64())));
             string path=Path.Combine(folder,"runtime-state.xml"); root.Save(path+".tmp"); if(File.Exists(path)) File.Replace(path+".tmp",path,null); else File.Move(path+".tmp",path);
         } catch(IOException) {} catch(UnauthorizedAccessException) {}
@@ -292,11 +303,11 @@ public class SixSlotSnap : ApplicationContext {
         mouseWasDown=mouse; escapeWasDown=escape;
     }
     public string ApplySettings(AppSettings draft) {
-        draft.Validate(); HideFlyout(); CancelResizeSession(); string error; if(!hotkeys.Replace(draft,out error)) return error;
-        try { SettingsStore.Save(settingsPath,draft); } catch(Exception e) { string rollback; hotkeys.Replace(settings,out rollback); return "Could not save settings: "+e.Message+(rollback==null?"":" "+rollback); }
+        draft.Validate(); HideFlyout(); CancelResizeSession(); var previousBindings=hotkeys.Snapshot(); string error; if(!hotkeys.Replace(draft,out error)) return error;
+        try { SettingsStore.Save(settingsPath,draft); } catch(Exception e) { string rollback=hotkeys.Restore(previousBindings); return "Could not save settings: "+e.Message+" Check the data folder is writable and not locked by another program."+(rollback==null?"":" "+rollback); }
         bool same=grid.Profile.Id==draft.ActiveProfileId;
         bool geometryChanged=!grid.Profile.GeometryMatches(draft.Profiles.First(p=>p.Id==draft.ActiveProfileId));
-        settings=draft; preserveInvalidSettings=false;
+        settings=draft; preserveInvalidSettings=false; recoveryNotice=null;
         var area=grid.Work; grid=new LayoutModel(settings.Profiles.First(p=>p.Id==settings.ActiveProfileId)){Work=area};
         if(!same) Array.Clear(assigned,0,16); else { for(int i=grid.Profile.SlotCount;i<16;i++) assigned[i]=IntPtr.Zero; if(geometryChanged) ApplyLayout(); }
         tray.ContextMenuStrip.Items[0].Text="Choose layout  "+settings.FlyoutShortcut;
@@ -304,7 +315,7 @@ public class SixSlotSnap : ApplicationContext {
     }
     public void OpenSettings() {
         HideFlyout(); if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
-        using(var form=new SnapSettingsForm(settings)) { settingsForm=form; form.SaveRequested=ApplySettings; form.ShowDialog(); settingsForm=null; }
+        using(var form=new SnapSettingsForm(settings,recoveryNotice)) { settingsForm=form; form.SaveRequested=ApplySettings; form.ShowDialog(); settingsForm=null; }
     }
     void HandleCommand(int message,IntPtr a,IntPtr b) {
         try {
@@ -325,12 +336,13 @@ public class SixSlotSnap : ApplicationContext {
         if(!File.Exists(settingsPath)) SettingsStore.MigrateLegacy(Path.Combine(folder,"layout.txt"),settings);
         settings.Validate(); grid=new LayoutModel(settings.Profiles.First(p=>p.Id==settings.ActiveProfileId)){Work=NativeMethods.Monitor(NativeMethods.GetForegroundWindow()).Work};
         receiver=new CommandWindow(); hotkeys=new HotkeyRegistry(receiver.Handle); string conflict;
-        if(!hotkeys.Replace(settings,out conflict)) { hotkeys.Dispose(); receiver.DestroyHandle(); throw new InvalidOperationException(conflict); }
+        recoveryNotice=warning;
+        if(!hotkeys.Replace(settings,out conflict)) { preserveInvalidSettings=true; recoveryNotice=(warning==null?"":warning+"\r\n\r\n")+"Startup shortcuts are unavailable. "+conflict+" No replacement bindings were kept. Review Hotkeys and save an available combination."; }
         var menu=new ContextMenuStrip();
         menu.Items.Add("Choose layout  "+settings.FlyoutShortcut,null,delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); });
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
         menu.Items.Add("Reset Layouts bar position",null,delegate { ResetLauncherPosition(); });
-        menu.Items.Add("Reset active layout proportions",null,delegate { CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
+        menu.Items.Add("Reset active layout proportions",null,delegate { if(MessageBox.Show("Reset this layout to equal columns and rows? Its assigned windows will be resized. Choose No to keep the current proportions.","Reset layout proportions?",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)!=DialogResult.Yes) return; CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("About Windows Tile Studio",null,delegate { MessageBox.Show("Windows Tile Studio "+ProductVersion+"\n\nCustom layouts, keyboard placement, and linked resizing.\n\nRuns locally. No AI service or account is required to use the controller.","About Windows Tile Studio",MessageBoxButtons.OK,MessageBoxIcon.Information); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
@@ -343,10 +355,12 @@ public class SixSlotSnap : ApplicationContext {
         if(eventHook==IntPtr.Zero) { tray.ShowBalloonTip(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
         RecoverAssignments(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
         if(warning!=null) { Log(warning); tray.ShowBalloonTip(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
+        if(recoveryNotice!=null) { Log("Recovery required: "+recoveryNotice); NativeMethods.PostMessage(receiver.Handle,SettingsCommand,IntPtr.Zero,IntPtr.Zero); }
     }
     protected override void ExitThreadCore() {
-        if(disposed) return; disposed=true;
-        if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.DialogResult=DialogResult.Cancel; settingsForm.Close(); }
+        if(disposed) return;
+        if(settingsForm!=null && !settingsForm.IsDisposed) { var open=settingsForm; open.DialogResult=DialogResult.Cancel; open.Close(); if(!open.IsDisposed && open.DialogResult==DialogResult.None) return; }
+        disposed=true;
         resizeTimer.Stop(); settleTimer.Stop(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose();
         if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
     }

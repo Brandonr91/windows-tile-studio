@@ -101,6 +101,10 @@ single-instance mutex prevents simultaneous controllers. The option affects
 only selected legacy folders, not every copied EXE on the computer; source
 repositories and startup settings are not edited. If the preferred source
 folder is moved or removed, re-enable with its new path or disable the option.
+Newly enabled folders also contain **Restore-SixSlotSnap.cmd**. Close any missing
+manager message and run this helper to restore the original with hash checks,
+even if the full manager's source folder is unavailable. Exit the full manager
+before starting the restored controller; the original backup is retained.
 
 ## Snap a window
 
@@ -156,6 +160,17 @@ The tray menu opens the layout manager, resets proportions in the current
 layout, or exits the controller. Exit and delete the project folder to remove it.
 
 ## Edit layouts and shortcuts
+
+Changed drafts ask before closing without saving. Replacing a grid or removing
+a layout asks for confirmation; **Undo grid change** restores the previous draft
+grid before saving. Save errors leave your edits open. Resetting live layout
+proportions from the tray also asks before resizing assigned windows.
+
+If startup shortcuts conflict or settings cannot be read, the app opens a
+**Recovery** tab instead of exiting. Review layouts/hotkeys and explicitly save
+to resolve it; Cancel preserves the original file. The tray remains available
+when global shortcuts cannot be registered. Successful replacement keeps the
+previous settings in `.bak`.
 
 The **Appearance** tab controls the floating Layouts bar. Show/hide or reset
 its saved position, then choose **Save changes** to apply; **Cancel** leaves

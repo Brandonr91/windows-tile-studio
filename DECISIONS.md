@@ -39,8 +39,13 @@ are explicitly labeled. Consult actual source before relying on them.
   controller accumulates affected slots during a drag. More complex app-driven
   edge changes across samples need additional compatibility tests, not an assertion
   that every possible native timing sequence has been verified.
-- Startup currently fails when a configured permanent shortcut is unavailable.
-  Recovery UI/default fallbacks are planned, not an accepted completed feature.
+- Startup previously failed when a configured permanent shortcut was unavailable.
+  Phase 2 supersedes that behavior with a usable tray/Recovery settings route,
+  original-file preservation and no silent persisted fallback. Actual binding
+  snapshots are restored after failed writes, including an empty startup set.
+- Phase 2 safeguards remain local to the settings draft: confirm destructive
+  grid changes, allow undo before save, and ask before discarding on close.
+  Legacy restoration must remain independent of the preferred manager folder.
 - Hosted binaries are not code-signed releases. Archive hashes record downloaded
   bytes and version identity; they are not a substitute for signing.
 

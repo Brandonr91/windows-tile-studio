@@ -115,6 +115,22 @@ existing session controller, regardless of the sender's data directory.
 
 ## Persistence and installation
 
+Phase 2 (`0.3.0-preview.2`) keeps the controller alive if startup hotkey
+registration fails. The failed candidate set is removed, autosave is suppressed,
+and a posted settings command opens the Recovery tab. Invalid configuration
+also opens Recovery while keeping the original bytes. `recoveryNotice` remains
+until explicit successful Save; runtime XML reports version/recoveryRequired.
+No fallback shortcut is silently persisted. The tray remains the recovery route
+when no global bindings are available.
+
+`ApplySettings` snapshots actual registered hotkeys before a candidate change;
+failed file writes restore that snapshot. This matters when startup has no
+registered keys even though the file requests conflicting shortcuts. The editor
+tracks changed drafts, prompts on close, retains edits after save/validation
+errors, confirms layout removal/grid replacement and stores per-profile grid
+history for undo before save. The live tray proportion reset has its own
+confirmation; launcher reset remains a separate nondestructive action.
+
 Launch scripts default to `data/` beside source; direct EXE entry defaults to
 its base directory unless `--data-dir` is supplied. Both launch modes import
 older `bin/settings.xml` or `bin/layout.txt` on first use. `SettingsStore` writes
@@ -160,6 +176,12 @@ mutex still prevents simultaneous unmodified controller instances. This optional
 compatibility shim is an EXE in the legacy folder; hosted manager mode remains
 source-only. `tests/SupersessionTests.ps1` uses a disposable fake legacy process
 and source launcher; run it with the daily controller stopped.
+
+Phase 2 also writes standalone Restore-SixSlotSnap.cmd/.ps1 helpers in opted-in
+legacy folders. They restore only when original and guard hashes match and
+retain the backup, with no dependency on manager source. The redirect's missing
+source message points to this helper. XML setup writes use explicit InnerText
+string assignment for Windows PowerShell 5.1 compatibility.
 
 `GridTests` checks geometry/configuration without desktop movement.
 `IntegrationTests` launches a separate controller and six disposable windows,

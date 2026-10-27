@@ -83,6 +83,11 @@ class GridTests {
         s.Profiles[0].Name="Saved custom layout"; SettingsStore.Save(path,s);
         Check(File.Exists(path+".bak"),"Settings replacement lost the previous copy");
         Check(SettingsStore.Load(path,out warning).Profiles[0].Name==s.Profiles[0].Name,"Edited settings not saved");
+        string beforeFailedSave=File.ReadAllText(path); bool saveFailed=false;
+        using(var locked=File.Open(path,FileMode.Open,FileAccess.Read,FileShare.None)) {
+            try { SettingsStore.Save(path,s); } catch(IOException) { saveFailed=true; }
+        }
+        Check(saveFailed && File.ReadAllText(path)==beforeFailedSave,"A blocked save replaced the original settings");
         File.WriteAllText(path,"not xml"); var recovered=SettingsStore.Load(path,out warning);
         Check(warning!=null && recovered.Profiles.Count==6 && File.ReadAllText(path)=="not xml","Malformed settings were not preserved");
         string legacy=Path.Combine(root,"legacy-layout.txt"); File.WriteAllLines(legacy,new[]{"0.3","0.7","0.45","0.6","0.55"});

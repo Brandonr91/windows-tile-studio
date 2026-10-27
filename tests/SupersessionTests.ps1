@@ -29,4 +29,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $data 'redirected.txt'))) { throw 'R
 & $setup -LegacyDirectory $legacy -Disable | Out-Null
 if ((Get-FileHash -LiteralPath (Join-Path $legacy 'SixSlotSnap.exe')).Hash -ne $original) { throw 'Disable did not restore the original executable.' }
 if (Test-Path -LiteralPath (Join-Path $legacy 'SixSlotSnap.supersession.xml')) { throw 'Disable left an active redirect record.' }
+& $setup -LegacyDirectory $legacy -ManagerSourceDirectory $manager -ManagerDataDirectory $data | Out-Null
+Remove-Item -LiteralPath (Join-Path $manager 'Start-Hosted.ps1')
+& (Join-Path $legacy 'Restore-SixSlotSnap.ps1') | Out-Null
+if ((Get-FileHash -LiteralPath (Join-Path $legacy 'SixSlotSnap.exe')).Hash -ne $original) { throw 'Standalone recovery failed after the manager was removed.' }
 'PASS: enable closes the selected legacy process; re-enable preserves original bytes; old EXE starts preferred source launcher with separate data; disable restores original bytes.'
+'PASS: standalone hash-checked legacy restoration works without the preferred manager source.'

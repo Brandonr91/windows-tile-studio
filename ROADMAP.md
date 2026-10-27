@@ -7,8 +7,8 @@ without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping 
 
 The user has now requested phased polishing. The current sequence and all
 previously optional features are captured in [polishing phases](docs/POLISH-PHASES.md).
-Phase 1 (everyday controls and identity) is implemented locally; phase 2
-(editing safeguards and recovery) is next. The older priority table below is
+Phases 1–2 (everyday controls/identity and editing/recovery) are implemented
+locally. Phase 3 (window compatibility and responsiveness) is next. The older priority table below is
 retained as technical detail, not a competing phase order.
 
 ## Completed and verified within recorded test scope
@@ -38,7 +38,7 @@ retained as technical detail, not a competing phase order.
 | Priority | Work | Exact first step and completion criteria |
 | --- | --- | --- |
 | 1 | Compatibility and resize verification | Add disposable windows with explicit minimum sizes and a 3-row column. Reproduce both sides of every height boundary, width-only changes, corners, minimize/restore and duplicate native events. Establish a failing test before changing behavior. Every height operation must preserve nonadjacent heights and width-only operations must preserve all heights. |
-| 2 | Startup hotkey-conflict recovery | Inspect constructor registration failure and settings loading. Add an isolated conflicting-binding test; design an explicit recoverable settings route that preserves the user's file. Do not claim recovery until startup can open that route without losing old settings or leaking keys. |
+| 2 (completed in phase 2) | Startup hotkey-conflict recovery | Recovery settings opens without exiting or replacing the saved file. Conflict/corrupt-file startup cases and editor recovery behavior pass isolated tests. |
 | 3 | Keyboard/accessibility coverage | Test all four arrow directions, uneven row counts, layout cycling/wrap, constrained viewport scrolling, foreground-switch dismissal and cleanup. Current integration verifies Right/Enter and Tab/Shift+Tab, not every combination. Verify mouse fallback on conflicts remains usable. |
 | 4 | App minimum-size feedback/negotiation | After priority 1 reproduces constraints, decide how to obtain/handle app minimums and rejected placements. Avoid repeatedly forcing impossible bounds; report fit limitations without disturbing unrelated windows. Generic 400/200 clamps are not app negotiation. |
 | 5 | Visual proportion editor | Start with a draft preview with draggable boundaries and cancel/save semantics. Reuse the same normalized model and pair-only height rules; keep current numeric weight editor usable. |
@@ -54,7 +54,7 @@ Follow the user's current priority before this suggested ordering.
 | Status | Finding | Basis / next step |
 | --- | --- | --- |
 | Resolved, regression covered | Heights in flanking columns could follow/reset during another pair's resize. | Scoped axes and captured actual bounds; stale-ratio and native-style group regression tests now pass. Retain these tests. |
-| Confirmed code behavior; recovery gap | An unavailable permanent shortcut during startup terminates initialization with a dialog. | Constructor throws on `HotkeyRegistry.Replace` failure. Runtime editing has rollback; startup has no recovery editor. Priority 2. |
+| Resolved, regression covered | An unavailable permanent shortcut previously terminated startup. | Phase 2 leaves tray/settings available, opens Recovery, preserves the file and installs no partial candidate set. Actual prior binding snapshots support failed-save rollback. |
 | Implemented limitation | App minimum sizes can prevent an exact fit; elevated apps may reject placement. | Generic model clamps and Win32 failure logging only; no negotiated minimums or verified post-placement fit. |
 | Implemented limitation | Only one active monitor/work area; no display-change or sleep/resume recovery. | `SetWork` clears assignment array; no per-monitor state. |
 | Implemented limitation | Geometry-based recovery may ambiguously adopt overlapping windows; no app restart restoration. | `RecoverAssignments` enumeration and current HWND array only. |

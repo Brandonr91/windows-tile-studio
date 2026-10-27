@@ -7,6 +7,9 @@ keep both views synchronized when a meaningful milestone or priority changes.
 Current phased execution: [Polishing phases](POLISH-PHASES.md). Phase 1 adds
 Appearance controls, launcher reset and version/branding consistency. All
 previously optional capabilities are in the planned phases, not claimed complete.
+Phase 2 now adds draft-close safeguards, confirmed/undoable grid changes,
+failed-save retention, startup Recovery settings and standalone legacy restore.
+Phase 3 is compatibility/responsiveness; broader production gates remain open.
 
 ## Basic preview version — implemented
 
@@ -29,7 +32,8 @@ particular release date.
 - Collect concrete failures from normal app use before broadening the feature set.
 - Exercise mixed app frames, minimum sizes, minimize/restore, and app restarts.
 - Check display changes, sleep/resume, and competing window-management utilities.
-- Improve startup recovery when a configured shortcut becomes unavailable.
+- Broaden startup recovery coverage beyond the configured-shortcut conflict and
+  corrupt-settings cases completed in phase 2.
 - Broaden keyboard navigation checks across mixed layouts and competing apps.
 
 ## First polish milestone — implemented

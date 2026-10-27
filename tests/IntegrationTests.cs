@@ -28,7 +28,7 @@ class IntegrationTests {
     static void Pump(int milliseconds) { var end=DateTime.UtcNow.AddMilliseconds(milliseconds); while(DateTime.UtcNow<end) { Application.DoEvents(); Thread.Sleep(10); } }
     static void Check(bool good,string text) { if(!good) throw new Exception(text); }
     static void Wait(Func<bool> ready,string error,int seconds=8) { var end=DateTime.UtcNow.AddSeconds(seconds); while(DateTime.UtcNow<end) { Application.DoEvents(); try { if(ready()) return; } catch(IOException) {} catch(System.Xml.XmlException) {} Thread.Sleep(20); } throw new Exception(error); }
-    static XElement State() { return XElement.Load(Path.Combine(data,"runtime-state.xml")); }
+    static XElement State() { using(var stream=new FileStream(Path.Combine(data,"runtime-state.xml"),FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete)) return XElement.Load(stream); }
     static bool Open() { return (bool)State().Attribute("flyoutVisible"); }
     static void Command(int message,int value,IntPtr target) { Check(NativeMethods.PostMessage(receiver,message,new IntPtr(value),target),"Could not send controller command"); Pump(160); }
     static SixSlotSnap.RECT Bounds(IntPtr w) { SixSlotSnap.RECT rect; Check(NativeMethods.VisibleRect(w,out rect),"Cannot read test window bounds"); return rect; }
@@ -69,6 +69,7 @@ class IntegrationTests {
             Check(!cancelled.Draft.LauncherPositionSet && original.LauncherPositionSet && original.LauncherX==456,"Resetting the draft changed live settings before save");
         }
         using(var editor=new SnapSettingsForm(original)) {
+            editor.ConfirmAction=delegate { return true; };
             editor.StartPosition=FormStartPosition.Manual; editor.Location=new Point(-30000,-30000); editor.ShowInTaskbar=false; editor.Show(); Pump(50);
             ((Button)Find(editor,c=>c is Button && c.Text=="Add layout")).PerformClick();
             ((TextBox)Find(editor,c=>c is TextBox && c.AccessibleName=="Layout name")).Text="Editor acceptance test";
@@ -77,17 +78,59 @@ class IntegrationTests {
             ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
             var custom=editor.Draft.Profiles.Last();
             Check(custom.Name=="Editor acceptance test" && custom.Columns.Count==2 && custom.Columns.All(c=>c.Rows.Count==3),"Grid-size edit lost the name or dimensions");
+            ((Button)Find(editor,c=>c is Button && c.AccessibleName=="Undo last grid change")).PerformClick();
+            Check(custom.Columns.Count==3 && custom.Columns.All(c=>c.Rows.Count==2),"Undo did not restore the previous grid");
+            editor.ConfirmAction=delegate { return false; };
+            ((NumericUpDown)Find(editor,c=>c is NumericUpDown && c.AccessibleName=="Number of columns")).Value=2;
+            ((NumericUpDown)Find(editor,c=>c is NumericUpDown && c.AccessibleName=="Default rows per column")).Value=3;
+            ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
+            Check(custom.Columns.Count==3,"Declining grid replacement changed the grid");
+            editor.ConfirmAction=delegate { return true; };
+            ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
             var tabs=(TabControl)Find(editor,c=>c is TabControl); tabs.SelectedIndex=2; Pump(30);
             ((Button)Find(editor,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
             ((CheckBox)Find(editor,c=>c is CheckBox && c.AccessibleName=="Show floating Layouts bar")).Checked=false;
             Check(!editor.Draft.LauncherPositionSet && original.LauncherPositionSet,"Appearance reset was not isolated to the draft");
+            string saveError=null; editor.ReportError=delegate(string title,string message) { saveError=message; };
+            editor.SaveRequested=delegate { return "Test: data folder is locked."; };
+            ((Button)Find(editor,c=>c is Button && c.Text=="Save changes")).PerformClick();
+            Check(editor.Visible && saveError!=null && original.ShowLauncherTab,"Failed save closed the draft or changed original settings");
             editor.SaveRequested=delegate(AppSettings draft) { SettingsStore.Save(Path.Combine(data,"editor-test-settings.xml"),draft); saved=true; return null; };
             ((Button)Find(editor,c=>c is Button && c.Text=="Save changes")).PerformClick();
             Check(saved && original.Profiles.Count==6,"Editor save failed or changed the input settings before save");
             string appearanceWarning; var appearance=SettingsStore.Load(Path.Combine(data,"editor-test-settings.xml"),out appearanceWarning);
             Check(appearanceWarning==null && !appearance.LauncherPositionSet && !appearance.ShowLauncherTab,"Appearance settings were not saved");
         }
+        using(var closing=new SnapSettingsForm(original)) {
+            closing.StartPosition=FormStartPosition.Manual; closing.Location=new Point(-30000,-30000); closing.ShowInTaskbar=false; closing.Show();
+            ((TextBox)Find(closing,c=>c is TextBox && c.AccessibleName=="Layout name")).Text="Unsaved name";
+            closing.ConfirmAction=delegate { return false; }; closing.Close();
+            Check(closing.Visible && !closing.IsDisposed,"Keep editing did not cancel closing");
+            closing.ConfirmAction=delegate { return true; }; closing.Close();
+            Check(!closing.Visible && original.Profiles[0].Name!="Unsaved name","Discard did not close without changing original settings");
+        }
         passed.Add("Settings UI saves custom layouts and Appearance visibility/reset; draft cancellation preserves original launcher settings.");
+        passed.Add("Grid replacement confirmation/undo, failed-save draft retention, and discard/keep-editing close safeguards pass.");
+    }
+    static void TestStartupRecovery(string directory,bool reserveShortcut) {
+        string priorData=data; data=directory; Directory.CreateDirectory(data);
+        string settingsPath=Path.Combine(data,"settings.xml"); var initial=AppSettings.Defaults(); initial.ShowLauncherTab=false;
+        if(reserveShortcut) SettingsStore.Save(settingsPath,initial); else File.WriteAllText(settingsPath,"unreadable settings fixture");
+        string original=File.ReadAllText(settingsPath);
+        using(var blocker=new Form()) {
+            if(reserveShortcut) Check(NativeMethods.RegisterHotKey(blocker.Handle,980,0x4000|(uint)initial.FlyoutShortcut.Modifiers,(uint)initial.FlyoutShortcut.Key),"Could not reserve startup shortcut");
+            try {
+                controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+                Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Recovery controller did not start");
+                receiver=new IntPtr((long)State().Attribute("controller"));
+                Check((bool)State().Attribute("recoveryRequired"),"Startup failure did not enter recovery mode");
+                Wait(()=>NativeMethods.FindWindow(null,"Windows Tile Studio — settings")!=IntPtr.Zero,"Startup recovery did not open settings");
+                Check(!controller.HasExited && File.ReadAllText(settingsPath)==original,"Recovery exited or replaced the original settings");
+                Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Recovery controller did not close");
+            } finally { if(reserveShortcut) NativeMethods.UnregisterHotKey(blocker.Handle,980); }
+        }
+        data=priorData;
+        passed.Add(reserveShortcut?"Reserved startup shortcut opens recoverable settings without replacing the saved file.":"Corrupt startup settings opens recovery while preserving the original bytes.");
     }
     static void Run(string directory,string hostedScript) {
         data=directory; Directory.CreateDirectory(data);
@@ -198,9 +241,16 @@ class IntegrationTests {
                 Check(!registry.Replace(conflict,out error) && error!=null,"Hotkey conflict was not reported");
                 Check(!NativeMethods.RegisterHotKey(blocker.Handle,801,0x4000|(uint)baseline.FlyoutShortcut.Modifiers,(uint)Keys.F23),"Previous hotkey was not restored after a conflict");
             } finally { NativeMethods.UnregisterHotKey(blocker.Handle,800); NativeMethods.UnregisterHotKey(blocker.Handle,801); }
+            var working=registry.Snapshot();
+            Check(registry.Restore(new System.Collections.Generic.Dictionary<int,Shortcut>())==null,"Could not restore a previously empty binding set");
+            Check(NativeMethods.RegisterHotKey(blocker.Handle,802,0x4000|(uint)baseline.FlyoutShortcut.Modifiers,(uint)Keys.F23),"Restoring empty bindings leaked the candidate shortcut");
+            NativeMethods.UnregisterHotKey(blocker.Handle,802);
+            Check(registry.Restore(working)==null,"Could not restore the actual working binding snapshot");
         }
         passed.Add("Hotkey conflict reports correctly and restores the previous working binding.");
         TestEditor();
+        TestStartupRecovery(Path.Combine(data,"startup-conflict"),true);
+        TestStartupRecovery(Path.Combine(data,"startup-corrupt"),false);
         File.WriteAllLines(Path.Combine(data,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
     }
     [STAThread] static int Main(string[] args) {

@@ -14,7 +14,7 @@ class LegacyRedirect {
         try {
             var config=XElement.Load(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.supersession.xml"));
             string script=(string)config.Element("ManagerScript"),data=(string)config.Element("DataDirectory");
-            if(config.Name!="TileStudioSupersession" || string.IsNullOrEmpty(script) || !File.Exists(script) || string.IsNullOrEmpty(data)) throw new IOException("The preferred Windows Tile Studio installation is unavailable. Restore it, or disable legacy supersession to use the original controller.");
+            if(config.Name!="TileStudioSupersession" || string.IsNullOrEmpty(script) || !File.Exists(script) || string.IsNullOrEmpty(data)) throw new IOException("The preferred Windows Tile Studio installation is unavailable.\n\nRestore its source folder, or close this message and run Restore-SixSlotSnap.cmd beside this legacy launcher to restore the original controller. Exit any running Tile Studio instance before starting the restored controller.\n\nFolder: "+AppDomain.CurrentDomain.BaseDirectory);
             if(FindWindow(null,"SixSlotSnap.Controller.v2")!=IntPtr.Zero) return 0;
             string powershell=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");
             Process.Start(new ProcessStartInfo(powershell,"-NoProfile -STA -ExecutionPolicy Bypass -File "+Quote(script)+" -DataDirectory "+Quote(data)){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});

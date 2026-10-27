@@ -9,7 +9,7 @@ background work or promise dates. Preserve independent height pairs throughout.
 | Phase | Scope | Completion gate | Status |
 | --- | --- | --- | --- |
 | 1. Everyday controls and identity | Settings organization, launcher reset/visibility, consistent visible branding, tray version/About. | Appearance save/cancel works, no unnecessary window reflow, existing resize/flyout tests pass. | Implemented and verified locally as `0.3.0-preview.1`; not published. |
-| 2. Editing safeguards and recovery | Unsaved changes, reversible grid edits/reset confirmation, actionable errors, startup hotkey conflicts, corrupt settings and missing-manager recovery. | Isolated failure reproductions preserve original files/working shortcuts and provide usable recovery. | Planned; next. |
+| 2. Editing safeguards and recovery | Unsaved changes, reversible grid edits/reset confirmation, actionable errors, startup hotkey conflicts, corrupt settings and missing-manager recovery. | Isolated failure reproductions preserve original files/working shortcuts and provide usable recovery. | Implemented and verified locally as `0.3.0-preview.2`; not published. |
 | 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Planned. |
 | 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Planned. |
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Planned. |
@@ -32,7 +32,30 @@ background work or promise dates. Preserve independent height pairs throughout.
   including draft isolation and Appearance save. Appearance screen rendered
   and visually inspected. Broader scaling/accessibility remains phase 7.
 
-## Exact next work: phase 2
+## Phase 2 result
+
+- Closing a changed draft asks whether to discard or keep editing, including
+  when quitting the controller. Save errors keep the draft open with recovery
+  guidance. Grid replacement/removal and live proportion reset require
+  confirmation; Undo grid change restores earlier draft grids before saving.
+- Startup shortcut conflicts keep the controller/tray alive and open a Recovery
+  settings page with no partial candidate registrations or file replacement.
+  Corrupt files also open Recovery with defaults for review; autosave remains
+  suppressed until explicit successful Save. Existing files are backed up on
+  replacement. Cancel preserves the original file.
+- Failed file saves restore a snapshot of actual prior bindings, including the
+  empty startup-recovery set, rather than assuming saved shortcuts were active.
+- Legacy opt-in creates standalone Restore-SixSlotSnap.cmd/.ps1 helpers beside
+  the old launch path. Hash-checked restoration works without manager source.
+  Enable/disable/enable safely reuses a byte-identical original backup.
+- PASS: 186129 geometry/configuration checks, including blocked-write byte
+  preservation; hosted six-window suite plus editor safeguards and isolated
+  compiled startup-conflict/corrupt-file cases; supersession recovery tests in
+  Windows PowerShell 5.1. Recovery UI rendered and visually inspected. Tests
+  use injected confirmation answers for deterministic editor branches; the live
+  tray reset confirmation was implemented but not manually clicked in this phase.
+
+## Phase 2 validation sequence (completed)
 
 1. Inspect draft/save/cancel and constructor hotkey registration failure.
 2. Add isolated reproductions for closing an edited draft, replacing a grid,
@@ -43,6 +66,14 @@ background work or promise dates. Preserve independent height pairs throughout.
    checks with disposable windows, then restore the daily controller.
 5. Update context records and package the tested phase. Keep preview work
    distinct from a production release.
+
+## Exact next work: phase 3
+
+Start with disposable windows that impose minimum sizes and a 3-row column.
+Exercise both sides of each divider, width-only changes, corners, rapid native
+notifications, minimize/restore and app restarts. Reproduce failures before
+changing negotiation or resize ownership; preserve nonadjacent heights and
+measure responsiveness. Multi-monitor support belongs to phase 4.
 
 ## Before pushing a production release
 
