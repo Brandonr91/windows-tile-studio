@@ -3,6 +3,29 @@
 The application currently retains the `SixSlotSnap` executable and internal
 class names. This repository is independent of the original six-slot project.
 
+## Required session recovery and documentation maintenance
+
+Before development in a new session or after context compaction:
+
+1. Read this file, [HANDOFF.md](HANDOFF.md), [ARCHITECTURE.md](ARCHITECTURE.md),
+   [DECISIONS.md](DECISIONS.md), and [ROADMAP.md](ROADMAP.md). Follow the roadmap
+   link to the existing milestone history in `docs/ROADMAP.md`.
+2. Inspect `git status --short --branch`, `git log -5 --oneline`, and
+   `git remote -v`. Inspect relevant source, tests, and any uncommitted changes.
+   Documentation is context, not proof that the checkout or running host matches it.
+3. Establish which controller and data directory are active before desktop tests
+   or deployment. Runtime XML is a snapshot; verify the process and command line.
+4. Continue the user's current request. Do not implement a roadmap item merely
+   because it appears in the handoff.
+
+Keep these records synchronized in the same change as meaningful behavior,
+architecture, requirements, verification, or delivery changes. Record what was
+tested, against which source, and remaining limitations. Mark proposals and
+inspection findings separately from reproduced defects. Update HANDOFF with
+the stopping point and executable next steps; record consequential tradeoffs in
+DECISIONS. Preserve existing authoritative documents and link rather than
+silently replace them. Never claim publication from a local commit alone.
+
 ## Build and test
 
 Run `./Build.ps1 -Test` on Windows. It compiles all `src/*.cs` files with the local
@@ -28,7 +51,11 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Preserve physical-pixel DPI handling and invisible-frame compensation.
 - Keep the visual selector nonactivating and retain clean hotkey cleanup.
 - The flyout stays open until selection, outside click, Escape, or its toggle
-  shortcut. Preserve the original target; never snap the flyout itself.
+  shortcut; switching foreground apps also dismisses it. Preserve the original
+  target; never snap the flyout itself.
+- Keyboard navigation uses temporary all-or-nothing registrations while open:
+  arrows, Tab/Shift+Tab, Enter. Release them on every close/exit path and keep
+  mouse selection working if registration conflicts.
 - Failed hotkey changes must restore the previous registered shortcuts.
 - A move-out releases a slot; a resize keeps neighboring edges joined.
 - Keep the controller local: no network service or AI runtime dependency.

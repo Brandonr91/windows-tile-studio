@@ -1,5 +1,9 @@
 # Development roadmap
 
+For current priorities, acceptance criteria and known defects/limits, read the
+root [ROADMAP](../ROADMAP.md). This file retains the existing milestone history;
+keep both views synchronized when a meaningful milestone or priority changes.
+
 ## Basic preview version — implemented
 
 - Persistent custom-layout flyout, opened by a configurable hotkey.

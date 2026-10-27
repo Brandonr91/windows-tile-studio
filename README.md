@@ -39,7 +39,7 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
-The launch-mode polish branch adds **Start-Hosted.cmd**, which runs the
+The first polish milestone adds **Start-Hosted.cmd**, which runs the
 controller inside Windows PowerShell without generating a standalone app EXE,
 and **Get-FromGitHub.ps1**, which installs source into versioned local folders.
 See [launch modes](docs/LAUNCHING.md) for instructions, publication requirements,
@@ -191,6 +191,11 @@ See [Using Codex](docs/USING-CODEX.md) for a recreation prompt, extension
 examples, a validation workflow, and ideas for similar native desktop tools.
 The repository also includes [AGENTS.md](AGENTS.md), which records the resizing
 rules and build command for future coding sessions.
+
+For persistent project context, read [architecture](ARCHITECTURE.md),
+[decisions](DECISIONS.md), the current [roadmap](ROADMAP.md), and
+[handoff](HANDOFF.md). Consult them together with the actual checkout before
+continuing development after a new session or context compaction.
 
 Next steps include per-monitor layouts, minimum-size negotiation, saved app
 assignments, and an optional login launcher. These are development ideas rather
