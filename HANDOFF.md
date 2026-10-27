@@ -1,5 +1,40 @@
 # Handoff
 
+## Latest fix: launcher paint exception
+
+2026-10-27, following `1a3c193`, user reported the .NET "Parameter is not valid"
+dialog and a red-cross launcher. A disposable launcher with a real message loop
+reproduced the exception in System.Drawing.Graphics.DrawString / Label.OnPaint
+against the pre-fix binary. DPI font replacement disposed a font still retained
+by label/native rendering. The previous audit did not test actual launcher paint;
+its prior pass must not be treated as coverage of this lifetime bug.
+
+LauncherTab now caches fonts by DPI, explicitly updates child font references,
+reuses cached fonts, and disposes them only after base/child disposal. No global
+exception suppression was added. `Build.ps1 -LauncherUi` runs the new real-loop
+test. Windows PowerShell 5.1 -STA `tests/LauncherUiTests.ps1` compiles the same
+source/test in memory, without an app EXE, and can export a rendered image.
+Both passed 70 synthetic 100/125/150/200% transitions, correct label sizes,
+initial/repeated painting, bitmap rendering, bounded GDI count and disposal.
+`Build.ps1 -Test -LauncherUi -HostedIntegration` passed: 186297 pure checks plus
+the full hosted resize/settings/recovery/compatibility suite. Screenshot of the
+fixed label was rendered and visually inspected. Physical mixed-DPI hardware
+and live mouse drag remain separate coverage limits.
+
+IMPORTANT runtime change: when inspected, the old hosted controller had stopped
+and the user had started the compiled repo app using repo `data/`. The fix was
+rebuilt and this SAME compiled mode/data was restarted; all six windows recovered,
+recoveryRequired=false. The hosted delivery source was also updated but no second
+controller started. Check repo `data/runtime-state.xml` first, verify process/path,
+and do not assume the old hosted runtime XML is live. Keep both data directories.
+Settings snapshots: `work/launcher-font-fallback/{compiled,hosted}-settings.xml`.
+Reports: `outputs/windows-tile-studio-launcher-paint-before.txt`,
+`windows-tile-studio-launcher-font-regression.txt`,
+`windows-tile-studio-launcher-font-hosted-ui.txt`; rendered label:
+`outputs/windows-tile-studio-launcher-fixed.png`. Before-fix stack is accepted
+reproduction; final tests are the accepted verification. Packages refreshed after
+the local fix commit. No push/new phase. Continue the user's latest priority.
+
 ## Latest verification: prior-phase audit
 
 2026-10-27, user requested a check of all prior phases. Starting from `d8852bf`,

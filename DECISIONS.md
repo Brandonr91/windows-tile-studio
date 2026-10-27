@@ -85,6 +85,15 @@ neighbor-triggered regression fails on d8852bf and passes with this correction.
 Keep inconclusive supplemental harness runs separate from accepted verification;
 see docs/PHASE-AUDIT.md for the matrix and physical/manual coverage gaps.
 
+## Launcher paint decision update
+
+Launcher paint follow-up: retain/cache fonts by DPI until after child disposal,
+instead of disposing on replacement. Label/native rendering could still retain
+the replaced object, causing the reproduced DrawString "Parameter is not valid"
+exception. Actual launcher paint testing is required in both launch modes;
+geometry/settings checks alone did not reveal this bug. Preserve the user's
+currently active launch mode and data directory when restarting after a fix.
+
 ## Proposed, not yet implemented
 
 App-specific minimum-size negotiation and per-monitor persistence are implemented

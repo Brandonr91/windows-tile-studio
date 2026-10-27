@@ -65,6 +65,11 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Default the persistent Layouts bar near the taskbar clock (above the primary
   taskbar's right end). Dragging the bar moves it without opening the selector;
   normal clicks open it. Preserve saved position and keep restored bounds visible.
+- Keep cached DPI fonts alive until launcher child controls are disposed. A
+  replaced font may still be retained by label/native paint callbacks; disposing
+  it immediately caused Label.OnPaint "Parameter is not valid". Run
+  Build.ps1 -LauncherUi for paint/DPI changes and the PowerShell 5.1 STA hosted
+  tests/LauncherUiTests.ps1 path too. Geometry checks alone do not cover painting.
 - The flyout stays open until selection, outside click, Escape, or its toggle
   shortcut; switching foreground apps also dismisses it. Preserve the original
   target; never snap the flyout itself.

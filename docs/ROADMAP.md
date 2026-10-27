@@ -13,7 +13,10 @@ Phase 3 is compatibility/responsiveness; broader production gates remain open.
 Phase 3 now has a tested core: size constraints, verified fits, pinned height
 gestures, asynchronous DPI-aware probes and lifecycle cleanup. See the
 [compatibility checkpoint](COMPATIBILITY.md) for exact coverage and open limits.
-Per-monitor state and display recovery are phase 4, still planned.
+Per-monitor state and display recovery have a local phase-4 implementation, with
+physical multi-monitor validation still outstanding. The launcher font-lifetime
+follow-up now adds actual paint/DPI lifecycle tests in both launch modes; see
+the [audit follow-up](PHASE-AUDIT.md).
 
 ## Basic preview version — implemented
 

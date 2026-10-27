@@ -1,5 +1,25 @@
 # Phases 1–4 regression audit
 
+## Follow-up: actual launcher painting
+
+After this audit, the user reported a red-cross launcher and "Parameter is not
+valid" dialog. The previously explicit launcher coverage gap hid a real defect:
+the DPI handler disposed a replaced font while Label.OnPaint still retained it.
+A disposable real-message-loop test reproduced the original Graphics.DrawString
+stack. Caching/reusing fonts by DPI until after child disposal fixes the failure.
+Children receive the current DPI font explicitly. No error suppression was added.
+
+New `Build.ps1 -LauncherUi` and Windows PowerShell 5.1 -STA
+`tests/LauncherUiTests.ps1` pass actual painting through 70 synthetic DPI changes,
+correct font sizes, bitmap rendering, stable GDI count and disposal. The fixed
+bitmap was visually inspected. `Build.ps1 -Test -LauncherUi -HostedIntegration`
+also passes the full existing suite. This updates paint coverage only; physical
+mixed-DPI crossing, live mouse drag and confirmation dialogs remain separate
+manual checks. Original audit evidence below is historical, not proof painting
+was verified then. See HANDOFF for the currently active compiled/data location.
+
+## Original audit
+
 2026-10-27. Audited local preview `0.3.0-preview.4`, starting at `d8852bf`.
 One resize defect was reproduced and corrected. This audit does not add phase-5
 features, publish source, enable startup or change Windows display settings.

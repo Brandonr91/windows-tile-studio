@@ -144,6 +144,12 @@ font/dimensions at creation and WM_DPICHANGED, clamps suggested bounds, and
 recreates/clamps it after display notifications. Physical mixed-DPI crossing
 remains unverified on the single available display.
 
+Launcher DPI fonts are cached by DPI and retained until child controls have been
+disposed. SetScale explicitly updates child font references and reuses cached
+fonts. Immediate disposal during replacement caused GDI+ Label.OnPaint failures;
+real-loop initial/repeated paint and synthetic-DPI tests now cover this lifecycle
+in compiled and source-hosted execution. No exception suppression masks failures.
+
 The flyout uses a nonactivating topmost tool window. It retains the external
 target HWND and returns selection to that target. Arrows choose a zone using
 rectangle-center directional distance; Tab/Shift+Tab cycles layouts and resets

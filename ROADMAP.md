@@ -58,6 +58,7 @@ Follow the user's current priority before this suggested ordering.
 | Status | Finding | Basis / next step |
 | --- | --- | --- |
 | Resolved, regression covered | Heights in flanking columns could follow/reset during another pair's resize. | Scoped axes and captured actual bounds; stale-ratio and native-style group regression tests now pass. Retain these tests. |
+| Resolved, paint regression covered | Launcher could display a red cross and .NET "Parameter is not valid". | Premature DPI-font disposal reproduced in Label.OnPaint. Cache fonts until child disposal; 70-transition real-loop paint test passes compiled and source-hosted. Physical mixed-DPI crossing remains unverified. |
 | Resolved, regression covered | An unavailable permanent shortcut previously terminated startup. | Phase 2 leaves tray/settings available, opens Recovery, preserves the file and installs no partial candidate set. Actual prior binding snapshots support failed-save rollback. |
 | Implemented with remaining limits | App sizing restrictions and access can prevent an exact fit. | Phase 3 adds reported minimum constraints, verified placement and feedback; elevated apps, fully hung targets and arbitrary maximum/aspect constraints still need broader validation. |
 | Implemented with hardware verification gap | Per-monitor state and display/resume recovery. | Phase 4 adds independent sessions, debounced fresh inventory and same-monitor verified reflow. Only one physical display available; real mixed-DPI/docking/sleep tests remain. |

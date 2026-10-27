@@ -104,12 +104,15 @@ public class SnapFlyout : NonactivatingForm {
 }
 
 public class LauncherTab : NonactivatingForm {
-    Font ownedFont;
+    // Labels/native paint callbacks can retain a previous Font after a change.
+    // Keep each DPI's font alive until all child controls have been disposed.
+    readonly Dictionary<int,Font> scaleFonts=new Dictionary<int,Font>();
     public static Size SizeForScale(double scale) { return new Size(Math.Max(1,(int)Math.Round(270*scale)),Math.Max(1,(int)Math.Round(27*scale))); }
     void SetScale(double scale) {
-        Size=SizeForScale(scale); var previous=ownedFont;
-        ownedFont=new Font("Segoe UI",(float)(12*scale),FontStyle.Regular,GraphicsUnit.Pixel); Font=ownedFont;
-        if(previous!=null) previous.Dispose();
+        int dpi=Math.Max(48,Math.Min(768,(int)Math.Round(96*scale)));scale=dpi/96.0;
+        Size=SizeForScale(scale);Font next;
+        if(!scaleFonts.TryGetValue(dpi,out next)) {next=new Font("Segoe UI",(float)(12*scale),FontStyle.Regular,GraphicsUnit.Pixel);scaleFonts.Add(dpi,next);}
+        Font=next;foreach(Control child in Controls) child.Font=next;
     }
     protected override void OnHandleCreated(EventArgs e) {
         base.OnHandleCreated(e); uint dpi=NativeMethods.GetDpiForWindow(Handle); if(dpi>0) SetScale(dpi/96.0);
@@ -125,7 +128,10 @@ public class LauncherTab : NonactivatingForm {
         }
         base.WndProc(ref m);
     }
-    protected override void Dispose(bool disposing) { base.Dispose(disposing); if(disposing && ownedFont!=null) {ownedFont.Dispose();ownedFont=null;} }
+    protected override void Dispose(bool disposing) {
+        base.Dispose(disposing);
+        if(disposing) {foreach(var font in scaleFonts.Values) font.Dispose();scaleFonts.Clear();}
+    }
     public Action OpenRequested;
     public Action<Point> PositionChanged;
     Point pressPoint,startLocation;
