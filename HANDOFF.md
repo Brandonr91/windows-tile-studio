@@ -1,5 +1,36 @@
 # Handoff
 
+## Latest checkpoint: tray identity and legacy preference
+
+2026-10-26, after launcher-placement commit `b3f941f`. User asked whether the
+old tray label indicated a second controller, requested legacy supersession,
+then requested a Windows Tile Studio tray entry/icon. Inspection found only the
+hosted full manager; the old tooltip was a naming artifact.
+
+Implemented: renamed its existing tray entry and added an owned blue/cyan six-tile
+icon. Added `Set-LegacySupersession.ps1`, `tools/LegacyRedirect.cs`, and isolated
+`tests/SupersessionTests.ps1`. The option is enabled locally for both
+`outputs/SixSlotSnap` and `outputs/six-slot-snap/bin`, pointing to the daily
+`windows-tile-studio-hosted` source/data. Original EXEs remain as
+`SixSlotSnap.legacy-original.exe` in each folder. Old normal launch paths now
+start the full manager, including when it was stopped, and do not create a
+second controller when it is running. Untouched copied binaries elsewhere are
+outside this option's scope. The original public repository is unchanged.
+
+Tests: geometry/configuration PASS (186126 checks); supersession fake-process
+test PASS for close, backup preservation, re-enable, redirected start and byte-for-byte
+restoration. Hosted desktop suite passed on retry after one focus-sensitive
+flyout-open failure; no flyout behavior was changed to hide that timing failure.
+The tray icon was rendered and inspected as six blue/cyan tiles. Local launches
+through both old paths retained the same full-manager PID and six assignments.
+
+Disable supersession before using the previous-controller recovery helper:
+run the setup script with each intended `-LegacyDirectory` and `-Disable`, then
+exit the full manager and start the restored original. Never run a name-wide
+process kill. Current changes are local until separately published; do not infer
+GitHub main matches this checkpoint. Next: gather user feedback on the tray entry;
+continue unrelated roadmap work only when requested.
+
 Last update: 2026-10-26 (America/Chicago), following context checkpoint
 `1aac7f3` on `feature/polish-launchers`. Latest request: move the persistent
 Layouts bar near the taskbar clock and make it movable.

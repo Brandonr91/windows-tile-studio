@@ -41,6 +41,8 @@ particular release date.
   resizing and correcting unwanted native group changes.
 - Persistent Layouts bar near the taskbar clock; drag it to move, click to open,
   with saved position and work-area clamping.
+- Distinct Windows Tile Studio tray name/icon and reversible, opt-in legacy
+  launch redirection for explicitly selected older controller folders.
 
 See [launch modes](LAUNCHING.md). Hosted installations require a revision
 containing the hosted launchers. The original `six-slot-snap` repository

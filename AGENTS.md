@@ -62,6 +62,10 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Failed hotkey changes must restore the previous registered shortcuts.
 - A move-out releases a slot; a resize keeps neighboring edges joined.
 - Keep the controller local: no network service or AI runtime dependency.
+- Use the Windows Tile Studio tray name and owned six-tile icon. Dispose its
+  native icon resources on exit. Legacy supersession is opt-in per folder:
+  preserve the original EXE, stop only that exact selected executable, support
+  hash-checked restoration, and never rewrite the original public repository.
 
 ## Verification
 

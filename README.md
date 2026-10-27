@@ -68,6 +68,40 @@ running, exit it from its tray icon before starting this copy.
 the launcher; it does not change the machine's saved execution policy.
 Managed machines may still restrict scripts or compilation.
 
+## Tray entry and legacy preference
+
+The tray entry is named **Windows Tile Studio — layouts and hotkeys** and uses
+a blue six-tile icon. Double-click it for settings, or right-click for layout,
+settings, reset and Exit commands. Windows may place it in the tray overflow.
+
+### Prefer the full manager over an old Six Slot Snap installation
+
+Only enable this for an explicitly selected legacy folder, separate from the
+full manager. From this repository:
+
+```powershell
+.\Set-LegacySupersession.ps1 -LegacyDirectory 'C:\path\to\old\SixSlotSnap' -ManagerSourceDirectory 'C:\path\to\windows-tile-studio'
+```
+
+This closes a running `SixSlotSnap.exe` at that exact legacy path, saves its
+original bytes as `SixSlotSnap.legacy-original.exe`, and puts a small redirect
+EXE at the old launch path. Existing shortcuts then launch the preferred hosted
+manager, or do nothing if it is already running. `-ManagerDataDirectory` can
+select its existing settings directory. This optional compatibility EXE is
+separate from the full manager's source-only hosted runtime.
+
+Disable the preference and restore the original executable with:
+
+```powershell
+.\Set-LegacySupersession.ps1 -LegacyDirectory 'C:\path\to\old\SixSlotSnap' -Disable
+```
+
+Exit the full manager before running the restored controller. The shared
+single-instance mutex prevents simultaneous controllers. The option affects
+only selected legacy folders, not every copied EXE on the computer; source
+repositories and startup settings are not edited. If the preferred source
+folder is moved or removed, re-enable with its new path or disable the option.
+
 ## Snap a window
 
 Select a window and press **Ctrl+Alt+Win+Space** to open the layout flyout.

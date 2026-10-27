@@ -38,6 +38,7 @@ public static class NativeMethods {
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern int GetClassName(IntPtr window,StringBuilder name,int size);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr FindWindow(string className,string caption);
     [DllImport("user32.dll")] public static extern bool PostMessage(IntPtr window,int message,IntPtr wparam,IntPtr lparam);
+    [DllImport("user32.dll")] public static extern bool DestroyIcon(IntPtr icon);
     public static bool VisibleRect(IntPtr window,out SixSlotSnap.RECT rect) { return DwmGetWindowAttribute(window,9,out rect,16)==0 || GetWindowRect(window,out rect); }
     public static MonitorInfo Monitor(IntPtr window) { var m=new MonitorInfo(); m.Size=Marshal.SizeOf(m); if(!GetMonitorInfo(MonitorFromWindow(window,2),ref m)) throw new InvalidOperationException("Could not read monitor work area."); return m; }
 }
@@ -72,6 +73,18 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
+    public static Icon CreateStudioIcon() {
+        using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
+            graphics.Clear(Color.Transparent);
+            using(var background=new SolidBrush(Color.FromArgb(24,33,47))) graphics.FillRectangle(background,0,0,32,32);
+            for(int row=0;row<2;row++) for(int column=0;column<3;column++) {
+                using(var brush=new SolidBrush(column==1?Color.FromArgb(75,201,231):Color.FromArgb(74,139,236))) graphics.FillRectangle(brush,3+column*9,4+row*13,8,11);
+            }
+            IntPtr handle=bitmap.GetHicon();
+            try { using(var temporary=Icon.FromHandle(handle)) return (Icon)temporary.Clone(); }
+            finally { NativeMethods.DestroyIcon(handle); }
+        }
+    }
     readonly List<int> navigationHotkeys=new List<int>();
     static readonly Keys[] navigationKeys={Keys.Left,Keys.Right,Keys.Up,Keys.Down,Keys.Tab,Keys.Tab,Keys.Enter};
     void RegisterNavigation() {
@@ -310,7 +323,7 @@ public class SixSlotSnap : ApplicationContext {
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
         menu.Items.Add("Reset active layout proportions",null,delegate { CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
-        tray=new NotifyIcon{Icon=SystemIcons.Application,Text="Six Slot Snap — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(); }; receiver.Received=HandleCommand;
+        tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(); }; receiver.Received=HandleCommand;
         resizeTimer.Interval=30; resizeTimer.Tick+=delegate { try { UpdateDrag(); } catch(Exception e) { Log("Resize tick: "+e.Message); } };
         settleTimer.Interval=100; settleTimer.Tick+=delegate { try { if(dragging==IntPtr.Zero) ApplyResizeFrames(true); } catch(Exception e) { Log("Settle: "+e.Message); } if(++settlePasses>=3) settleTimer.Stop(); };
         flyoutTimer.Interval=20; flyoutTimer.Tick+=delegate { PollFlyout(); };
@@ -324,7 +337,7 @@ public class SixSlotSnap : ApplicationContext {
         if(disposed) return; disposed=true;
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.DialogResult=DialogResult.Cancel; settingsForm.Close(); }
         resizeTimer.Stop(); settleTimer.Stop(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose();
-        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; tray.Dispose(); Log("Stopped."); base.ExitThreadCore();
+        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
     }
     [STAThread] public static void Main(string[] args) {
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); Application.EnableVisualStyles();

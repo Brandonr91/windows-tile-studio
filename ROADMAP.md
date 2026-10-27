@@ -19,6 +19,10 @@ without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping 
   distinction, saved coordinates and work-area clamping. Geometry/settings
   checks and disposable-bar mouse input verified; broader display-change handling
   remains planned.
+- Tray identity: Windows Tile Studio tooltip and generated six-tile icon.
+  Optional per-folder legacy supersession closes the selected old controller,
+  redirects its normal launch path, and restores original bytes when disabled.
+  A fake-process/source fixture verifies enable, re-enable, redirect and restore.
 - Geometry/configuration, disposable-window desktop and launcher test suites.
   A fresh public-source download and hosted validation passed in the previous
   development turn. See HANDOFF for revision/evidence limits.

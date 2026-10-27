@@ -127,6 +127,31 @@ makes network requests when used without `-ArchivePath`.
 
 ## Verification boundaries
 
+### Tray identity and optional legacy compatibility
+
+The existing `NotifyIcon` now identifies itself as Windows Tile Studio, with a
+32-pixel blue/cyan six-tile icon drawn using System.Drawing. Its HICON is cloned,
+the temporary handle is destroyed, and the owned Icon is disposed on exit.
+There is still one tray entry per controller, not a second companion process.
+
+`Set-LegacySupersession.ps1` compiles `tools/LegacyRedirect.cs` outside `src/`
+into a specifically selected legacy installation. It preserves the old EXE,
+records original/guard SHA256 hashes and manager script/data paths in a sidecar
+XML file, and closes only a running process at that exact old EXE path. If that
+process cannot close normally it is stopped. Re-enable checks recorded hashes;
+`-Disable` restores original bytes and retains the backup for recovery.
+
+The redirect exits when the manager receiver already exists; otherwise it
+starts the selected hosted source with the selected data directory. Missing
+preferred source reports an error rather than silently running legacy code.
+This blocks normal old shortcuts/direct launches in opted-in folders even while
+the manager is stopped. It does not intercept unrelated copied binaries, install
+a service, edit startup entries, or change the original repository. The shared
+mutex still prevents simultaneous unmodified controller instances. This optional
+compatibility shim is an EXE in the legacy folder; hosted manager mode remains
+source-only. `tests/SupersessionTests.ps1` uses a disposable fake legacy process
+and source launcher; run it with the daily controller stopped.
+
 `GridTests` checks geometry/configuration without desktop movement.
 `IntegrationTests` launches a separate controller and six disposable windows,
 injects move/size notifications, inspects actual bounds, clicks controls and
