@@ -1,5 +1,39 @@
 # Handoff
 
+## Latest request: close the launcher to tray
+
+2026-10-27, following `1f6302d`. User rejects the always-visible bar and requests
+close-to-tray behavior. The bar now has an explicit × button. User WM_CLOSE and
+minimize hide it and notify the controller; ShowLauncherTab=false is saved.
+Flyout dismissal respects this preference, so it cannot resurrect the bar.
+Tray Show/Hide Layouts bar explicitly restores/hides it; tray Exit still quits.
+An open Appearance draft/checkbox is synchronized with this immediate action.
+Shutdown/recreation uses Dispose, which is not canceled by the close handler.
+Runtime XML reports launcherEnabled/Visible/Handle for verification.
+
+Tests: real-loop LauncherUiTests now checks ×, WM_CLOSE and minimize hiding
+without disposal, restoration, DPI painting and final disposal. Hosted integration
+starts with a visible launcher, sends actual WM_CLOSE, verifies persisted false
+and a live controller, exercises snapping/hotkeys, and checks flyout dismissal
+does not revive the bar. See outputs/windows-tile-studio-close-to-tray-final-tests.txt
+and the source-hosted launcher UI report for final results. Geometry checks remain
+186297. Preserve prior physical/manual coverage limitations.
+
+Final checks PASS: Build.ps1 -Test -LauncherUi -HostedIntegration and Windows
+PowerShell 5.1 STA tests/LauncherUiTests.ps1. A development test exposed that raw
+WM_CLOSE can bypass the UserClosing-only managed filter; WndProc now intercepts
+the close request directly. State diagnostics do not recreate/access disposed
+launcher handles. The real-controller close/persistence and no-resurrection checks
+pass. Settings snapshots are under work/close-to-tray-before; ShowLauncherTab=false
+is applied in both local data directories. Live compiled runtime confirms hidden
+launcher, running controller, six assignments, no recovery warning.
+
+Deployment keeps the user's compiled repo/data mode, deliberately sets only
+ShowLauncherTab=false so the unwanted bar is hidden immediately, preserves its
+position and other settings, and recovers six assignments. Hosted source updated
+too without launching a second controller. Tray icon/hotkey remain the access
+routes. No public push/new phase. Check live process/runtime before further work.
+
 ## Latest repeat phase 1–4 check
 
 2026-10-27, starting at `53d589f`. Application source unchanged. PASS:

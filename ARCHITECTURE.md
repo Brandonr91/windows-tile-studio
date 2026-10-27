@@ -150,6 +150,13 @@ fonts. Immediate disposal during replacement caused GDI+ Label.OnPaint failures;
 real-loop initial/repeated paint and synthetic-DPI tests now cover this lifecycle
 in compiled and source-hosted execution. No exception suppression masks failures.
 
+The bar's explicit close button, user WM_CLOSE and minimize command hide it to
+the existing tray, preserving the controller and hotkeys. The controller persists
+ShowLauncherTab=false and synchronizes an open Appearance draft; flyout dismissal
+respects this setting. Tray Show/Hide Layouts bar restores/hides it explicitly;
+Exit still quits. Direct Dispose remains available for shutdown/recreation and
+tests. Runtime diagnostics include launcher enabled/visible/handle fields.
+
 The flyout uses a nonactivating topmost tool window. It retains the external
 target HWND and returns selection to that target. Arrows choose a zone using
 rectangle-center directional distance; Tab/Shift+Tab cycles layouts and resets

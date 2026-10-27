@@ -37,14 +37,23 @@ public class LauncherUiTests {
                         if(step==6) warmedGdi=GetGuiResources(Process.GetCurrentProcess().Handle,0);
                         if(++step>=70) {
                             if(GetGuiResources(Process.GetCurrentProcess().Handle,0)>warmedGdi+4) throw new Exception("Repeated DPI transitions grew the launcher GDI resource count.");
-                            timer.Stop();launcher.Close();
+                            int hides=0;launcher.HideRequested=delegate{hides++;};
+                            launcher.Close();if(launcher.Visible || launcher.IsDisposed || hides!=1)throw new Exception("Close did not hide the launcher without disposing it.");
+                            launcher.ShowUnfocused();
+                            foreach(Control control in launcher.Controls)if(control.AccessibleName=="Hide Layouts bar to tray")((Button)control).PerformClick();
+                            if(launcher.Visible || hides!=2)throw new Exception("Close button did not hide the launcher.");
+                            launcher.ShowUnfocused();
+                            var minimize=Message.Create(launcher.Handle,0x112,new IntPtr(0xf020),IntPtr.Zero);
+                            NativeMethods.PostMessage(launcher.Handle,minimize.Msg,minimize.WParam,minimize.LParam);
+                            Application.DoEvents();if(launcher.Visible || hides!=3)throw new Exception("Minimize did not hide the launcher to tray.");
+                            timer.Stop();launcher.Dispose();
                         }
-                    } catch(Exception e) {failure=e;timer.Stop();launcher.Close();}
+                    } catch(Exception e) {failure=e;timer.Stop();launcher.Dispose();}
                 };
                 launcher.Shown+=delegate{timer.Start();};Application.Run(launcher);
             }
             if(failure!=null) throw failure;
-            Console.WriteLine("PASS: launcher initial paint, 70 synthetic DPI transitions, correct label font sizes, repaint/bitmap rendering, bounded GDI count and disposal in a real message loop.");
+            Console.WriteLine("PASS: launcher paint through 70 DPI transitions, correct fonts/bounded GDI, close button/WM_CLOSE/minimize hide without disposal, restore and final disposal.");
             return 0;
         } catch(Exception e) {Console.Error.WriteLine(e);return 1;}
     }

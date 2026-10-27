@@ -147,6 +147,7 @@ public class SixSlotSnap : ApplicationContext {
     int settlePasses;
     SnapFlyout flyout;
     LauncherTab launcher;
+    ToolStripMenuItem launcherMenu;
     SnapSettingsForm settingsForm;
     readonly bool recover;
     bool preserveInvalidSettings;
@@ -212,6 +213,7 @@ public class SixSlotSnap : ApplicationContext {
             if(lastPlacementIssue!=null) root.Add(new XAttribute("placementIssue",lastPlacementIssue));
             root.Add(new XAttribute("resizing",dragging!=IntPtr.Zero));
             root.Add(new XAttribute("resizeSource",dragging.ToInt64()));
+            root.Add(new XAttribute("launcherEnabled",settings.ShowLauncherTab),new XAttribute("launcherVisible",launcher!=null && !launcher.IsDisposed && launcher.Visible),new XAttribute("launcherHandle",launcher==null || launcher.IsDisposed || !launcher.IsHandleCreated?0:launcher.Handle.ToInt64()));
             root.Add(new XAttribute("activeMonitor",workspace.Active.Display.Id),new XAttribute("displayRefreshes",displayRefreshes));
             var monitors=new XElement("Monitors");
             foreach(var session in workspace.Sessions.Values) {
@@ -424,11 +426,13 @@ public class SixSlotSnap : ApplicationContext {
     }
     double DpiScale(IntPtr target) { uint dpi=NativeMethods.GetDpiForWindow(target); return dpi==0?1:dpi/96.0; }
     void RefreshLauncher() {
+        if(launcherMenu!=null) {launcherMenu.Text=settings.ShowLauncherTab?"Hide Layouts bar to tray":"Show Layouts bar";launcherMenu.Checked=settings.ShowLauncherTab;}
         if(launcher!=null) { launcher.Dispose(); launcher=null; } if(!settings.ShowLauncherTab) return;
         IntPtr taskbar=NativeMethods.FindWindow("Shell_TrayWnd",null);
         IntPtr anchor=taskbar==IntPtr.Zero?NativeMethods.GetForegroundWindow():taskbar;
         var m=NativeMethods.Monitor(anchor); double scale=DpiScale(anchor); launcher=new LauncherTab(settings.FlyoutShortcut.ToString(),scale);
         launcher.OpenRequested=delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); };
+        launcher.HideRequested=delegate { SetLauncherVisible(false); };
         launcher.PositionChanged=delegate(Point location) { settings.LauncherPositionSet=true; settings.LauncherX=location.X; settings.LauncherY=location.Y; SaveSettings(); };
         int gap=Math.Max(4,(int)(8*scale));
         Point position=settings.LauncherPositionSet?new Point(settings.LauncherX,settings.LauncherY):new Point(m.Work.R-launcher.Width-gap,m.Work.B-launcher.Height-gap);
@@ -440,6 +444,14 @@ public class SixSlotSnap : ApplicationContext {
         settings.LauncherPositionSet=false;
         if(settingsForm!=null && !settingsForm.IsDisposed) settingsForm.Draft.LauncherPositionSet=false;
         SaveSettings(); RefreshLauncher(); WriteState();
+    }
+    void SetLauncherVisible(bool visible) {
+        settings.ShowLauncherTab=visible;
+        if(settingsForm!=null && !settingsForm.IsDisposed) settingsForm.SyncLauncherVisibility(visible);
+        if(!visible && launcher!=null)launcher.Hide();
+        if(visible)RefreshLauncher();
+        if(launcherMenu!=null){launcherMenu.Text=visible?"Hide Layouts bar to tray":"Show Layouts bar";launcherMenu.Checked=visible;}
+        SaveSettings();WriteState();
     }
     public void OpenFlyout(IntPtr target,string onlyProfile) {
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
@@ -460,7 +472,7 @@ public class SixSlotSnap : ApplicationContext {
     public void HideFlyout() {
         flyoutTimer.Stop(); ReleaseNavigation(); if(escapeRegistered) NativeMethods.UnregisterHotKey(receiver.Handle,200); escapeRegistered=false;
         if(flyout!=null) { var old=flyout; flyout=null; old.Hide(); old.Dispose(); }
-        if(launcher!=null && !disposed) launcher.ShowUnfocused(); WriteState();
+        if(launcher!=null && !launcher.IsDisposed && !disposed && settings.ShowLauncherTab) launcher.ShowUnfocused(); WriteState();
     }
     void PollFlyout() {
         if(flyout==null) return; bool mouse=MouseDown(),escape=Down(27);
@@ -519,6 +531,7 @@ public class SixSlotSnap : ApplicationContext {
         var menu=new ContextMenuStrip();
         menu.Items.Add("Choose layout  "+settings.FlyoutShortcut,null,delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); });
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
+        launcherMenu=(ToolStripMenuItem)menu.Items.Add("Show Layouts bar",null,delegate {SetLauncherVisible(!settings.ShowLauncherTab);});
         menu.Items.Add("Reset Layouts bar position",null,delegate { ResetLauncherPosition(); });
         menu.Items.Add("Reset active layout proportions",null,delegate { if(MessageBox.Show("Reset this layout to equal columns and rows? Its assigned windows will be resized. Choose No to keep the current proportions.","Reset layout proportions?",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)!=DialogResult.Yes) return; CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
         menu.Items.Add(new ToolStripSeparator());

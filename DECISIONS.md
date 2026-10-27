@@ -94,6 +94,14 @@ exception. Actual launcher paint testing is required in both launch modes;
 geometry/settings checks alone did not reveal this bug. Preserve the user's
 currently active launch mode and data directory when restarting after a fix.
 
+## Close-to-tray decision update
+
+User request supersedes always-visible launcher behavior: closing/minimizing the
+bar means hide to the existing tray, not controller exit. Reuse persisted
+ShowLauncherTab rather than a second hidden-state flag. Tray Show Layouts bar
+and Appearance explicitly restore it; flyout dismissal and refresh must not.
+Direct disposal and tray Exit retain their shutdown semantics.
+
 ## Proposed, not yet implemented
 
 App-specific minimum-size negotiation and per-monitor persistence are implemented

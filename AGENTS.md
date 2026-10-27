@@ -65,6 +65,9 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - Default the persistent Layouts bar near the taskbar clock (above the primary
   taskbar's right end). Dragging the bar moves it without opening the selector;
   normal clicks open it. Preserve saved position and keep restored bounds visible.
+- User close/minimize of the Layouts bar hides it to tray and persists visibility
+  off; never resurrect it on flyout dismissal, display refresh or restart. Keep
+  tray Show Layouts bar available; only explicit tray Exit/quit stops the manager.
 - Keep cached DPI fonts alive until launcher child controls are disposed. A
   replaced font may still be retained by label/native paint callbacks; disposing
   it immediately caused Label.OnPaint "Parameter is not valid". Run

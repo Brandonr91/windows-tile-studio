@@ -210,6 +210,11 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
+The Layouts bar has an **×** button. Closing or minimizing it hides it to the
+tray and remembers that choice; snapping and hotkeys keep running. Right-click
+the Windows Tile Studio tray icon and choose **Show Layouts bar** to restore it.
+Use **Exit** in the tray menu to stop the controller.
+
 - Displays retain independent selected layouts, proportions and live assignments.
   Names, grids and shortcuts are shared. See [display support and hardware
   verification limits](docs/DISPLAYS.md); real multi-monitor/docking tests remain.

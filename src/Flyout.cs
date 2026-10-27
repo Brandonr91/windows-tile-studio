@@ -104,6 +104,13 @@ public class SnapFlyout : NonactivatingForm {
 }
 
 public class LauncherTab : NonactivatingForm {
+    public Action HideRequested;
+    Button closeButton;
+    void HideToTray() { Hide();if(HideRequested!=null)HideRequested(); }
+    protected override void OnFormClosing(FormClosingEventArgs e) {
+        if(e.CloseReason==CloseReason.UserClosing) {e.Cancel=true;HideToTray();return;}
+        base.OnFormClosing(e);
+    }
     // Labels/native paint callbacks can retain a previous Font after a change.
     // Keep each DPI's font alive until all child controls have been disposed.
     readonly Dictionary<int,Font> scaleFonts=new Dictionary<int,Font>();
@@ -113,6 +120,7 @@ public class LauncherTab : NonactivatingForm {
         Size=SizeForScale(scale);Font next;
         if(!scaleFonts.TryGetValue(dpi,out next)) {next=new Font("Segoe UI",(float)(12*scale),FontStyle.Regular,GraphicsUnit.Pixel);scaleFonts.Add(dpi,next);}
         Font=next;foreach(Control child in Controls) child.Font=next;
+        if(closeButton!=null)closeButton.Width=(int)Math.Round(27*scale);
     }
     protected override void OnHandleCreated(EventArgs e) {
         base.OnHandleCreated(e); uint dpi=NativeMethods.GetDpiForWindow(Handle); if(dpi>0) SetScale(dpi/96.0);
@@ -120,6 +128,7 @@ public class LauncherTab : NonactivatingForm {
         Location=ClampPosition(Location,Size,Rectangle.FromLTRB(work.L,work.T,work.R,work.B));
     }
     protected override void WndProc(ref Message m) {
+        if(m.Msg==0x10 || (m.Msg==0x112 && (m.WParam.ToInt64()&0xfff0)==0xf020)) {HideToTray();m.Result=IntPtr.Zero;return;}
         if(m.Msg==0x2e0) {
             var suggested=(SixSlotSnap.RECT)System.Runtime.InteropServices.Marshal.PtrToStructure(m.LParam,typeof(SixSlotSnap.RECT));
             SetScale((m.WParam.ToInt64()&0xffff)/96.0);
@@ -164,5 +173,7 @@ public class LauncherTab : NonactivatingForm {
         };
         label.MouseCaptureChanged+=delegate { if(pressed && !label.Capture) { pressed=false; if(moved && PositionChanged!=null) PositionChanged(Location); } };
         Controls.Add(label);
+        closeButton=new Button{Text="×",Dock=DockStyle.Right,Width=Height,FlatStyle=FlatStyle.Flat,TabStop=false,Cursor=Cursors.Hand,ForeColor=ForeColor,BackColor=BackColor,AccessibleName="Hide Layouts bar to tray"};
+        closeButton.FlatAppearance.BorderSize=0;closeButton.Click+=delegate{HideToTray();};Controls.Add(closeButton);label.BringToFront();
     }
 }

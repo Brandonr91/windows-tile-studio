@@ -260,7 +260,7 @@ class IntegrationTests {
     static void Run(string directory,string hostedScript) {
         data=directory; Directory.CreateDirectory(data);
         Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before integration tests.");
-        var settings=AppSettings.Defaults(); settings.ShowLauncherTab=false; SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
+        var settings=AppSettings.Defaults(); settings.ShowLauncherTab=true; SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
         forms=new Form[6]; for(int i=0;i<6;i++) { forms[i]=new Form{Text="Six Slot Snap disposable test "+(i+1),StartPosition=FormStartPosition.Manual,Location=new Point(200+20*i,250+20*i),Size=new Size(450,350)}; forms[i].Show(); NativeMethods.ShowWindow(forms[i].Handle,4); }
         if(hostedScript==null) {
             controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
@@ -274,6 +274,12 @@ class IntegrationTests {
         }
         Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Controller did not start; inspect its log and host-stderr.txt.",hostedScript==null?8:20);
         receiver=new IntPtr((long)State().Attribute("controller")); Check(receiver!=IntPtr.Zero,"Controller handle missing");
+        var launcherHandle=new IntPtr((long)State().Attribute("launcherHandle"));Check(launcherHandle!=IntPtr.Zero && (bool)State().Attribute("launcherVisible"),"Launcher was not initially visible");
+        NativeMethods.PostMessage(launcherHandle,0x10,IntPtr.Zero,IntPtr.Zero);
+        Wait(()=>!(bool)State().Attribute("launcherVisible") && !(bool)State().Attribute("launcherEnabled"),"Closing launcher did not hide it to tray");
+        Check(!controller.HasExited,"Closing launcher stopped the controller");
+        string launcherWarning;Check(!SettingsStore.Load(Path.Combine(data,"settings.xml"),out launcherWarning).ShowLauncherTab,"Hidden launcher preference was not saved");
+        passed.Add("Closing the real controller launcher hides it to tray and saves visibility while leaving the controller and hotkeys running.");
         for(int i=0;i<6;i++) Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle);
         CheckAll(); Check(State().Elements("Zone").Count()==6,"Not all six zones were assigned"); passed.Add("Six external-process test windows placed and tracked.");
         var displayBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();int refreshes=(int)State().Attribute("displayRefreshes");
@@ -363,6 +369,7 @@ class IntegrationTests {
         Wait(()=>!Open() && (string)State().Attribute("profile")=="two-columns","Layout zone selection failed");
         Check(Equal(Bounds(forms[0].Handle),Model().RectFor(1)),"Selected zone did not place original target"); Check(Equal(unchanged,Bounds(forms[1].Handle)),"Changing layouts moved an unrelated window"); passed.Add("Actual flyout button selects a different layout and moves only the original target.");
         Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Flyout did not reopen"); Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Check(!Open(),"Flyout shortcut toggle failed");
+        Check(!(bool)State().Attribute("launcherVisible"),"Closing a flyout resurrected the hidden launcher");
         passed.Add("Escape route and repeated flyout command dismiss cleanly.");
         Focus(forms[0].Handle); Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Keyboard flyout did not open");
         SendKeys.SendWait("{RIGHT}"); Pump(150); SendKeys.SendWait("{ENTER}"); Pump(250);

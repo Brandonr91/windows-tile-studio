@@ -17,6 +17,11 @@ retained as technical detail, not a competing phase order.
 
 ## Completed and verified within recorded test scope
 
+- User-requested close-to-tray: launcher ×/WM_CLOSE/minimize hides it and saves
+  visibility off; tray Show Layouts bar restores it, Exit quits. Hidden bar stays
+  hidden after flyout dismissal/restart. Real-loop UI and hosted controller
+  close/persistence regressions pass; deployed with the bar hidden.
+
 - Basic preview: six starter profiles, configurable layouts/weights/hotkeys,
   persistent nonactivating flyout and launcher, linked widths and independent
   row dividers, XML backup/recovery and legacy import.

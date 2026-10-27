@@ -28,6 +28,7 @@ public class ShortcutDialog : Form {
 }
 
 public class SnapSettingsForm : Form {
+    public void SyncLauncherVisibility(bool visible) {launcher.Checked=visible;Draft.ShowLauncherTab=visible;}
     public void DisplayContext(string name) {
         var label=new Label{Text="Display: "+name+"  ·  Proportions apply here; layout names, grids and hotkeys are shared.",Dock=DockStyle.Top,Height=36,Padding=new Padding(12,9,0,0),AccessibleName="Display being edited"};
         ClientSize=new Size(ClientSize.Width,ClientSize.Height+label.Height);
