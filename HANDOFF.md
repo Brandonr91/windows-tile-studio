@@ -1,5 +1,67 @@
 # Handoff
 
+## Current checkpoint: phase 5
+
+2026-10-27, following `4ca3c9b`. User requested phase 5 and attention to Windows
+errors near the clock. Local `0.3.0-preview.5` is implemented and deployed.
+No public push, startup registration, saved app workspace or automatic relaunch.
+Read [visual/portable guide](docs/VISUAL-AND-PORTABLE.md) before changing this flow.
+
+New `VisualEditor.cs`: cloned draft session with one adjacent boundary per drag,
+4% clipping, capped 50-gesture undo/redo and Escape; painted canvas/modal from
+Layouts → Edit visually. Accepted geometry enters settings' existing grid history;
+main Save remains the live apply point. Numeric editor retained. New
+`PortableLayouts.cs`: schema-1 DTO, 256 KB bounded/DTD-prohibited strict XML,
+atomic export and copy-first validation. Share layouts stages copied or explicitly
+replaced catalogs, regenerates IDs/names, optionally imports shortcuts, rejects
+conflicts before mutation and offers a confirmed pre-import checkpoint restore.
+Local monitor/appearance/runtime data are excluded; OS key availability is still
+checked on main Save. Example: examples/starter-layouts.tilelayouts.xml.
+
+Verification:
+
+- `Build.ps1 -Test -EditorUi -OutputDirectory bin/phase-five`: PASS, 198525 pure
+  checks plus real-message-loop canvas pointer, Undo/Redo/Escape, painting,
+  accepted settings draft/grid undo and import/failure/undo/discard coverage.
+- Full compiled and hosted controller regressions PASS on the phase-5 functional
+  implementation. Final preview.5 `-Test -LauncherUi -EditorUi -HostedIntegration`
+  PASS after the version/status-label changes, including close-to-tray/no revival,
+  font painting, concurrent-source resize, Recovery and compatibility subcases.
+- Windows PowerShell 5.1 STA `tests/EditorUiTests.ps1`: PASS against final source,
+  in-memory source hosting without an app EXE. `tests/LauncherTests.ps1`: PASS
+  including updated eight-source compilation and install/data/archive validation.
+- Final XML-depth preflight (max 32) was rechecked with pure/editor tests in
+  both modes after the controller regressions; final pure count is 198525.
+  Accepted report: outputs/windows-tile-studio-phase-five-editor-final.txt.
+- Rendered visual/share pages inspected. Real mouse drag/Undo checked in a
+  disposable preview through computer use: only center pair moved and restored.
+- Windows window inventories sampled during testing/startup showed no unexpected
+  error dialogs. Application events 1000/1001/1026 for the app/test process names
+  since phase development began: no matching crash events. These are sampled
+  checks, not continuous notification-area monitoring. Expected fit/hotkey warnings
+  remain deliberate compatibility/recovery test cases.
+
+`Build.ps1` adds optional OutputDirectory and EditorUi. Eight src/*.cs files are
+loaded dynamically in both modes; no external dependency added. Initial normal
+build was blocked by the running EXE; development used bin/phase-five until the
+daily controller was paused for desktop tests. No stale running EXE was tested.
+
+Current runtime is compiled repo bin/SixSlotSnap.exe with repo data/. It reports
+preview.5, six recovered assignments, launcher hidden, recoveryRequired=false.
+Settings hash matches the pre-phase snapshot. Hosted delivery src updated too;
+its separate data is preserved and no second controller started. Fallback source
+and both settings snapshots: work/phase-five-fallback (prior source also Git
+4ca3c9b). Verify the actual process/runtime before any later desktop tests.
+
+Reports outside Git: outputs/windows-tile-studio-phase-five-editor-tests.txt,
+phase-five-full-tests.txt, phase-five-final-tests.txt, phase-five-hosted-editor.txt,
+phase-five-launcher-tests.txt and phase-five-windows-errors.json (all share the
+windows-tile-studio- filename prefix). Rendered PNGs under outputs with
+phase-five-visual-editor/share-layouts names. Source packages refreshed after
+the local commit. Physical mixed-DPI/docking/sleep, privileged/hung apps, keyboard
+divider dragging and broader accessibility remain explicit gaps. Next planned
+phase is 6 (opt-in workspaces/startup); follow the user's latest request first.
+
 ## Latest request: close the launcher to tray
 
 2026-10-27, following `1f6302d`. User rejects the always-visible bar and requests

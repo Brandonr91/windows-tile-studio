@@ -65,6 +65,11 @@ is unchanged.
 
 ## Polished version
 
+Phase 5 local checkpoint: `0.3.0-preview.5` adds the draft visual divider editor
+and validated portable layout/hotkey transfer. See [guide](VISUAL-AND-PORTABLE.md).
+The next planned phase is optional workspaces/startup, with no relaunch or login
+registration enabled by this phase.
+
 Local phased progress (2026-10-27): phases 1–4 implement controls/identity,
 editing/startup recovery, representative app-size compatibility, and independent
 monitor state/display notifications. See [phase plan](POLISH-PHASES.md) and

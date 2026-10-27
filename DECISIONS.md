@@ -102,11 +102,24 @@ ShowLauncherTab rather than a second hidden-state flag. Tray Show Layouts bar
 and Appearance explicitly restore it; flyout dismissal and refresh must not.
 Direct disposal and tray Exit retain their shutdown semantics.
 
+## Phase 5 decision update
+
+Phase 5 implements graphical proportions and portable catalog/shortcut transfer.
+Edits are nested drafts, not live OS/window changes. Reuse normalized column
+stacks, pair-only row boundaries and a 4% floor; native app fit checks remain
+separate. Transfer files have their own versioned DTO, bounded/DTD-prohibited XML,
+and no monitor/HWND/appearance fields. Generate fresh IDs for both import modes
+to avoid accidental reuse of per-monitor geometry. Hotkeys are opt-in on import;
+duplicate conflicts reject the whole candidate before mutation, while actual OS
+availability is checked on Save. Replacing a catalog is explicit and requires
+re-snapping; no hidden app relaunch/auto-assignment. Undo import is a confirmed
+checkpoint restore because it can also discard later catalog/hotkey draft edits.
+
 ## Proposed, not yet implemented
 
-App-specific minimum-size negotiation and per-monitor persistence are implemented
-in phases 3–4 within documented limits. A graphical divider editor,
-optional app/workspace restoration, optional login startup, and
+App-specific minimum-size negotiation, per-monitor persistence, a graphical
+divider editor and portable transfer are implemented in phases 3–5 within
+documented limits. Optional app/workspace restoration, optional login startup, and
 release signing remain roadmap candidates. Do not treat them as user approval
 to install services, enable startup, publish releases or change system settings.
 

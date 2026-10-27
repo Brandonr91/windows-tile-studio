@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[string]$HostedSourceRoot)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -7,7 +7,7 @@ if (-not (Test-Path -LiteralPath $compiler)) {
 if (-not (Test-Path -LiteralPath $compiler)) {
     throw 'The Windows .NET Framework C# compiler was not found.'
 }
-$output = Join-Path $PSScriptRoot 'bin'
+$output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $PSScriptRoot 'bin' } else { [IO.Path]::GetFullPath($OutputDirectory) }
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $executable = Join-Path $output 'SixSlotSnap.exe'
 $sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | ForEach-Object { $_.FullName })
@@ -27,6 +27,13 @@ if ($LauncherUi) {
     if ($LASTEXITCODE -ne 0) { throw 'Launcher UI test compilation failed.' }
     & $launcherTest
     if ($LASTEXITCODE -ne 0) { throw 'Launcher UI paint/DPI tests failed.' }
+}
+if ($EditorUi) {
+    $editorTest = Join-Path $output 'EditorUiTests.exe'
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll "/reference:$executable" "/out:$editorTest" (Join-Path $PSScriptRoot 'tests\EditorUiTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Editor UI test compilation failed.' }
+    & $editorTest (Join-Path $output 'editor-ui-data')
+    if ($LASTEXITCODE -ne 0) { throw 'Editor UI tests failed.' }
 }
 if ($Integration -or $HostedIntegration -or $Compatibility) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'

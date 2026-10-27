@@ -88,6 +88,11 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
   Merge current monitor snapshots when saving an older settings draft. Consult
   docs/DISPLAYS.md and do not claim physical mixed-DPI/hotplug coverage from tests.
 - Keep the controller local: no network service or AI runtime dependency.
+- Visual edits/imports remain draft-only until main settings Save. Preserve
+  adjacent-pair height scope, per-gesture undo/redo/Escape and numeric fallback.
+  Portable exports must exclude monitor IDs/HWNDs/appearance/runtime data. Validate
+  bounded XML and all conflicts on copies before staging; preserve the old draft
+  on failure. See docs/VISUAL-AND-PORTABLE.md and run -EditorUi plus its hosted test.
 - Appearance-only and shortcut/name-only saves must not reflow managed app
   windows. Keep appearance edits draft-only until Save; launcher reset from
   the tray is immediate and must not reset layout proportions.

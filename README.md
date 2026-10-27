@@ -210,6 +210,12 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
+Phase-5 preview adds **Layouts → Edit visually...** and a **Share layouts** tab.
+Drag dividers, Undo/Redo or cancel the preview, then use **Save changes** in
+settings to apply. Share layouts exports portable XML and imports copies or a
+replacement catalog; importing shortcuts is optional. Invalid imports keep the
+draft intact. See [visual editing and portable layouts](docs/VISUAL-AND-PORTABLE.md).
+
 The Layouts bar has an **×** button. Closing or minimizing it hides it to the
 tray and remembers that choice; snapping and hotkeys keep running. Right-click
 the Windows Tile Studio tray icon and choose **Show Layouts bar** to restore it.

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.IO;
 using System.Windows.Forms;
 
 public class ShortcutDialog : Form {
@@ -39,6 +40,9 @@ public class SnapSettingsForm : Form {
     public Action<string,string> ReportError;
     public readonly AppSettings Draft;
     readonly Dictionary<string,Stack<LayoutProfile>> gridHistory=new Dictionary<string,Stack<LayoutProfile>>();
+    AppSettings importUndo;
+    Button undoImport;
+    Label importStatus;
     bool dirty,savedSuccessfully;
     bool Confirm(string title,string message) { return ConfirmAction!=null?ConfirmAction(title,message):MessageBox.Show(this,message,title,MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes; }
     void Error(string title,string message) { if(ReportError!=null) ReportError(title,message); else MessageBox.Show(this,message,title,MessageBoxButtons.OK,MessageBoxIcon.Warning); }
@@ -52,6 +56,16 @@ public class SnapSettingsForm : Form {
     readonly CheckBox launcher=new CheckBox{Text="Show the floating Layouts bar",AutoSize=true};
     LayoutProfile selected;
     bool refreshing;
+    void RememberGrid() {if(!gridHistory.ContainsKey(selected.Id))gridHistory[selected.Id]=new Stack<LayoutProfile>();gridHistory[selected.Id].Push(selected.Clone());}
+    void ApplyCatalog(AppSettings source) {
+        Draft.Profiles=source.Profiles.Select(p=>p.Clone()).ToList();Draft.ActiveProfileId=source.ActiveProfileId;
+        Draft.FlyoutShortcut=source.FlyoutShortcut.Clone();Draft.SlotShortcuts=source.SlotShortcuts.Select(s=>s.Clone()).ToList();Draft.Monitors=source.Monitors.Select(m=>m.Clone()).ToList();
+        gridHistory.Clear();dirty=true;selected=null;RefreshList(Draft.Profiles.First(p=>p.Id==Draft.ActiveProfileId));RefreshShortcuts();
+    }
+    void StageImport(AppSettings candidate) {importUndo=Draft.Clone();ApplyCatalog(candidate);if(undoImport!=null)undoImport.Enabled=true;if(importStatus!=null)importStatus.Text="Import staged. Review layouts and shortcuts, then Save changes. Live windows have not changed.";}
+    public void ImportPortable(string path,bool replace,bool importHotkeys) {
+        var candidate=PortableLayouts.Candidate(Draft,PortableLayouts.Load(path),replace,importHotkeys);StageImport(candidate);
+    }
     public SnapSettingsForm(AppSettings source,string recoveryNotice=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
@@ -85,6 +99,13 @@ public class SnapSettingsForm : Form {
             if(selected==null || !gridHistory.TryGetValue(selected.Id,out history) || history.Count==0) return;
             selected.Columns=history.Pop().Columns.Select(c=>c.Clone()).ToList(); dirty=true; FillEditor();
         }; layoutPage.Controls.Add(undoGrid);
+        var visual=new Button{Text="Edit visually...",AccessibleName="Edit proportions visually",Bounds=new Rectangle(650,302,180,30)};layoutPage.Controls.Add(visual);
+        visual.Click+=delegate {
+            if(!ReadEditor())return;
+            using(var dialog=new VisualLayoutDialog(selected))if(dialog.ShowDialog(this)==DialogResult.OK && !selected.GeometryMatches(dialog.Result)) {
+                RememberGrid();selected.Columns=dialog.Result.Columns.Select(c=>c.Clone()).ToList();dirty=true;RefreshList(selected);
+            }
+        };
         preview.Bounds=new Rectangle(250,344,300,172); preview.BackColor=Color.FromArgb(24,28,35); layoutPage.Controls.Add(preview);
         layoutPage.Controls.Add(new Label{Text="Each column keeps its own row dividers.\n\nPicking a zone in another layout moves only the selected window. Re-snap other windows to link them to that layout.",Bounds=new Rectangle(570,350,270,130)});
         appearancePage.Controls.Add(new Label{Text="Layouts bar",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,26)});
@@ -99,6 +120,33 @@ public class SnapSettingsForm : Form {
         shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="command",HeaderText="Action",ReadOnly=true,FillWeight=170}); shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="binding",HeaderText="Shortcut",ReadOnly=true,FillWeight=160});
         shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="change",HeaderText="",Text="Change",UseColumnTextForButtonValue=true,FillWeight=60}); shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="clear",HeaderText="",Text="Clear",UseColumnTextForButtonValue=true,FillWeight=55}); shortcutPage.Controls.Add(shortcuts);
         shortcuts.CellContentClick+=EditShortcut;
+        var sharePage=new TabPage("Share layouts");tabs.TabPages.Add(sharePage);
+        sharePage.Controls.Add(new Label{Text="Portable layouts",AutoSize=true,Location=new Point(24,24)});
+        sharePage.Controls.Add(new Label{Text="Export this draft's layouts and shortcuts. Monitor identities, app windows and launcher position stay private.\nImport changes only this draft until Save changes. Windows shortcut availability is checked when you save.",Bounds=new Rectangle(24,56,810,64)});
+        var export=new Button{Text="Export layouts...",Bounds=new Rectangle(24,134,190,34),AccessibleName="Export portable layouts"};sharePage.Controls.Add(export);
+        var mode=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Bounds=new Rectangle(24,218,300,28),AccessibleName="Import layout mode"};mode.Items.AddRange(new object[]{"Add as copies","Replace layout catalog"});mode.SelectedIndex=0;sharePage.Controls.Add(mode);
+        var importKeys=new CheckBox{Text="Import shortcuts too (checked for conflicts)",AutoSize=true,Location=new Point(24,267),AccessibleName="Import shortcuts"};sharePage.Controls.Add(importKeys);
+        var import=new Button{Text="Import layouts...",Bounds=new Rectangle(24,312,190,34),AccessibleName="Import portable layouts"};sharePage.Controls.Add(import);
+        undoImport=new Button{Text="Undo import",Bounds=new Rectangle(234,312,150,34),Enabled=false,AccessibleName="Undo portable import"};sharePage.Controls.Add(undoImport);
+        sharePage.Controls.Add(new Label{Text="Add as copies keeps existing layouts. Replace removes the old catalog when saved; re-snap windows to link\nthem to imported layouts. Turn off Import shortcuts to keep your current global keys and leave copied keys empty.",Bounds=new Rectangle(24,373,810,65)});
+        importStatus=new Label{Text="No import staged.",Bounds=new Rectangle(24,455,810,40),AccessibleName="Portable import status"};sharePage.Controls.Add(importStatus);
+        export.Click+=delegate {
+            if(!ReadEditor())return;
+            using(var dialog=new SaveFileDialog{Filter="Tile Studio layouts (*.tilelayouts.xml)|*.tilelayouts.xml",FileName="my-layouts.tilelayouts.xml",OverwritePrompt=true})if(dialog.ShowDialog(this)==DialogResult.OK) {
+                try{PortableLayouts.Export(dialog.FileName,Draft);}catch(Exception e){Error("Export failed",e.GetBaseException().Message);}
+            }
+        };
+        import.Click+=delegate {
+            if(!ReadEditor())return;
+            using(var dialog=new OpenFileDialog{Filter="Tile Studio layouts (*.xml)|*.xml",CheckFileExists=true})if(dialog.ShowDialog(this)==DialogResult.OK) {
+                try {
+                    var bundle=PortableLayouts.Load(dialog.FileName);var candidate=PortableLayouts.Candidate(Draft,bundle,mode.SelectedIndex==1,importKeys.Checked);
+                    string description=(mode.SelectedIndex==1?"Replace this draft's layout catalog with ":"Add copies of ")+bundle.Profiles.Count+" layouts from '"+Path.GetFileName(dialog.FileName)+"'?\n"+(importKeys.Checked?"Imported shortcuts will replace global bindings if you later save.":"Your global shortcuts will be kept.")+"\nNothing applies to real windows until Save changes.";
+                    if(Confirm("Import layouts?",description))StageImport(candidate);
+                }catch(Exception e){Error("Import failed",e.GetBaseException().Message+"\nYour draft has not been replaced.");}
+            }
+        };
+        undoImport.Click+=delegate{if(importUndo==null || !Confirm("Undo last import?","Restore the catalog and shortcuts from before the last import? Later layout/hotkey edits will also be undone. Appearance changes stay as they are."))return;var previous=importUndo;importUndo=null;ApplyCatalog(previous);undoImport.Enabled=false;importStatus.Text="Previous catalog and shortcuts restored in this draft.";};
         layouts.SelectedIndexChanged+=delegate {
             if(refreshing) return;
             LayoutProfile next=layouts.SelectedItem as LayoutProfile;

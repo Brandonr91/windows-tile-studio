@@ -1,7 +1,7 @@
 # Architecture
 
 Context established 2026-10-26 from base application `48b96b2`; updated
-2026-10-27 for local phase-4 preview `0.3.0-preview.4`. Earlier milestones and
+2026-10-27 for local phase-5 preview `0.3.0-preview.5`. Earlier milestones and
 decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
@@ -13,7 +13,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all six `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all eight `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 `Start.ps1` only builds if the EXE is missing: after source changes explicitly
@@ -35,6 +35,24 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/Flyout.cs` | Nonactivating flyout, layout cards, zone highlight/navigation, draggable clock-area launcher bar. |
 | `src/SettingsForm.cs` | Draft-based layout/weight editor, preview and shortcut dialog; validation before applying/saving. |
 | `src/DisplayState.cs` | Native fresh monitor inventory, per-monitor saved geometry, pure session ownership/topology and draft merge transitions. |
+| `src/VisualEditor.cs` | Pure draft gesture/history session, painted draggable preview and nested visual editor. |
+| `src/PortableLayouts.cs` | Separate bounded XML transfer schema, atomic export, copy/replace candidate construction and shortcut validation. |
+
+Phase 5 adds a draft-only visual modal from Layouts and a Share layouts tab.
+VisualLayoutSession clones the source; a gesture changes one adjacent pair with
+a 4% floor, records one of at most 50 undo snapshots, and can cancel/undo/redo.
+The canvas owns paint resources only for each draw and never disposes inherited
+fonts. Accepted visual geometry joins the existing settings grid history.
+Import candidates use fresh profile IDs and optional shortcuts; replacement is
+confirmed, one import checkpoint can be restored, and main Save remains the only
+live apply point. The XML DTO excludes machine/runtime/appearance fields, limits
+files to 256 KB, prohibits DTD/entity resolution and rejects unknown schema data.
+See [visual and portable behavior](docs/VISUAL-AND-PORTABLE.md).
+
+`Build.ps1 -OutputDirectory` permits a separate build while the daily compiled
+EXE is loaded; desktop integration still requires stopping that controller.
+`-EditorUi` adds real-loop painting/interaction tests. Hosted EditorUiTests.ps1
+compiles app and test sources in memory, retaining source-only execution.
 
 ## Geometry and resize ownership
 
@@ -125,7 +143,7 @@ stored HWNDs are not treated as durable workspace identity.
 Phase-1 UI uses a third Appearance settings tab for launcher visibility and
 draft position reset. Cancel discards those changes. The tray also offers an
 immediate bar reset and About with `SixSlotSnap.ProductVersion` (currently
-`0.3.0-preview.4`). Visible UI names are Windows Tile Studio; compatibility
+`0.3.0-preview.5`). Visible UI names are Windows Tile Studio; compatibility
 identifiers remain unchanged. `LayoutProfile.GeometryMatches` compares segment
 counts/weights with tolerance `1e-8`; `ApplySettings` only reflows the same active
 profile when its geometry changed, preserving actual frames on appearance-only

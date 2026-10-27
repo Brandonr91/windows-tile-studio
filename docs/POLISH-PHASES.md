@@ -17,7 +17,7 @@ gaps remain explicit; this does not implement phase 5.
 | 2. Editing safeguards and recovery | Unsaved changes, reversible grid edits/reset confirmation, actionable errors, startup hotkey conflicts, corrupt settings and missing-manager recovery. | Isolated failure reproductions preserve original files/working shortcuts and provide usable recovery. | Implemented and verified locally as `0.3.0-preview.2`; not published. |
 | 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Core implemented and representative matrix verified locally as `0.3.0-preview.3`; elevated/hung-app limits remain explicit. |
 | 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Core implemented locally as `0.3.0-preview.4`; simulated topology and single-display notifications verified. Physical multi-monitor/docking/sleep release gates remain. |
-| 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Planned. |
+| 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Implemented locally as `0.3.0-preview.5`; pure, real-loop compiled/source-hosted editor and controller regressions pass within documented scope. |
 | 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Planned. |
 | 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Planned. |
 | 8. Production delivery | Consistent executable/package identity; install/update/rollback/uninstall and legacy recovery; Windows CI, reproducible builds, versioned signing/checksums/release notes, clean-account/external beta testing. | Exact packages pass install/use/update/remove/rollback; documentation matches release; original repository is preserved. | Planned. |
@@ -109,15 +109,31 @@ Only one physical display is connected; mixed-DPI movement, physical docking,
 taskbar changes and actual sleep/wake remain release gates. See
 [display checkpoint](DISPLAYS.md).
 
-## Exact next work: phase 5
+## Phase 5 result
 
-Start with a draft-only graphical divider editor using the existing normalized
-layout model. Dragging a height boundary affects its adjacent pair in its column;
-numeric controls remain available. Add undo/save/cancel semantics, then portable
-layout/hotkey export/import that excludes monitor device IDs, HWNDs and launcher
-coordinates. Validate schema/size/weights and shortcut conflicts before replacing
-any draft or live settings. Re-run pair-only height, draft isolation and hosted
-source tests. Physical display validation can proceed when hardware is available.
+Visual editing is a nested draft, with adjacent-pair dividers, a 4% floor,
+per-gesture undo/redo/Escape and numeric fallback. Share layouts exports a bounded
+versioned XML DTO and stages validated copies/replacements with optional keys
+and a confirmed undo checkpoint. IDs are regenerated, private machine/runtime
+fields excluded, and OS shortcut conflicts checked on main Save. Pure checks:
+198525 PASS. Real-loop editor tests pass compiled and source-hosted, including
+painting, pointer gestures, cancel/undo and invalid import preservation. The
+center-divider real mouse/Undo check passed. Full compiled and hosted controller
+regressions, launcher paint/close-to-tray and source installer checks pass. No
+unexpected Windows/.NET dialogs or relevant crash events were observed in sampled
+checks. See [visual/portable guide](VISUAL-AND-PORTABLE.md) for exact limits.
+
+## Exact next work: phase 6
+
+Define durable app/window identity and an explicit workspace capture/restore
+policy before persisting assignments. HWNDs are not durable identity. Start with
+opt-in capture, preview of matching/missing apps and restore without relaunch;
+make any relaunch an additional explicit choice. Define stale/multiple-window
+matching and per-monitor fallback before native placement. Add optional login
+startup only with visible status and an equally usable disable/removal path;
+never enable it automatically. Preserve hidden launcher preferences and all
+existing geometry/fit/undo/recovery safeguards. Hardware display tests remain
+separate release gates.
 
 ## Before pushing a production release
 

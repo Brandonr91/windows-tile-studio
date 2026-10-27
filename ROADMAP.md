@@ -1,21 +1,30 @@
 # Roadmap and next work
 
-Context established 2026-10-26 at `48b96b2`; updated 2026-10-27 for phase 4.
+Context established 2026-10-26 at `48b96b2`; updated 2026-10-27 for phase 5.
 The existing [development roadmap](docs/ROADMAP.md) remains the authoritative
 milestone history. This root entry adds current priorities and acceptance criteria
 without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping point.
 
 The user has now requested phased polishing. The current sequence and all
 previously optional features are captured in [polishing phases](docs/POLISH-PHASES.md).
-Phases 1–4 are implemented locally within their recorded test scope. Phase 3's
+Phases 1–5 are implemented locally within their recorded test scope. Phase 3's
 [compatibility checkpoint](docs/COMPATIBILITY.md) documents remaining elevated,
 hung-app and timing limits. Phase 4's [display checkpoint](docs/DISPLAYS.md) records
 single-display native and simulated topology coverage, with physical multi-monitor
-release gates outstanding. Phase 5 (visual builder and portable layouts) is next.
+release gates outstanding. Phase 5's [visual/portable guide](docs/VISUAL-AND-PORTABLE.md)
+records draft-only editing and validated import/export. Phase 6 (workspaces and
+optional startup) is next; neither app relaunch nor startup is enabled.
 The older priority table below is
 retained as technical detail, not a competing phase order.
 
 ## Completed and verified within recorded test scope
+
+- Phase 5: draggable visual proportions with per-gesture undo/redo/Escape,
+  numeric fallback, settings draft isolation and portable catalog/hotkey transfer.
+  XML bounds/schema/geometry/conflicts validate before staging; imports can add
+  copies or replace explicitly, with a confirmed undo checkpoint. New pure and
+  real-loop editor checks pass compiled and source-hosted. No matching Windows
+  crash events or unexpected error dialogs were observed in sampled checks.
 
 - User-requested close-to-tray: launcher ×/WM_CLOSE/minimize hides it and saves
   visibility off; tray Show Layouts bar restores it, Exit quits. Hidden bar stays
@@ -50,7 +59,7 @@ retained as technical detail, not a competing phase order.
 | 2 (completed in phase 2) | Startup hotkey-conflict recovery | Recovery settings opens without exiting or replacing the saved file. Conflict/corrupt-file startup cases and editor recovery behavior pass isolated tests. |
 | 3 | Keyboard/accessibility coverage | Test all four arrow directions, uneven row counts, layout cycling/wrap, constrained viewport scrolling, foreground-switch dismissal and cleanup. Current integration verifies Right/Enter and Tab/Shift+Tab, not every combination. Verify mouse fallback on conflicts remains usable. |
 | 4 (initial implementation completed in phase 3) | App sizing feedback/constraints | Reported minimums constrain boundaries and rejected actual fits are not assigned. Validate remaining maximum/aspect/custom-frame and privilege cases without repeatedly forcing impossible bounds. |
-| 5 | Visual proportion editor | Start with a draft preview with draggable boundaries and cancel/save semantics. Reuse the same normalized model and pair-only height rules; keep current numeric weight editor usable. |
+| 5 (core completed in phase 5) | Visual proportion editor and portable layouts | Draft drag/undo/redo/Escape and accepted/canceled edits pass. Portable schema/privacy/conflict/failure tests pass. Keyboard divider movement and broader accessibility remain phase 7. |
 | 6 (core implemented in phase 4) | Per-monitor state and display recovery | Independent sessions and optional XML records; pure topology and single-display native notifications tested. Physical mixed-DPI, work-area changes, docking/disconnect/reconnect and sleep/resume remain release validation. |
 | 7 | Optional workspace restoration | Define explicit app identity/relaunch policy and stale-window handling; do not serialize HWNDs as durable identities. Make adoption/relaunch opt-in. |
 | 8 | Distribution/identity | Unify prototype naming carefully, add an application icon, reproducible versioned packaging and possibly signing. If startup is added, make it explicit opt-in with an equally usable removal path. |

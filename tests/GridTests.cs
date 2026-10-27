@@ -160,6 +160,41 @@ class GridTests {
         var migrated=new MonitorWorkspace(old);migrated.UpdateDisplays(new[]{primary});Check(migrated.Active.Model.Profile.Id==old.ActiveProfileId,"First monitor did not inherit old selected layout");
         Check(LauncherTab.SizeForScale(1.25)==new System.Drawing.Size(338,34) && LauncherTab.SizeForScale(2)==new System.Drawing.Size(540,54),"Launcher physical scaling failed");
     }
+    static void VisualDrafts() {
+        var source=LayoutProfile.Create("draft","Draft",3,3);var original=source.Clone();var session=new VisualLayoutSession(source);
+        session.Begin();Check(session.Move(false,1,2,0.8),"Visual row divider did not move");session.End(false);
+        Check(source.GeometryMatches(original),"Visual edit mutated the source layout");
+        Check(session.Profile.Columns[0].Rows.SequenceEqual(original.Columns[0].Rows) && session.Profile.Columns[2].Rows.SequenceEqual(original.Columns[2].Rows),"Visual row edit affected flanking columns");
+        Check(session.Profile.Columns[1].Rows[0]==original.Columns[1].Rows[0],"Visual row edit affected a nonadjacent row");
+        var changed=session.Profile.Clone();session.Undo();Check(session.Profile.GeometryMatches(original)&&session.CanRedo,"Visual undo lost the gesture snapshot");session.Redo();Check(session.Profile.GeometryMatches(changed),"Visual redo failed");
+        session.Begin();session.Move(true,-1,1,0.6);session.End(true);Check(session.Profile.GeometryMatches(changed),"Escape/cancel did not restore visual draft");
+        session.Begin();session.Move(true,-1,1,-100);session.End(false);Check(Math.Abs(session.Profile.Columns[0].Width-0.04)<1e-8,"Visual width did not clamp at 4%");
+        Check(session.Profile.Columns.All(c=>c.Rows.SequenceEqual(changed.Columns[session.Profile.Columns.IndexOf(c)].Rows)),"Visual width edited row heights");
+        Check(!session.Move(true,0,0,0.3)&&!session.Move(false,99,1,0.4)&&!session.Move(true,0,1,double.NaN),"Visual editor accepted invalid edges");
+        var random=new Random(711);for(int i=0;i<200;i++){bool widths=i%2==0;session.Begin();session.Move(widths,random.Next(3),random.Next(1,3),random.NextDouble()*2-0.5);session.End(false);session.Profile.Validate();Cover(new LayoutModel(session.Profile){Work=new SixSlotSnap.RECT{L=-3000,T=-100,R=2120,B=2060}});}
+    }
+    static void Portable(string root) {
+        string path=Path.Combine(root,"portable.tilelayouts.xml");var current=AppSettings.Defaults();
+        current.ShowLauncherTab=false;current.LauncherPositionSet=true;current.LauncherX=12345;current.Monitors.Add(new MonitorConfiguration{Id="PRIVATE-MONITOR-ID",ActiveProfileId=current.ActiveProfileId});
+        PortableLayouts.Export(path,current);string xml=File.ReadAllText(path);var bundle=PortableLayouts.Load(path);
+        Check(bundle.Version==1&&bundle.Profiles.Count==6,"Portable round trip failed");
+        Check(!xml.Contains("PRIVATE-MONITOR-ID")&&!xml.Contains("LauncherX")&&!xml.Contains("ShowLauncherTab")&&!xml.Contains("Monitors"),"Portable export leaked machine/appearance data");
+        var added=PortableLayouts.Candidate(current,bundle,false,false);
+        Check(added.Profiles.Count==12&&added.Profiles.Select(p=>p.Id).Distinct().Count()==12&&added.Profiles.Select(p=>p.Name.ToLowerInvariant()).Distinct().Count()==12,"Add copies did not generate independent IDs/names");
+        Check(added.Profiles.Skip(6).All(p=>!p.Shortcut.Enabled)&&current.Profiles.Count==6,"Import without shortcuts mutated current settings or kept copied keys");
+        Check(added.LauncherX==12345&&!added.ShowLauncherTab&&added.Monitors[0].Id=="PRIVATE-MONITOR-ID","Portable import replaced local appearance/monitor identity");
+        var replaced=PortableLayouts.Candidate(current,bundle,true,true);Check(replaced.Profiles.Count==6&&!replaced.Profiles.Any(p=>current.Profiles.Any(c=>c.Id==p.Id)),"Replacement reused local monitor geometry identity");
+        Check(replaced.FlyoutShortcut.ToString()==bundle.FlyoutShortcut.ToString(),"Portable global shortcuts were lost");
+        Reject(()=>PortableLayouts.Candidate(added,bundle,false,false),"Import beyond profile limit succeeded");
+        var conflict=PortableLayouts.FromSettings(current);conflict.Profiles[0].Shortcut=new Shortcut{Modifiers=ShortcutModifiers.Control|ShortcutModifiers.Alt,Key=Keys.F24};current.Profiles[1].Shortcut=conflict.Profiles[0].Shortcut.Clone();
+        Reject(()=>PortableLayouts.Candidate(current,conflict,false,true),"Duplicate imported/existing hotkey accepted");
+        var invalid=PortableLayouts.FromSettings(AppSettings.Defaults());invalid.Profiles[0].Columns[0].Width=double.NaN;Reject(()=>PortableLayouts.Candidate(current,invalid,true,false),"Invalid portable geometry accepted");
+        string[] malformed={"not xml",xml.Replace("<Version>1</Version>","<Version>999</Version>"),xml.Replace("<Version>1</Version>",""),xml.Replace("</TileStudioLayouts>","<Monitors /></TileStudioLayouts>"),"<!DOCTYPE x [<!ENTITY y SYSTEM 'file:///nonexistent'>]><TileStudioLayouts>&y;</TileStudioLayouts>",new string(' ',PortableLayouts.MaximumBytes+1)};
+        foreach(string bad in malformed){File.WriteAllText(path,bad);bool rejected=false;try{PortableLayouts.Load(path);}catch(Exception){rejected=true;}Check(rejected,"Malformed/unsafe portable XML accepted");}
+        File.WriteAllText(path,string.Concat(Enumerable.Repeat("<nested>",40))+string.Concat(Enumerable.Repeat("</nested>",40)));bool depthRejected=false;try{PortableLayouts.Load(path);}catch(ArgumentException){depthRejected=true;}Check(depthRejected,"Deep portable XML was not rejected before deserialization");
+        File.WriteAllText(path,xml);var before=File.ReadAllText(path);bool failed=false;using(var locked=File.Open(path,FileMode.Open,FileAccess.Read,FileShare.None)){try{PortableLayouts.Export(path,AppSettings.Defaults());}catch(IOException){failed=true;}}
+        Check(failed&&File.ReadAllText(path)==before,"Failed portable export replaced the destination");
+    }
     static int Main() {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
@@ -169,6 +204,7 @@ class GridTests {
             HeightPair();
             MinimumConstraints();
             Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            VisualDrafts();Portable(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }
