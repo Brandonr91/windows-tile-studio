@@ -37,14 +37,14 @@ public class SnapSettingsForm : Form {
     readonly DataGridView proportions=new DataGridView();
     readonly DataGridView shortcuts=new DataGridView();
     readonly Panel preview=new Panel();
-    readonly CheckBox launcher=new CheckBox{Text="Show the small layout button at the top of the screen",AutoSize=true};
+    readonly CheckBox launcher=new CheckBox{Text="Show the floating Layouts bar",AutoSize=true};
     LayoutProfile selected;
     bool refreshing;
     public SnapSettingsForm(AppSettings source) {
-        Draft=source.Clone(); Text="Six Slot Snap — layouts and hotkeys"; AccessibleName="Six Slot Snap settings";
+        Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
         var tabs=new TabControl{Dock=DockStyle.Fill}; Controls.Add(tabs);
-        var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage});
+        var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); var appearancePage=new TabPage("Appearance"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,appearancePage});
         var footer=new Panel{Dock=DockStyle.Bottom,Height=57}; Controls.Add(footer); tabs.BringToFront();
         var save=new Button{Text="Save changes",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(742,12,140,32)}; footer.Controls.Add(save);
         var cancel=new Button{Text="Cancel",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(636,12,96,32),DialogResult=DialogResult.Cancel}; footer.Controls.Add(cancel); CancelButton=cancel;
@@ -62,7 +62,14 @@ public class SnapSettingsForm : Form {
         var update=new Button{Text="Update preview",Bounds=new Rectangle(250,302,170,30)}; layoutPage.Controls.Add(update);
         preview.Bounds=new Rectangle(250,344,300,172); preview.BackColor=Color.FromArgb(24,28,35); layoutPage.Controls.Add(preview);
         layoutPage.Controls.Add(new Label{Text="Each column keeps its own row dividers.\n\nPicking a zone in another layout moves only the selected window. Re-snap other windows to link them to that layout.",Bounds=new Rectangle(570,350,270,130)});
-        launcher.Location=new Point(250,512); launcher.Checked=Draft.ShowLauncherTab; layoutPage.Controls.Add(launcher);
+        appearancePage.Controls.Add(new Label{Text="Layouts bar",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,26)});
+        launcher.Location=new Point(24,65); launcher.Checked=Draft.ShowLauncherTab; launcher.AccessibleName="Show floating Layouts bar"; appearancePage.Controls.Add(launcher);
+        appearancePage.Controls.Add(new Label{Text="Click the bar to choose a layout. Hold the left mouse button and drag to move it.\nIts position is remembered. The default location is near the taskbar clock.",Bounds=new Rectangle(24,104,800,50)});
+        var positionStatus=new Label{Text=Draft.LauncherPositionSet?"Position: custom":"Position: default near clock",Bounds=new Rectangle(24,174,500,25),AccessibleName="Launcher position status"}; appearancePage.Controls.Add(positionStatus);
+        var resetPosition=new Button{Text="Reset bar position",Bounds=new Rectangle(24,212,190,34),AccessibleName="Reset Layouts bar position"};
+        resetPosition.Click+=delegate { Draft.LauncherPositionSet=false; positionStatus.Text="Position: default near clock (applied when saved)"; }; appearancePage.Controls.Add(resetPosition);
+        appearancePage.Controls.Add(new Label{Text="Appearance changes apply when you choose Save changes.\nCancel leaves the running bar unchanged. You can always open layouts with your hotkey or tray menu.",Bounds=new Rectangle(24,274,800,56)});
+        appearancePage.Controls.Add(new Label{Text="Windows Tile Studio  "+SixSlotSnap.ProductVersion,AutoSize=true,Location=new Point(24,375)});
         shortcuts.Dock=DockStyle.Fill; shortcuts.AllowUserToAddRows=false; shortcuts.AllowUserToDeleteRows=false; shortcuts.RowHeadersVisible=false; shortcuts.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill; shortcuts.AccessibleName="Global hotkey assignments";
         shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="command",HeaderText="Action",ReadOnly=true,FillWeight=170}); shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="binding",HeaderText="Shortcut",ReadOnly=true,FillWeight=160});
         shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="change",HeaderText="",Text="Change",UseColumnTextForButtonValue=true,FillWeight=60}); shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="clear",HeaderText="",Text="Clear",UseColumnTextForButtonValue=true,FillWeight=55}); shortcutPage.Controls.Add(shortcuts);

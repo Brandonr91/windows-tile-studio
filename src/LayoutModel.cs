@@ -16,6 +16,14 @@ public class LayoutProfile {
     public int SlotCount { get { return Columns.Sum(c=>c.Rows.Count); } }
     public override string ToString() { return Name; }
     public LayoutProfile Clone() { return new LayoutProfile{Id=Id,Name=Name,Columns=Columns.Select(c=>c.Clone()).ToList(),Shortcut=Shortcut.Clone()}; }
+    public bool GeometryMatches(LayoutProfile other) {
+        if(other==null || Columns.Count!=other.Columns.Count) return false;
+        for(int c=0;c<Columns.Count;c++) {
+            if(Math.Abs(Columns[c].Width-other.Columns[c].Width)>1e-8 || Columns[c].Rows.Count!=other.Columns[c].Rows.Count) return false;
+            for(int r=0;r<Columns[c].Rows.Count;r++) if(Math.Abs(Columns[c].Rows[r]-other.Columns[c].Rows[r])>1e-8) return false;
+        }
+        return true;
+    }
     public static LayoutProfile Create(string id,string name,int columns,int rows) {
         var p=new LayoutProfile{Id=id,Name=name};
         for(int c=0;c<columns;c++) p.Columns.Add(new ColumnDefinition{Width=1.0/columns,Rows=Enumerable.Repeat(1.0/rows,rows).ToList()});

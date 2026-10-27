@@ -75,10 +75,10 @@ public class SnapFlyout : NonactivatingForm {
         Highlight();
     }
     public SnapFlyout(AppSettings settings,string target,double scale,int availableWidth,int availableHeight) {
-        Text="Six Slot Snap — choose a layout";
+        Text="Windows Tile Studio — choose a layout";
         FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
         BackColor=Color.FromArgb(24,28,35); ForeColor=Color.White; Font=new Font("Segoe UI",9);
-        AccessibleName="Six Slot Snap layout flyout";
+        AccessibleName="Windows Tile Studio layout flyout";
         Func<int,int> s=n=>(int)Math.Round(n*scale);
         int count=settings.Profiles.Count,columns=Math.Max(1,Math.Min(3,(availableWidth-s(32))/s(252)));
         Width=Math.Min(availableWidth-s(16),s(columns*252+40));
@@ -112,7 +112,7 @@ public class LauncherTab : NonactivatingForm {
         return new Point(Math.Max(work.Left,Math.Min(point.X,work.Right-size.Width)),Math.Max(work.Top,Math.Min(point.Y,work.Bottom-size.Height)));
     }
     public LauncherTab(string shortcut,double scale) {
-        Text="Six Slot Snap — layout button";
+        Text="Windows Tile Studio — layout button";
         StartPosition=FormStartPosition.Manual;
         FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
         Width=(int)(270*scale); Height=(int)(27*scale); BackColor=Color.FromArgb(33,39,49); ForeColor=Color.FromArgb(210,222,239); Font=new Font("Segoe UI",9); AccessibleName="Open custom Snap layouts";

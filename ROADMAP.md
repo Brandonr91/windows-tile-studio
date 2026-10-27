@@ -5,6 +5,12 @@ The existing [development roadmap](docs/ROADMAP.md) remains the authoritative
 milestone history. This root entry adds current priorities and acceptance criteria
 without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping point.
 
+The user has now requested phased polishing. The current sequence and all
+previously optional features are captured in [polishing phases](docs/POLISH-PHASES.md).
+Phase 1 (everyday controls and identity) is implemented locally; phase 2
+(editing safeguards and recovery) is next. The older priority table below is
+retained as technical detail, not a competing phase order.
+
 ## Completed and verified within recorded test scope
 
 - Basic preview: six starter profiles, configurable layouts/weights/hotkeys,

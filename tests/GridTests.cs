@@ -61,6 +61,10 @@ class GridTests {
     static void Config(string root) {
         Directory.CreateDirectory(root); string path=Path.Combine(root,"test-settings.xml");
         var s=AppSettings.Defaults(); s.Validate(); SettingsStore.Save(path,s);
+        var renamed=s.Profiles[0].Clone(); renamed.Name="Appearance-only example";
+        Check(s.Profiles[0].GeometryMatches(renamed),"A renamed layout must not trigger geometry reflow");
+        renamed.Columns[0].Rows[0]+=0.05;
+        Check(!s.Profiles[0].GeometryMatches(renamed),"Changed proportions must trigger geometry reflow");
         string warning; var loaded=SettingsStore.Load(path,out warning);
         Check(warning==null && loaded.Profiles.Count==6,"Settings round trip failed");
         Check(loaded.FlyoutShortcut.ToString()=="Ctrl+Alt+Win+Space","Flyout default changed");

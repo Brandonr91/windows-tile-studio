@@ -10,8 +10,8 @@ launchers are available. See [the roadmap](docs/ROADMAP.md) for further work.
 This is the configurable-layout successor to
 [Six Slot Snap](https://github.com/Brandonr91/six-slot-snap), published in a
 separate repository so the original six-slot utility remains available.
-The current executable and some window titles still use the prototype name
-`SixSlotSnap`; the repository is Windows Tile Studio.
+The executable and internal compatibility identifiers retain the prototype name
+`SixSlotSnap`; visible windows and the tray use Windows Tile Studio.
 
 Built with C#, Windows Forms, and Windows APIs. No external packages or
 replacement taskbar. The current version is an early desktop utility tested
@@ -156,6 +156,13 @@ The tray menu opens the layout manager, resets proportions in the current
 layout, or exits the controller. Exit and delete the project folder to remove it.
 
 ## Edit layouts and shortcuts
+
+The **Appearance** tab controls the floating Layouts bar. Show/hide or reset
+its saved position, then choose **Save changes** to apply; **Cancel** leaves
+the running bar unchanged. The tray's **Reset Layouts bar position** applies
+immediately and does not reset window proportions. **About Windows Tile Studio**
+shows the preview version. See [polishing phases](docs/POLISH-PHASES.md) for the
+current implementation milestone and remaining production scope.
 
 Open **Manage layouts & hotkeys** from the flyout or tray menu.
 

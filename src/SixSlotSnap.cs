@@ -73,6 +73,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
+    public const string ProductVersion="0.3.0-preview.1";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -260,6 +261,11 @@ public class SixSlotSnap : ApplicationContext {
         Rectangle work=settings.LauncherPositionSet?Screen.FromPoint(position).WorkingArea:Rectangle.FromLTRB(m.Work.L,m.Work.T,m.Work.R,m.Work.B);
         launcher.Location=LauncherTab.ClampPosition(position,launcher.Size,work); if(flyout==null) launcher.ShowUnfocused();
     }
+    void ResetLauncherPosition() {
+        settings.LauncherPositionSet=false;
+        if(settingsForm!=null && !settingsForm.IsDisposed) settingsForm.Draft.LauncherPositionSet=false;
+        SaveSettings(); RefreshLauncher(); WriteState();
+    }
     public void OpenFlyout(IntPtr target,string onlyProfile) {
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
         if(flyout!=null && flyout.Visible) { HideFlyout(); return; }
@@ -288,9 +294,11 @@ public class SixSlotSnap : ApplicationContext {
     public string ApplySettings(AppSettings draft) {
         draft.Validate(); HideFlyout(); CancelResizeSession(); string error; if(!hotkeys.Replace(draft,out error)) return error;
         try { SettingsStore.Save(settingsPath,draft); } catch(Exception e) { string rollback; hotkeys.Replace(settings,out rollback); return "Could not save settings: "+e.Message+(rollback==null?"":" "+rollback); }
-        bool same=grid.Profile.Id==draft.ActiveProfileId; settings=draft; preserveInvalidSettings=false;
+        bool same=grid.Profile.Id==draft.ActiveProfileId;
+        bool geometryChanged=!grid.Profile.GeometryMatches(draft.Profiles.First(p=>p.Id==draft.ActiveProfileId));
+        settings=draft; preserveInvalidSettings=false;
         var area=grid.Work; grid=new LayoutModel(settings.Profiles.First(p=>p.Id==settings.ActiveProfileId)){Work=area};
-        if(!same) Array.Clear(assigned,0,16); else { for(int i=grid.Profile.SlotCount;i<16;i++) assigned[i]=IntPtr.Zero; ApplyLayout(); }
+        if(!same) Array.Clear(assigned,0,16); else { for(int i=grid.Profile.SlotCount;i<16;i++) assigned[i]=IntPtr.Zero; if(geometryChanged) ApplyLayout(); }
         tray.ContextMenuStrip.Items[0].Text="Choose layout  "+settings.FlyoutShortcut;
         RefreshLauncher(); WriteState(); return null;
     }
@@ -309,7 +317,7 @@ public class SixSlotSnap : ApplicationContext {
             else if(message==SettingsCommand) OpenSettings(); else if(message==QuitCommand) ExitThread();
             else if(message==SnapCommand) { HideFlyout(); SnapTo(b,settings.ActiveProfileId,a.ToInt32()-1); }
             else if(message==ProfileCommand && a.ToInt32()>=0 && a.ToInt32()<settings.Profiles.Count) { HideFlyout(); UseProfile(settings.Profiles[a.ToInt32()].Id); WriteState(); }
-        } catch(Exception e) { Log("Command: "+e); tray.ShowBalloonTip(2500,"Six Slot Snap",e.Message,ToolTipIcon.Warning); }
+        } catch(Exception e) { Log("Command: "+e); tray.ShowBalloonTip(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
     }
     public SixSlotSnap(string dataDirectory,bool recoverWindows) {
         folder=dataDirectory; Directory.CreateDirectory(folder); settingsPath=Path.Combine(folder,"settings.xml"); recover=recoverWindows;
@@ -321,7 +329,10 @@ public class SixSlotSnap : ApplicationContext {
         var menu=new ContextMenuStrip();
         menu.Items.Add("Choose layout  "+settings.FlyoutShortcut,null,delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); });
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
+        menu.Items.Add("Reset Layouts bar position",null,delegate { ResetLauncherPosition(); });
         menu.Items.Add("Reset active layout proportions",null,delegate { CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add("About Windows Tile Studio",null,delegate { MessageBox.Show("Windows Tile Studio "+ProductVersion+"\n\nCustom layouts, keyboard placement, and linked resizing.\n\nRuns locally. No AI service or account is required to use the controller.","About Windows Tile Studio",MessageBoxButtons.OK,MessageBoxIcon.Information); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
         tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(); }; receiver.Received=HandleCommand;
         resizeTimer.Interval=30; resizeTimer.Tick+=delegate { try { UpdateDrag(); } catch(Exception e) { Log("Resize tick: "+e.Message); } };
@@ -330,7 +341,7 @@ public class SixSlotSnap : ApplicationContext {
         IntPtr foreground=NativeMethods.GetForegroundWindow(); if(ValidTarget(foreground)) lastExternalWindow=foreground;
         eventCallback=OnWindowEvent; eventHook=NativeMethods.SetWinEventHook(3,11,IntPtr.Zero,eventCallback,0,0,0);
         if(eventHook==IntPtr.Zero) { tray.ShowBalloonTip(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
-        RecoverAssignments(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready v0.2-local; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
+        RecoverAssignments(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
         if(warning!=null) { Log(warning); tray.ShowBalloonTip(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
     }
     protected override void ExitThreadCore() {
@@ -344,7 +355,7 @@ public class SixSlotSnap : ApplicationContext {
         string folder=AppDomain.CurrentDomain.BaseDirectory; int data=Array.IndexOf(args,"--data-dir"); if(data>=0 && data+1<args.Length) folder=Path.GetFullPath(args[data+1]);
         string command=args.FirstOrDefault(a=>a=="--show"||a=="--settings"||a=="--quit"||a=="--snap"||a=="--layout");
         if(command!=null) {
-            IntPtr existing=NativeMethods.FindWindow(null,ControllerCaption); if(existing==IntPtr.Zero) { MessageBox.Show("Start Six Slot Snap before sending a command.","Six Slot Snap"); return; }
+            IntPtr existing=NativeMethods.FindWindow(null,ControllerCaption); if(existing==IntPtr.Zero) { MessageBox.Show("Start Windows Tile Studio before sending a command.","Windows Tile Studio"); return; }
             int message=command=="--show"?ShowCommand:command=="--settings"?SettingsCommand:command=="--quit"?QuitCommand:command=="--snap"?SnapCommand:ProfileCommand;
             int number=0,at=Array.IndexOf(args,command); if((message==SnapCommand||message==ProfileCommand) && (at+1>=args.Length||!int.TryParse(args[at+1],out number))) return;
             NativeMethods.PostMessage(existing,message,new IntPtr(number),NativeMethods.GetForegroundWindow()); return;
@@ -355,7 +366,7 @@ public class SixSlotSnap : ApplicationContext {
         bool created; using(var mutex=new Mutex(true,"Local\\SixSlotSnapController",out created)) {
             if(!created) return;
             try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"))); }
-            catch(Exception e) { Directory.CreateDirectory(folder); File.AppendAllText(Path.Combine(folder,"status.log"),e+Environment.NewLine); MessageBox.Show(e.Message,"Six Slot Snap could not start"); Environment.ExitCode=1; }
+            catch(Exception e) { Directory.CreateDirectory(folder); File.AppendAllText(Path.Combine(folder,"status.log"),e+Environment.NewLine); MessageBox.Show(e.Message,"Windows Tile Studio could not start"); Environment.ExitCode=1; }
         }
     }
 }

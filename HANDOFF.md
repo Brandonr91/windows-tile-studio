@@ -1,5 +1,22 @@
 # Handoff
 
+## Current phase checkpoint
+
+2026-10-26, following `d3a430f`. User requested phased polishing, including
+all optional features from the production scope. See [phase plan](docs/POLISH-PHASES.md).
+Phase 1 is implemented locally as `0.3.0-preview.1`: Appearance tab for bar
+visibility/draft reset, immediate tray bar reset, About/version, consistent
+visible names and no whole-grid reflow for appearance/name/hotkey-only saves.
+The old top-of-screen checkbox also overlapped the preview; it is now removed
+from Layouts. Phase 2 is editing safeguards and startup/failure recovery.
+
+Verification: geometry/configuration PASS (186128 checks); hosted six-window
+integration PASS, with new Appearance save and draft-cancel isolation checks.
+Appearance screenshot rendered and visually inspected. Updated source deployed
+to the separate daily hosted folder; preserve its settings. Source delivery
+and context changes remain local until published. Next steps are in the phase
+plan; do not treat later optional features as implemented or enable startup.
+
 ## Latest checkpoint: tray identity and legacy preference
 
 2026-10-26, after launcher-placement commit `b3f941f`. User asked whether the

@@ -4,6 +4,10 @@ For current priorities, acceptance criteria and known defects/limits, read the
 root [ROADMAP](../ROADMAP.md). This file retains the existing milestone history;
 keep both views synchronized when a meaningful milestone or priority changes.
 
+Current phased execution: [Polishing phases](POLISH-PHASES.md). Phase 1 adds
+Appearance controls, launcher reset and version/branding consistency. All
+previously optional capabilities are in the planned phases, not claimed complete.
+
 ## Basic preview version — implemented
 
 - Persistent custom-layout flyout, opened by a configurable hotkey.

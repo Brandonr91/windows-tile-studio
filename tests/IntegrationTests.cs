@@ -61,6 +61,13 @@ class IntegrationTests {
     }
     static void TestEditor() {
         var original=AppSettings.Defaults(); bool saved=false;
+        original.LauncherPositionSet=true; original.LauncherX=456; original.LauncherY=789;
+        using(var cancelled=new SnapSettingsForm(original)) {
+            cancelled.StartPosition=FormStartPosition.Manual; cancelled.Location=new Point(-30000,-30000); cancelled.ShowInTaskbar=false; cancelled.Show();
+            ((TabControl)Find(cancelled,c=>c is TabControl)).SelectedIndex=2; Pump(30);
+            ((Button)Find(cancelled,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
+            Check(!cancelled.Draft.LauncherPositionSet && original.LauncherPositionSet && original.LauncherX==456,"Resetting the draft changed live settings before save");
+        }
         using(var editor=new SnapSettingsForm(original)) {
             editor.StartPosition=FormStartPosition.Manual; editor.Location=new Point(-30000,-30000); editor.ShowInTaskbar=false; editor.Show(); Pump(50);
             ((Button)Find(editor,c=>c is Button && c.Text=="Add layout")).PerformClick();
@@ -70,11 +77,17 @@ class IntegrationTests {
             ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
             var custom=editor.Draft.Profiles.Last();
             Check(custom.Name=="Editor acceptance test" && custom.Columns.Count==2 && custom.Columns.All(c=>c.Rows.Count==3),"Grid-size edit lost the name or dimensions");
+            var tabs=(TabControl)Find(editor,c=>c is TabControl); tabs.SelectedIndex=2; Pump(30);
+            ((Button)Find(editor,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
+            ((CheckBox)Find(editor,c=>c is CheckBox && c.AccessibleName=="Show floating Layouts bar")).Checked=false;
+            Check(!editor.Draft.LauncherPositionSet && original.LauncherPositionSet,"Appearance reset was not isolated to the draft");
             editor.SaveRequested=delegate(AppSettings draft) { SettingsStore.Save(Path.Combine(data,"editor-test-settings.xml"),draft); saved=true; return null; };
             ((Button)Find(editor,c=>c is Button && c.Text=="Save changes")).PerformClick();
             Check(saved && original.Profiles.Count==6,"Editor save failed or changed the input settings before save");
+            string appearanceWarning; var appearance=SettingsStore.Load(Path.Combine(data,"editor-test-settings.xml"),out appearanceWarning);
+            Check(appearanceWarning==null && !appearance.LauncherPositionSet && !appearance.ShowLauncherTab,"Appearance settings were not saved");
         }
-        passed.Add("Settings UI adds a layout, preserves its name through grid changes, and saves a 2-column/3-row profile.");
+        passed.Add("Settings UI saves custom layouts and Appearance visibility/reset; draft cancellation preserves original launcher settings.");
     }
     static void Run(string directory,string hostedScript) {
         data=directory; Directory.CreateDirectory(data);

@@ -23,6 +23,12 @@ are explicitly labeled. Consult actual source before relying on them.
 
 ## Resolved failures and tradeoffs
 
+- Phase 1 of the user's phased polish request groups bar controls in Appearance
+  and uses one visible Windows Tile Studio identity/version. Internal class,
+  mutex, receiver and EXE names stay compatible. Appearance/name/hotkey-only
+  saves do not reflow the grid. Settings reset is draft-only; tray bar reset
+  applies immediately and is separate from resetting layout proportions.
+
 - Initial display assumptions were corrected to physical 5120 × 2160 at 125%
   scaling, rather than treating the scaled desktop dimensions as panel resolution.
 - Column-specific math alone did not isolate heights: whole-grid application and

@@ -73,6 +73,15 @@ state or display-change subscription is implemented.
 
 ## Flyout, keyboard and command flow
 
+Phase-1 UI uses a third Appearance settings tab for launcher visibility and
+draft position reset. Cancel discards those changes. The tray also offers an
+immediate bar reset and About with `SixSlotSnap.ProductVersion` (currently
+`0.3.0-preview.1`). Visible UI names are Windows Tile Studio; compatibility
+identifiers remain unchanged. `LayoutProfile.GeometryMatches` compares segment
+counts/weights with tolerance `1e-8`; `ApplySettings` only reflows the same active
+profile when its geometry changed, preserving actual frames on appearance-only
+saves. This tolerance avoids numeric-editor rounding triggering a reflow.
+
 The persistent launcher defaults to the bottom-right of the primary taskbar's
 monitor work area, with an 8-DPI-scaled-pixel gap, above the clock area rather
 than over taskbar controls. `StartPosition.Manual` prevents Windows overriding
