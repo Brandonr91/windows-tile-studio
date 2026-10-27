@@ -1,7 +1,8 @@
 # Architecture
 
-Inspected 2026-10-26; base application `48b96b2`, plus the clock-area draggable
-launcher change following context checkpoint `1aac7f3`.
+Context established 2026-10-26 from base application `48b96b2`; updated
+2026-10-27 for local phase-3 preview `0.3.0-preview.3`. Earlier milestones and
+decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
 
@@ -51,9 +52,22 @@ an assigned window captures actual bounds and HWNDs of the assigned set. The
 30 ms timer samples the source. `LayoutModel.Adjust` reports width and height
 affected slots separately. Width changes affect rows in the two adjacent
 columns; height changes choose one internal boundary and its adjacent pair.
-If both height edges move in a sample, the larger displacement wins (bottom
-wins a tie). Current clamps use generic 400 px width / 200 px height targets,
-bounded by segment capacity and the 4% floor; they are not app minimum sizes.
+The controller pins the first observed height boundary for the whole gesture,
+including while size probes are pending. If both edges first move together,
+the larger displacement wins (bottom wins a tie). Runtime per-slot minimum
+arrays constrain the model: each column takes the largest reported width minimum
+among its rows; height limits apply only to the adjacent pair. Reported minimums
+have a conservative 1-pixel rounding margin. Generic 400 px width / 200 px height
+targets and the 4% floor remain fallback constraints. Impossible adjacent-pair
+constraints do not mutate that boundary.
+
+At resize start actual frames are captured before probing. A ThreadPool pass
+queries WM_GETMINMAXINFO with a 50 ms SendMessageTimeout per eligible window,
+sets its own physical-pixel DPI context and restores the prior context afterward.
+The UI timer observes initial movement while waiting, then applies the latest
+cumulative movement when results arrive. An early end event is completed after
+probe readiness. Cancellation marks stale probes so they stop between queries;
+they do not write UI state. Minimums are transient, not saved in layout profiles.
 
 `ApplyResizeFrames` starts from captured actual bounds, replacing only scoped
 axes with model bounds. Unaffected windows can be restored if native Snap
@@ -63,6 +77,16 @@ at release, and three 100 ms settling passes apply the same scopes. Explicit
 snap, profile/settings changes and proportion reset cancel stale sessions.
 Whole-grid `ApplyLayout` is retained for explicit reflow/reset, not live dragging.
 
+Snap checks advertised minimums before moving and verifies the resulting visible
+frame within two physical pixels before recording assignment. Rejected frames
+request restoration of previous outer bounds. Failed snaps do not first switch
+the active profile/work area. A constrained no-op drag requests the original
+source frame instead of silently disconnecting it. Unexpected frame refusals
+or impossible constraints stop the session, request baseline frames, restore
+model proportions and release the source for re-snap. Unresponsive affected
+neighbors are not repeatedly forced. Throttled feedback and the last issue are
+recorded in runtime XML, together with resize/source status.
+
 Assignments are HWNDs in a 16-entry in-memory array, one window per slot.
 Moving an unchanged-size window away releases its slot at move/size end.
 Recovery enumerates visible eligible windows with a less-than-16-pixel edge
@@ -70,6 +94,10 @@ tolerance. Two-row columns also recognize complementary top/bottom pairs and
 recover their divider from actual bounds. No app identity or workspace session
 is persisted. A change of monitor work area clears assignments; no per-monitor
 state or display-change subscription is implemented.
+
+A separate EVENT_OBJECT_DESTROY hook releases closed top-level windows and is
+unhooked on exit. A recreated/restarted window must be explicitly snapped;
+stored HWNDs are not treated as durable workspace identity.
 
 ## Flyout, keyboard and command flow
 

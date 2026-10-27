@@ -11,6 +11,10 @@ using System.Windows.Forms;
 using System.Xml.Linq;
 
 public static class NativeMethods {
+    [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X,Y; }
+    [StructLayout(LayoutKind.Sequential)] public struct MINMAXINFO { public POINT Reserved,MaxSize,MaxPosition,MinTrackSize,MaxTrackSize; }
+    [DllImport("user32.dll",EntryPoint="SendMessageTimeoutW",SetLastError=true)] public static extern IntPtr QueryMinMax(IntPtr window,uint message,IntPtr wparam,ref MINMAXINFO info,uint flags,uint timeout,out IntPtr result);
+    [DllImport("user32.dll")] public static extern bool IsHungAppWindow(IntPtr window);
     public delegate bool EnumProc(IntPtr window,IntPtr parameter);
     public delegate void WinEventProc(IntPtr hook,uint evt,IntPtr window,int objectId,int childId,uint thread,uint time);
     [StructLayout(LayoutKind.Sequential)] public struct MonitorInfo { public int Size; public SixSlotSnap.RECT Monitor,Work; public uint Flags; }
@@ -83,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.2";
+    public const string ProductVersion="0.3.0-preview.3";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -120,12 +124,20 @@ public class SixSlotSnap : ApplicationContext {
     readonly RECT[] resizeBaseline=new RECT[16];
     readonly bool[] resizeBaselineValid=new bool[16];
     readonly HashSet<int> resizeWidths=new HashSet<int>(),resizeHeights=new HashSet<int>();
+    int resizeHeightBoundary=-1;
+    IntPtr resizeSource;
+    class ResizeProbe { public readonly Size[] Minimums=new Size[16]; public readonly bool[] Valid=new bool[16]; public volatile bool Ready,Cancelled; public bool Applied; }
+    ResizeProbe resizeProbe;
+    bool resizeEnding,resizeAttempted;
+    LayoutProfile resizeStartProfile;
+    string lastPlacementIssue;
+    DateTime lastFitNotice;
     readonly CommandWindow receiver;
     readonly HotkeyRegistry hotkeys;
     readonly NotifyIcon tray;
     readonly System.Windows.Forms.Timer resizeTimer=new System.Windows.Forms.Timer(),settleTimer=new System.Windows.Forms.Timer(),flyoutTimer=new System.Windows.Forms.Timer();
     readonly NativeMethods.WinEventProc eventCallback;
-    IntPtr eventHook,dragging,targetWindow,lastExternalWindow;
+    IntPtr eventHook,destroyHook,dragging,targetWindow,lastExternalWindow;
     RECT lastDrag;
     bool changed,mouseWasDown,escapeWasDown,escapeRegistered,disposed;
     int settlePasses;
@@ -155,7 +167,10 @@ public class SixSlotSnap : ApplicationContext {
     void WriteState() {
         try {
             var root=new XElement("Runtime",new XAttribute("pid",Process.GetCurrentProcess().Id),new XAttribute("version",ProductVersion),new XAttribute("recoveryRequired",recoveryNotice!=null),new XAttribute("controller",receiver.Handle.ToInt64()),new XAttribute("profile",settings.ActiveProfileId),new XAttribute("flyoutVisible",flyout!=null && flyout.Visible),new XAttribute("flyoutHandle",flyout==null?0:flyout.Handle.ToInt64()),new XAttribute("target",targetWindow.ToInt64()),new XAttribute("flyoutShortcut",settings.FlyoutShortcut));
-            for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]!=IntPtr.Zero) root.Add(new XElement("Zone",new XAttribute("number",i+1),new XAttribute("window",assigned[i].ToInt64())));
+            if(lastPlacementIssue!=null) root.Add(new XAttribute("placementIssue",lastPlacementIssue));
+            root.Add(new XAttribute("resizing",dragging!=IntPtr.Zero));
+            root.Add(new XAttribute("resizeSource",dragging.ToInt64()));
+            for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]!=IntPtr.Zero && NativeMethods.IsWindow(assigned[i])) root.Add(new XElement("Zone",new XAttribute("number",i+1),new XAttribute("window",assigned[i].ToInt64())));
             string path=Path.Combine(folder,"runtime-state.xml"); root.Save(path+".tmp"); if(File.Exists(path)) File.Replace(path+".tmp",path,null); else File.Move(path+".tmp",path);
         } catch(IOException) {} catch(UnauthorizedAccessException) {}
     }
@@ -180,11 +195,35 @@ public class SixSlotSnap : ApplicationContext {
         }
         Log("Recovered "+assigned.Count(w=>w!=IntPtr.Zero)+" occupied zones in "+grid.Profile.Name+".");
     }
-    bool PlaceWindow(IntPtr window,RECT wanted,bool notify) {
+    bool ReadMinimum(IntPtr window,out Size minimum) {
+        minimum=Size.Empty; RECT outer,visible; IntPtr result;
+        if(NativeMethods.IsHungAppWindow(window) || !NativeMethods.GetWindowRect(window,out outer) || !NativeMethods.VisibleRect(window,out visible)) return false;
+        var info=new NativeMethods.MINMAXINFO();
+        if(NativeMethods.QueryMinMax(window,0x24,IntPtr.Zero,ref info,0x23,50,out result)==IntPtr.Zero) return false;
+        minimum=new Size(Math.Max(0,info.MinTrackSize.X-((outer.R-outer.L)-(visible.R-visible.L))),Math.Max(0,info.MinTrackSize.Y-((outer.B-outer.T)-(visible.B-visible.T))));
+        return true;
+    }
+    void FitIssue(string message,bool notify) {
+        bool fresh=message!=lastPlacementIssue || (DateTime.UtcNow-lastFitNotice).TotalSeconds>2;
+        lastPlacementIssue=message;
+        if(fresh) { lastFitNotice=DateTime.UtcNow; Log(message); if(notify) tray.ShowBalloonTip(3500,"Window does not fit",message,ToolTipIcon.Warning); }
+        WriteState();
+    }
+    static bool SameFrame(RECT a,RECT b) { return Math.Abs(a.L-b.L)<=2 && Math.Abs(a.R-b.R)<=2 && Math.Abs(a.T-b.T)<=2 && Math.Abs(a.B-b.B)<=2; }
+    bool PlaceWindow(IntPtr window,RECT wanted,bool notify,bool queryMinimum=true) {
         RECT outer,visible; if(!NativeMethods.GetWindowRect(window,out outer) || !NativeMethods.VisibleRect(window,out visible)) return false;
+        if(NativeMethods.IsHungAppWindow(window)) { FitIssue("The app is not responding. Try snapping it again after it responds.",notify); return false; }
+        Size minimum=Size.Empty;
+        if(queryMinimum && !ReadMinimum(window,out minimum)) { FitIssue("The app did not provide size information in time, or Windows blocked access. Try again; administrator apps may require matching privileges.",notify); return false; }
+        if(queryMinimum && (wanted.R-wanted.L<minimum.Width || wanted.B-wanted.T<minimum.Height)) { FitIssue("This app needs at least "+minimum.Width+" x "+minimum.Height+" pixels; the selected zone is "+(wanted.R-wanted.L)+" x "+(wanted.B-wanted.T)+". Choose a larger layout or enlarge its column/row.",notify); return false; }
         int l=visible.L-outer.L,t=visible.T-outer.T,r=outer.R-visible.R,b=outer.B-visible.B;
         if(!NativeMethods.SetWindowPos(window,IntPtr.Zero,wanted.L-l,wanted.T-t,wanted.R-wanted.L+l+r,wanted.B-wanted.T+t+b,0x14)) {
             Log("Placement failed, Win32 "+Marshal.GetLastWin32Error()); if(notify) tray.ShowBalloonTip(3000,"Window could not be moved","The app may need matching administrator privileges.",ToolTipIcon.Warning); return false;
+        }
+        RECT actual;
+        if(!NativeMethods.VisibleRect(window,out actual) || !SameFrame(actual,wanted)) {
+            NativeMethods.SetWindowPos(window,IntPtr.Zero,outer.L,outer.T,outer.R-outer.L,outer.B-outer.T,0x14);
+            FitIssue("The app refused the requested frame. Its previous bounds were requested again; choose a larger zone or a supported window style.",notify); return false;
         }
         return true;
     }
@@ -193,15 +232,25 @@ public class SixSlotSnap : ApplicationContext {
     }
     void CancelResizeSession() {
         resizeTimer.Stop(); settleTimer.Stop(); dragging=IntPtr.Zero;
+        changed=false; resizeHeightBoundary=-1; resizeSource=IntPtr.Zero; if(resizeProbe!=null) resizeProbe.Cancelled=true; resizeProbe=null; resizeEnding=false; resizeAttempted=false;
         resizeWidths.Clear(); resizeHeights.Clear(); Array.Clear(resizeBaselineValid,0,16);
     }
     void BeginResizeSession(IntPtr window) {
-        CancelResizeSession(); dragging=window; changed=false;
+        CancelResizeSession(); dragging=window; resizeSource=window; changed=false;
+        resizeStartProfile=grid.Profile.Clone(); Array.Clear(grid.MinimumWidths,0,16); Array.Clear(grid.MinimumHeights,0,16);
         for(int i=0;i<grid.Profile.SlotCount;i++) {
             resizeWindows[i]=assigned[i];
             resizeBaselineValid[i]=NativeMethods.IsWindow(assigned[i]) && NativeMethods.VisibleRect(assigned[i],out resizeBaseline[i]);
         }
-        NativeMethods.VisibleRect(window,out lastDrag); resizeTimer.Start();
+        int sourceSlot=Array.IndexOf(assigned,window);
+        if(sourceSlot>=0) lastDrag=resizeBaseline[sourceSlot];
+        var probe=new ResizeProbe(); resizeProbe=probe; var windows=(IntPtr[])resizeWindows.Clone(); var eligible=(bool[])resizeBaselineValid.Clone(); int count=grid.Profile.SlotCount;
+        ThreadPool.QueueUserWorkItem(delegate {
+            IntPtr previousContext=NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4));
+            try { for(int i=0;i<count && !probe.Cancelled;i++) if(eligible[i] && !NativeMethods.IsIconic(windows[i]) && !NativeMethods.IsZoomed(windows[i])) probe.Valid[i]=ReadMinimum(windows[i],out probe.Minimums[i]); }
+            finally { if(previousContext!=IntPtr.Zero) NativeMethods.SetThreadDpiAwarenessContext(previousContext); probe.Ready=true; }
+        });
+        resizeTimer.Start(); WriteState();
     }
     void ApplyResizeFrames(bool includeSource) {
         for(int i=0;i<grid.Profile.SlotCount;i++) {
@@ -214,8 +263,17 @@ public class SixSlotSnap : ApplicationContext {
             if(resizeHeights.Contains(i)) { wanted.T=model.T; wanted.B=model.B; }
             // Unaffected windows stay at their actual starting bounds. If
             // native Snap also resized them, undo only that unintended change.
-            if(current.L!=wanted.L || current.R!=wanted.R || current.T!=wanted.T || current.B!=wanted.B) PlaceWindow(window,wanted,false);
+            if(current.L!=wanted.L || current.R!=wanted.R || current.T!=wanted.T || current.B!=wanted.B) {
+                if(!PlaceWindow(window,wanted,false,false)) { AbortResize(); return; }
+            }
         }
+    }
+    void AbortResize() {
+        IntPtr source=resizeSource;
+        for(int i=0;i<grid.Profile.SlotCount;i++) if(resizeBaselineValid[i] && assigned[i]==resizeWindows[i] && NativeMethods.IsWindow(assigned[i]) && !NativeMethods.IsIconic(assigned[i]) && !NativeMethods.IsZoomed(assigned[i])) PlaceWindow(assigned[i],resizeBaseline[i],false,false);
+        if(resizeStartProfile!=null) grid.Profile.Columns=resizeStartProfile.Columns.Select(c=>c.Clone()).ToList();
+        int slot=Array.IndexOf(assigned,source); if(slot>=0) assigned[slot]=IntPtr.Zero;
+        CancelResizeSession(); SaveSettings(); FitIssue("Linked resizing stopped because an app rejected its frame. Previous bounds were requested again. Snap the source window again to reconnect it.",true);
     }
     void UseProfile(string id) {
         if(id==settings.ActiveProfileId) return;
@@ -227,9 +285,12 @@ public class SixSlotSnap : ApplicationContext {
         if(!ValidTarget(window)) { tray.ShowBalloonTip(2500,"Choose a window first","Select the app you want to place, then open the layout flyout.",ToolTipIcon.Info); return false; }
         var profile=settings.Profiles.FirstOrDefault(p=>p.Id==profileId); if(profile==null || slot<0 || slot>=profile.SlotCount) return false;
         CancelResizeSession();
-        SetWork(NativeMethods.Monitor(window).Work); UseProfile(profileId);
-        if(NativeMethods.IsZoomed(window) || NativeMethods.IsIconic(window)) NativeMethods.ShowWindow(window,9);
-        if(!PlaceWindow(window,grid.RectFor(slot),true)) return false;
+        var work=NativeMethods.Monitor(window).Work; var desired=new LayoutModel(profile){Work=work}.RectFor(slot);
+        bool wasMaximized=NativeMethods.IsZoomed(window),wasMinimized=NativeMethods.IsIconic(window);
+        if(wasMaximized || wasMinimized) NativeMethods.ShowWindow(window,9);
+        lastPlacementIssue=null;
+        if(!PlaceWindow(window,desired,true)) { if(wasMaximized) NativeMethods.ShowWindow(window,3); else if(wasMinimized) NativeMethods.ShowWindow(window,6); return false; }
+        SetWork(work); UseProfile(profileId);
         for(int i=0;i<16;i++) if(assigned[i]==window) assigned[i]=IntPtr.Zero;
         assigned[slot]=window; SaveSettings(); WriteState(); return true;
     }
@@ -237,15 +298,54 @@ public class SixSlotSnap : ApplicationContext {
         if(dragging==IntPtr.Zero) return;
         if(!NativeMethods.IsWindow(dragging)) { CancelResizeSession(); return; }
         int slot=Array.IndexOf(assigned,dragging); RECT current;
-        if(slot<0 || !NativeMethods.VisibleRect(dragging,out current) || NativeMethods.IsZoomed(dragging)) return;
-        if(grid.Adjust(slot,lastDrag,current)) {
+        if(slot<0 || !NativeMethods.VisibleRect(dragging,out current) || NativeMethods.IsZoomed(dragging) || NativeMethods.IsIconic(dragging)) return;
+        if(resizeHeightBoundary<0 && Math.Abs((current.B-current.T)-(lastDrag.B-lastDrag.T))>1) {
+            int column,row; grid.Locate(slot,out column,out row);
+            bool top=row>0 && Math.Abs(current.T-lastDrag.T)>1,bottom=row<grid.Profile.Columns[column].Rows.Count-1 && Math.Abs(current.B-lastDrag.B)>1;
+            if(top||bottom) resizeHeightBoundary=top && (!bottom || Math.Abs(current.T-lastDrag.T)>Math.Abs(current.B-lastDrag.B))?row:row+1;
+        }
+        if(resizeProbe==null || !resizeProbe.Ready) return;
+        if(!resizeProbe.Applied) {
+            for(int i=0;i<grid.Profile.SlotCount;i++) {
+                if(resizeProbe.Valid[i]) { grid.MinimumWidths[i]=resizeProbe.Minimums[i].Width>0?resizeProbe.Minimums[i].Width+1:0; grid.MinimumHeights[i]=resizeProbe.Minimums[i].Height>0?resizeProbe.Minimums[i].Height+1:0; }
+                else if(!NativeMethods.IsIconic(resizeWindows[i]) && !NativeMethods.IsZoomed(resizeWindows[i])) resizeBaselineValid[i]=false;
+            }
+            int source=Array.IndexOf(assigned,dragging);
+            if(source<0 || !resizeBaselineValid[source]) { if(source>=0) assigned[source]=IntPtr.Zero; CancelResizeSession(); FitIssue("The source app did not respond to its size query. Snap it again after it responds.",true); return; }
+            resizeProbe.Applied=true;
+        }
+        RECT proposed=current;
+        if(Math.Abs((current.R-current.L)-(lastDrag.R-lastDrag.L))>1 || Math.Abs((current.B-current.T)-(lastDrag.B-lastDrag.T))>1) resizeAttempted=true;
+        if(resizeHeightBoundary>=0) { int column,row; grid.Locate(slot,out column,out row); if(resizeHeightBoundary==row) proposed.B=lastDrag.B; else proposed.T=lastDrag.T; }
+        if(grid.Adjust(slot,lastDrag,proposed)) {
+            if(grid.WidthAffectedSlots.Concat(grid.HeightAffectedSlots).Any(i=>!resizeBaselineValid[i])) { AbortResize(); return; }
+            if(resizeHeightBoundary<0 && grid.HeightAffectedSlots.Length==2) { int column,row; grid.Locate(grid.HeightAffectedSlots[0],out column,out row); resizeHeightBoundary=row+1; }
             changed=true; resizeWidths.UnionWith(grid.WidthAffectedSlots); resizeHeights.UnionWith(grid.HeightAffectedSlots);
         }
+        if(grid.ConstraintBlocked) { AbortResize(); return; }
         if(changed) ApplyResizeFrames(false);
-        NativeMethods.VisibleRect(dragging,out lastDrag);
+        if(dragging!=IntPtr.Zero) NativeMethods.VisibleRect(dragging,out lastDrag);
+    }
+    void CompleteResize() {
+        if(dragging==IntPtr.Zero || !resizeEnding || resizeProbe==null || !resizeProbe.Applied) return;
+        IntPtr window=dragging; resizeTimer.Stop(); int slot=Array.IndexOf(assigned,window); RECT actual;
+        if(slot>=0 && !changed && resizeAttempted && !NativeMethods.IsIconic(window) && !NativeMethods.IsZoomed(window)) {
+            if(!PlaceWindow(window,resizeBaseline[slot],true,false)) { AbortResize(); return; }
+            FitIssue("This divider reached its size limit. Choose a larger layout or adjust another boundary.",true);
+        }
+        if(slot>=0 && (NativeMethods.IsZoomed(window)||(!changed && !resizeAttempted && NativeMethods.VisibleRect(window,out actual) && !Near(actual,grid.RectFor(slot))))) assigned[slot]=IntPtr.Zero;
+        dragging=IntPtr.Zero; resizeEnding=false;
+        if(changed) { ApplyResizeFrames(true); SaveSettings(); settlePasses=0; settleTimer.Start(); }
+        WriteState();
     }
     void OnWindowEvent(IntPtr hook,uint evt,IntPtr window,int objectId,int childId,uint thread,uint time) {
         try {
+            if(evt==0x8001 && objectId==0 && childId==0) {
+                bool released=false;
+                for(int i=0;i<assigned.Length;i++) if(assigned[i]==window && window!=IntPtr.Zero) { assigned[i]=IntPtr.Zero; released=true; }
+                if(released) { if(window==resizeSource) { SaveSettings(); CancelResizeSession(); } WriteState(); }
+                return;
+            }
             if(evt==3) { if(ValidTarget(window)) lastExternalWindow=window; return; }
             if(evt==10 && Array.IndexOf(assigned,window)>=0) {
                 // A grouped native resize must not transfer ownership of the
@@ -253,9 +353,7 @@ public class SixSlotSnap : ApplicationContext {
                 if(dragging==IntPtr.Zero || !NativeMethods.IsWindow(dragging)) BeginResizeSession(window);
             }
             else if(evt==11 && window==dragging) {
-                UpdateDrag(); resizeTimer.Stop(); int slot=Array.IndexOf(assigned,window); RECT actual;
-                if(slot>=0 && (NativeMethods.IsZoomed(window)||(!changed && NativeMethods.VisibleRect(window,out actual) && !Near(actual,grid.RectFor(slot))))) assigned[slot]=IntPtr.Zero;
-                dragging=IntPtr.Zero; if(changed) { ApplyResizeFrames(true); SaveSettings(); settlePasses=0; settleTimer.Start(); } WriteState();
+                resizeEnding=true; UpdateDrag(); CompleteResize();
             }
         } catch(Exception e) { Log("Resize: "+e.Message); }
     }
@@ -347,11 +445,13 @@ public class SixSlotSnap : ApplicationContext {
         menu.Items.Add("About Windows Tile Studio",null,delegate { MessageBox.Show("Windows Tile Studio "+ProductVersion+"\n\nCustom layouts, keyboard placement, and linked resizing.\n\nRuns locally. No AI service or account is required to use the controller.","About Windows Tile Studio",MessageBoxButtons.OK,MessageBoxIcon.Information); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
         tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(); }; receiver.Received=HandleCommand;
-        resizeTimer.Interval=30; resizeTimer.Tick+=delegate { try { UpdateDrag(); } catch(Exception e) { Log("Resize tick: "+e.Message); } };
+        resizeTimer.Interval=30; resizeTimer.Tick+=delegate { try { UpdateDrag(); CompleteResize(); } catch(Exception e) { Log("Resize tick: "+e.Message); } };
         settleTimer.Interval=100; settleTimer.Tick+=delegate { try { if(dragging==IntPtr.Zero) ApplyResizeFrames(true); } catch(Exception e) { Log("Settle: "+e.Message); } if(++settlePasses>=3) settleTimer.Stop(); };
         flyoutTimer.Interval=20; flyoutTimer.Tick+=delegate { PollFlyout(); };
         IntPtr foreground=NativeMethods.GetForegroundWindow(); if(ValidTarget(foreground)) lastExternalWindow=foreground;
         eventCallback=OnWindowEvent; eventHook=NativeMethods.SetWinEventHook(3,11,IntPtr.Zero,eventCallback,0,0,0);
+        destroyHook=NativeMethods.SetWinEventHook(0x8001,0x8001,IntPtr.Zero,eventCallback,0,0,0);
+        if(destroyHook==IntPtr.Zero) Log("Closed-window event hook unavailable; dead handles are filtered when runtime state is next written.");
         if(eventHook==IntPtr.Zero) { tray.ShowBalloonTip(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
         RecoverAssignments(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
         if(warning!=null) { Log(warning); tray.ShowBalloonTip(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
@@ -362,7 +462,7 @@ public class SixSlotSnap : ApplicationContext {
         if(settingsForm!=null && !settingsForm.IsDisposed) { var open=settingsForm; open.DialogResult=DialogResult.Cancel; open.Close(); if(!open.IsDisposed && open.DialogResult==DialogResult.None) return; }
         disposed=true;
         resizeTimer.Stop(); settleTimer.Stop(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose();
-        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
+        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); if(destroyHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(destroyHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
     }
     [STAThread] public static void Main(string[] args) {
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); Application.EnableVisualStyles();

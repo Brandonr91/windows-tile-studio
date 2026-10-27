@@ -102,6 +102,19 @@ class GridTests {
         var unchanged=model.RectFor(0); Check(top.T==unchanged.T && top.B==unchanged.B,"Height adjustment moved the uninvolved third window");
         Cover(model);
     }
+    static void MinimumConstraints() {
+        var p=LayoutProfile.Create("minimums","Minimum constraints",2,3); var model=new LayoutModel(p){Work=new SixSlotSnap.RECT{R=2000,B=1200}};
+        model.MinimumWidths[1]=800; var source=model.RectFor(0); var proposed=source;proposed.R=1800;
+        Check(model.Adjust(0,source,proposed),"A feasible constrained width did not adjust");
+        var neighbor=model.RectFor(1);Check(neighbor.R-neighbor.L>=800,"A neighbor's advertised width minimum was violated");
+        var top=model.RectFor(0);model.MinimumHeights[4]=350;source=model.RectFor(2);proposed=source;proposed.B=1100;
+        Check(model.Adjust(2,source,proposed),"A feasible constrained height did not adjust");
+        neighbor=model.RectFor(4);Check(neighbor.B-neighbor.T>=350 && model.RectFor(0).B==top.B,"Height minimum negotiation changed a nonadjacent window");
+        var before=p.Clone();model.MinimumHeights[2]=700;model.MinimumHeights[4]=700;source=model.RectFor(2);proposed=source;proposed.B+=100;
+        Check(!model.Adjust(2,source,proposed) && p.GeometryMatches(before),"Impossible height constraints changed the grid");
+        model.MinimumWidths[0]=1400;model.MinimumWidths[1]=1400;source=model.RectFor(0);proposed=source;proposed.R+=100;
+        Check(!model.Adjust(0,source,proposed) && p.GeometryMatches(before),"Impossible width constraints changed the grid");Cover(model);
+    }
     static int Main() {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
@@ -109,6 +122,7 @@ class GridTests {
             var ragged=LayoutProfile.Create("ragged","Mixed column rows",3,2); ragged.Columns[1].Rows.Add(1); ragged.Columns[2].Rows.RemoveAt(1); Exercise(ragged,-5120,-2160);
             Config(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             HeightPair();
+            MinimumConstraints();
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }

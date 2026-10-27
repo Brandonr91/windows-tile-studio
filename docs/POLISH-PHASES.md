@@ -10,7 +10,7 @@ background work or promise dates. Preserve independent height pairs throughout.
 | --- | --- | --- | --- |
 | 1. Everyday controls and identity | Settings organization, launcher reset/visibility, consistent visible branding, tray version/About. | Appearance save/cancel works, no unnecessary window reflow, existing resize/flyout tests pass. | Implemented and verified locally as `0.3.0-preview.1`; not published. |
 | 2. Editing safeguards and recovery | Unsaved changes, reversible grid edits/reset confirmation, actionable errors, startup hotkey conflicts, corrupt settings and missing-manager recovery. | Isolated failure reproductions preserve original files/working shortcuts and provide usable recovery. | Implemented and verified locally as `0.3.0-preview.2`; not published. |
-| 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Planned. |
+| 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Core implemented and representative matrix verified locally as `0.3.0-preview.3`; elevated/hung-app limits remain explicit. |
 | 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Planned. |
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Planned. |
 | 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Planned. |
@@ -67,13 +67,33 @@ background work or promise dates. Preserve independent height pairs throughout.
 5. Update context records and package the tested phase. Keep preview work
    distinct from a production release.
 
-## Exact next work: phase 3
+## Phase 3 result
+
+Reported minimum constraints, post-placement fit verification, background DPI-aware
+probes, pinned height gestures, limit feedback and closed-window cleanup are
+implemented. Geometry/configuration: 186177 checks PASS. Full hosted regression
+and focused compatibility suites PASS, including 3/4-row layouts, a delayed
+query, borderless/tool frames and isolated Chrome. See the detailed
+[compatibility checkpoint](COMPATIBILITY.md) for measurements and limits.
+Elevated apps and completely hung targets remain unverified; this is not a
+universal application-compatibility or production-release claim.
+
+## Phase 3 validation sequence (completed for recorded cases)
 
 Start with disposable windows that impose minimum sizes and a 3-row column.
 Exercise both sides of each divider, width-only changes, corners, rapid native
 notifications, minimize/restore and app restarts. Reproduce failures before
 changing negotiation or resize ownership; preserve nonadjacent heights and
 measure responsiveness. Multi-monitor support belongs to phase 4.
+
+## Exact next work: phase 4
+
+Inspect monitor/work-area selection and define stable monitor identity and
+backward-compatible profile/state storage before changing window ownership.
+Add simulated negative-origin, mixed-DPI and work-area-change cases, then verify
+available physical displays, disconnect/reconnect and sleep/resume explicitly.
+Keep the launcher visible and preserve per-monitor independent height pairs.
+Do not claim hardware coverage from simulations alone.
 
 ## Before pushing a production release
 

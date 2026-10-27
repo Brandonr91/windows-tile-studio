@@ -23,6 +23,16 @@ are explicitly labeled. Consult actual source before relying on them.
 
 ## Resolved failures and tradeoffs
 
+- Phase 3 (`0.3.0-preview.3`, 2026-10-27) treats advertised minimum sizes as
+  constraints, verifies actual placement before assignment, and pins one height
+  boundary per gesture. A background probe keeps size messaging off the UI loop.
+  Its DPI context must be set/restored explicitly; tests reproduced drift when
+  worker GetWindowRect coordinates were virtualized while DWM bounds were physical.
+- Timeout/rejection must give feedback and stop repeated forcing. Rollback is
+  best-effort and may require explicit re-snap. Closed windows release slots;
+  app restarts do not authorize implicit adoption. Representative compatibility
+  coverage and remaining limits are recorded in `docs/COMPATIBILITY.md`.
+
 - Phase 1 of the user's phased polish request groups bar controls in Appearance
   and uses one visible Windows Tile Studio identity/version. Internal class,
   mutex, receiver and EXE names stay compatible. Appearance/name/hotkey-only

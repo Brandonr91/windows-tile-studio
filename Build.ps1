@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[string]$HostedSourceRoot)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[string]$HostedSourceRoot)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -21,13 +21,17 @@ if ($Test) {
     & $testExecutable
     if ($LASTEXITCODE -ne 0) { throw 'Grid tests failed.' }
 }
-if ($Integration -or $HostedIntegration) {
+if ($Integration -or $HostedIntegration -or $Compatibility) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'
     & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$integrationExecutable" (Join-Path $PSScriptRoot 'tests\IntegrationTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Integration test compilation failed.' }
     if ($Integration) {
         & $integrationExecutable
         if ($LASTEXITCODE -ne 0) { throw 'Integration tests failed; inspect bin/integration-data.' }
+    }
+    if ($Compatibility) {
+        & $integrationExecutable (Join-Path $output 'compatibility-data') --compatibility-only
+        if ($LASTEXITCODE -ne 0) { throw 'Compatibility tests failed; inspect bin/compatibility-data.' }
     }
     if ($HostedIntegration) {
         if ([string]::IsNullOrWhiteSpace($HostedSourceRoot)) { $HostedSourceRoot = $PSScriptRoot }

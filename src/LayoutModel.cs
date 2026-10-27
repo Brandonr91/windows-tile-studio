@@ -52,6 +52,8 @@ public class LayoutModel {
     public LayoutProfile Profile;
     public int[] WidthAffectedSlots=new int[0];
     public int[] HeightAffectedSlots=new int[0];
+    public int[] MinimumWidths=new int[16],MinimumHeights=new int[16];
+    public bool ConstraintBlocked;
     public LayoutModel(LayoutProfile profile) { Profile=profile; }
     public bool Locate(int slot,out int column,out int row) {
         int index=0,max=Profile.Columns.Max(c=>c.Rows.Count);
@@ -72,27 +74,30 @@ public class LayoutModel {
         int w=Work.R-Work.L,h=Work.B-Work.T;
         return new SixSlotSnap.RECT{L=Pixel(Work.L,w,x),R=c==Profile.Columns.Count-1?Work.R:Pixel(Work.L,w,x+column.Width),T=Pixel(Work.T,h,y),B=r==column.Rows.Count-1?Work.B:Pixel(Work.T,h,y+column.Rows[r])};
     }
-    static bool Boundary(IList<double> parts,int boundary,double desired,double min) {
+    bool Boundary(IList<double> parts,int boundary,double desired,double min,double minimumBefore,double minimumAfter) {
         if(boundary<=0 || boundary>=parts.Count) return false;
         double start=0; for(int i=0;i<boundary-1;i++) start+=parts[i];
         double end=start+parts[boundary-1]+parts[boundary];
         min=Math.Max(0.04,Math.Min(min,(end-start)/2));
-        double split=Math.Max(start+min,Math.Min(end-min,desired));
+        double before=Math.Max(min,minimumBefore),after=Math.Max(min,minimumAfter);
+        if(before+after>end-start+1e-9) { ConstraintBlocked=true; return false; }
+        double split=Math.Max(start+before,Math.Min(end-after,desired));
         if(Math.Abs(parts[boundary-1]-(split-start))<1e-9) return false;
         parts[boundary-1]=split-start; parts[boundary]=end-split; return true;
     }
     public bool Adjust(int slot,SixSlotSnap.RECT before,SixSlotSnap.RECT after) {
-        WidthAffectedSlots=new int[0]; HeightAffectedSlots=new int[0];
+        WidthAffectedSlots=new int[0]; HeightAffectedSlots=new int[0]; ConstraintBlocked=false;
         int c,r,w=Work.R-Work.L,h=Work.B-Work.T;
         if(!Locate(slot,out c,out r) || w<=0 || h<=0) return false;
         bool changed=false; var widths=Profile.Columns.Select(v=>v.Width).ToList();
         var widthSlots=new HashSet<int>(); var heightSlots=new HashSet<int>();
+        Func<int,double> columnMinimum=column=>column<0||column>=Profile.Columns.Count?0:Enumerable.Range(0,Profile.Columns[column].Rows.Count).Max(row=>MinimumWidths[IndexOf(column,row)])/(double)w;
         Action<int> markWidth=delegate(int boundary) {
             for(int column=boundary-1;column<=boundary;column++) for(int row=0;row<Profile.Columns[column].Rows.Count;row++) widthSlots.Add(IndexOf(column,row));
         };
         if(Math.Abs((after.R-after.L)-(before.R-before.L))>1) {
-            if(Math.Abs(after.L-before.L)>1 && Boundary(widths,c,(after.L-Work.L)/(double)w,400.0/w)) { changed=true; markWidth(c); }
-            if(Math.Abs(after.R-before.R)>1 && Boundary(widths,c+1,(after.R-Work.L)/(double)w,400.0/w)) { changed=true; markWidth(c+1); }
+            if(Math.Abs(after.L-before.L)>1 && Boundary(widths,c,(after.L-Work.L)/(double)w,400.0/w,columnMinimum(c-1),columnMinimum(c))) { changed=true; markWidth(c); }
+            if(Math.Abs(after.R-before.R)>1 && Boundary(widths,c+1,(after.R-Work.L)/(double)w,400.0/w,columnMinimum(c),columnMinimum(c+1))) { changed=true; markWidth(c+1); }
         }
         for(int i=0;i<widths.Count;i++) Profile.Columns[i].Width=widths[i];
         var rows=Profile.Columns[c].Rows;
@@ -104,7 +109,7 @@ public class LayoutModel {
             bool useTop=top && (!bottom || Math.Abs(after.T-before.T)>Math.Abs(after.B-before.B));
             int boundary=useTop?r:r+1;
             double desired=useTop?(after.T-Work.T)/(double)h:(after.B-Work.T)/(double)h;
-            if((top||bottom) && Boundary(rows,boundary,desired,200.0/h)) {
+            if((top||bottom) && Boundary(rows,boundary,desired,200.0/h,MinimumHeights[IndexOf(c,boundary-1)]/(double)h,MinimumHeights[IndexOf(c,boundary)]/(double)h)) {
                 changed=true; heightSlots.Add(IndexOf(c,boundary-1)); heightSlots.Add(IndexOf(c,boundary));
             }
         }

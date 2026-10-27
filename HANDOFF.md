@@ -1,5 +1,46 @@
 # Handoff
 
+## Current checkpoint: phase 3
+
+2026-10-27, following `11f217a`. Phase 3 core is implemented locally as
+`0.3.0-preview.3`. The original user workflow, pair-only heights, source-only
+host and legacy preference are preserved. Next is phase 4 display/per-monitor
+state, not a production release. See [compatibility evidence](docs/COMPATIBILITY.md)
+and the phase plan before continuing after compaction or a new session.
+
+Implemented: reported minimum constraints in transient model arrays; verified
+visible frames before assignment; failed-fit feedback/best-effort restore;
+background minimum probes with explicit thread DPI context, timeout/cancellation;
+height-boundary ownership pinned even while probes are pending; limit no-op
+restoration; closed-window event cleanup; explicit reconnect after restore/restart.
+Runtime XML now reports resizing/source and the last placement issue.
+
+Reproduced failures included an oversized app falsely marked snapped and closed
+windows left in runtime assignments. Development also exposed worker DPI drift
+and tests relying on fixed native-event timing. Tests now acknowledge source
+ownership/completion; synthetic grouped-neighbor duplicates remain raw events.
+No temporary DEBUG logging remains in source.
+
+Final checks: `Build.ps1 -Test` PASS (186177); `Build.ps1 -HostedIntegration`
+PASS, including phases 1–2 and compiled compatibility subcases; focused
+`Build.ps1 -Compatibility` PASS twice with slow response, app minimums, at-limit
+drag, 3/4-row dividers, corners, borderless/tool frames, minimize/maximize,
+close/recreate, and isolated Chrome. Latest full-run corner sample: 20 updates,
+1487 ms including deliberate pumping/settling, 47 ms controller CPU; one-second
+idle sample 16 ms CPU; no growing GDI-object count. Short samples have finite
+accounting resolution and are not universal performance guarantees.
+
+Elevated apps and completely hung targets were not manually validated.
+SendMessageTimeout bounds sizing queries; SetWindowPos/DWM still have no overall
+hard deadline. Other frame/aspect/max constraints and native mouse timing need
+broader beta coverage. Do not expand the tested matrix into an all-app claim.
+
+Updated source is installed in the daily hosted folder; preserve its `data/`.
+The prior source/settings fallback is under `work/phase-three-fallback`.
+Reports are `outputs/windows-tile-studio-phase-three-test-results.txt` and
+`outputs/windows-tile-studio-phase-three-compatibility-results.txt` outside Git.
+Changes remain local until separately published; original repository untouched.
+
 ## Current checkpoint: phase 2
 
 2026-10-26 following `c56b6a7`. Phase 2 is implemented locally as

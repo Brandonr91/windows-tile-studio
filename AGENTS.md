@@ -49,6 +49,14 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
   heights elsewhere, including during width resizing and settling. Extra native
   group events must not transfer resize ownership to a flanking window.
 - Preserve physical-pixel DPI handling and invisible-frame compensation.
+- Set and restore physical-pixel DPI context on background geometry-probe
+  threads too. Never combine virtualized GetWindowRect with physical DWM bounds.
+- Treat reported app minimum sizes as advisory constraints and verify actual
+  frames after placement. Reject failed fits without adding a false assignment.
+  Keep size queries bounded and off the live resize UI loop; cancelled probe
+  results must not affect a new session. Pin a height gesture to one boundary.
+- Release closed windows with lifecycle events; restarting/recreating an app
+  does not authorize automatic adoption or relaunch.
 - Keep the visual selector nonactivating and retain clean hotkey cleanup.
 - Default the persistent Layouts bar near the taskbar clock (above the primary
   taskbar's right end). Dragging the bar moves it without opening the selector;
@@ -94,6 +102,11 @@ native resize events, hotkey cleanup, or the settings editor.
 host. Use `-HostedSourceRoot` for a clean source-only controller fixture.
 Keep installer cleanup bounded to its own fresh staging directory; never
 delete or replace user data when switching source versions.
+
+`./Build.ps1 -Compatibility` runs focused disposable 3/4-row, size-limit,
+lifecycle and isolated Chrome-frame checks with the daily controller stopped.
+It uses a separate Chrome profile and must never move existing browser windows.
+Performance samples are local observations, not universal latency/CPU promises.
 
 ## Repository hygiene
 

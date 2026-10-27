@@ -10,6 +10,10 @@ previously optional capabilities are in the planned phases, not claimed complete
 Phase 2 now adds draft-close safeguards, confirmed/undoable grid changes,
 failed-save retention, startup Recovery settings and standalone legacy restore.
 Phase 3 is compatibility/responsiveness; broader production gates remain open.
+Phase 3 now has a tested core: size constraints, verified fits, pinned height
+gestures, asynchronous DPI-aware probes and lifecycle cleanup. See the
+[compatibility checkpoint](COMPATIBILITY.md) for exact coverage and open limits.
+Per-monitor state and display recovery are phase 4, still planned.
 
 ## Basic preview version — implemented
 

@@ -141,6 +141,10 @@ available and the panel reports that keyboard navigation is unavailable.
 
 - Drag a shared **left/right edge** to resize neighboring columns in both rows.
 - Drag a shared **top/bottom edge** to resize that column's two windows.
+- Reported app minimum sizes constrain shared dividers. If a window cannot fit
+  its requested zone, placement is rejected with feedback instead of recording
+  a false snap. Choose another zone or enlarge the layout; unusual app sizing
+  rules may still prevent an exact fit.
 - Each column keeps its own row divider. A horizontal boundary does not move
   the row dividers in other columns.
 - Height dragging affects only the two windows sharing that boundary, from
@@ -209,7 +213,8 @@ you want to retain it as a fallback; only one controller can run at a time.
 - One monitor is managed at a time; snapping on another monitor switches the
   active layout and clears the previous monitor's window assignments.
 - Only the most recently snapped window in each slot participates in resizing.
-- App minimum sizes may prevent an exact fit. Minimized and maximized neighbors
+- Advertised minimum sizes are checked, and actual placement is verified, but
+  arbitrary app restrictions may still prevent an exact fit. Minimized and maximized neighbors
   are excluded from linked resizing.
 - Elevated apps may require running the controller with matching privileges.
 - The selector is a separate panel. This does not add a Windows Snap flyout
@@ -223,6 +228,14 @@ you want to retain it as a fallback; only one controller can run at a time.
 - This version uses rectangular column stacks, not arbitrary overlapping zones.
 
 ## Development and verification
+
+With the daily controller stopped, `Build.ps1 -Compatibility` runs the focused
+phase-3 window tests. They include 3/4-row stacks, delayed size replies, reported
+minimums, limit drags, lifecycle cases and an isolated Chrome profile when Chrome
+is available. Existing browser windows are not used. The full hosted suite also
+includes these compiled-controller compatibility subcases. See the
+[compatibility checkpoint](docs/COMPATIBILITY.md) for exact results and limits;
+elevated and completely hung apps have not been manually validated.
 
 The controller is split across `src/`: native window management, layout geometry,
 settings persistence, flyout controls, and the settings GUI. Run `Build.ps1 -Test`
