@@ -1,5 +1,38 @@
 # Phases 1–4 regression audit
 
+## Repeat check after launcher fix
+
+2026-10-27, source `53d589f`, no application changes. Final accepted checks:
+
+| Check | Result |
+| --- | --- |
+| Geometry/configuration | PASS, 186297 checks. |
+| Compiled launcher real-loop paint | PASS, 70 synthetic DPI transitions, correct fonts, rendering and bounded GDI count. |
+| Source-hosted launcher real-loop paint | PASS, same 70-transition test under Windows PowerShell 5.1 STA. |
+| Compiled desktop integration | PASS, resize/concurrent-source regression, independent heights, selector/hotkeys/editor, recovery and compatibility subcases. |
+| Final hosted desktop integration | PASS, same coverage and live synthetic display/resume notifications. |
+| Legacy supersession/restoration | PASS, disposable fixture only. |
+| Source installer/hosting | PASS, archive safety, persistent data and fallback checks. |
+| Packaged app source/content | PASS, all six sources match checkout; no user runtime data/binaries. |
+
+The initial desktop run failed selector persistence. It lacked dismissal/focus
+evidence, so its cause remains unconfirmed. A compiled diagnostic rerun passed;
+the following hosted attempt stopped because the disposable target could not
+acquire foreground. The test now captures foreign foreground events, sampled
+mouse/Escape state and display-refresh count on persistence failures, and waits
+up to two seconds for focus setup instead of one 100 ms attempt. The final
+hosted suite passed. These are test diagnostics/setup changes, not a product
+selector fix or suppression of a failure. Original failed reports remain saved.
+
+The compiled controller was restored with all six assignments and no recovery
+warning. Only saved launcher position fields differ from the initial snapshot;
+the latest position was retained. Reports are outside Git under
+`outputs/windows-tile-studio-phase-recheck-*`. Accepted desktop reports:
+`phase-recheck-compiled.txt`, `phase-recheck-hosted-final.txt`; initial failure:
+`phase-recheck-core.txt`; focus precondition failure: `phase-recheck-hosted.txt`.
+Physical multi-monitor/docking/sleep and the previously listed manual/privilege
+gaps remain unverified. No new phase or public push was performed.
+
 ## Follow-up: actual launcher painting
 
 After this audit, the user reported a red-cross launcher and "Parameter is not

@@ -48,9 +48,15 @@ class IntegrationTests {
         Check(NativeMethods.SetWindowPos(forms[index].Handle,IntPtr.Zero,wanted.L-l,wanted.T-t,wanted.R-wanted.L+l+r,wanted.B-wanted.T+t+b,0x14),"Cannot resize test window");
     }
     static void Focus(IntPtr target) {
-        uint process; uint other=NativeMethods.GetWindowThreadProcessId(NativeMethods.GetForegroundWindow(),out process),own=GetCurrentThreadId();
-        bool attach=other!=own && other!=0; if(attach) AttachThreadInput(own,other,true);
-        NativeMethods.ShowWindow(target,5); NativeMethods.SetForegroundWindow(target); if(attach) AttachThreadInput(own,other,false); Pump(100);
+        var until=DateTime.UtcNow.AddSeconds(2);
+        do {
+            uint process; uint other=NativeMethods.GetWindowThreadProcessId(NativeMethods.GetForegroundWindow(),out process),own=GetCurrentThreadId();
+            bool attached=other!=own && other!=0 && AttachThreadInput(own,other,true);
+            try {NativeMethods.ShowWindow(target,5);NativeMethods.SetForegroundWindow(target);}
+            finally {if(attached)AttachThreadInput(own,other,false);}
+            Pump(100);
+            if(NativeMethods.GetForegroundWindow()==target)return;
+        } while(DateTime.UtcNow<until);
     }
     static void Click(IntPtr window) { IntPtr result; Check(SendMessageTimeout(window,0xF5,IntPtr.Zero,IntPtr.Zero,2,2000,out result)!=IntPtr.Zero,"Test button click failed"); Pump(160); }
     static string Text(IntPtr w) { var text=new StringBuilder(256); GetWindowText(w,text,text.Capacity); return text.ToString(); }
@@ -337,8 +343,16 @@ class IntegrationTests {
         var afterGrouped=Model(); foreach(int c in new[]{0,2}) Check(afterGrouped.Profile.Columns[c].Rows.SequenceEqual(beforeGrouped.Profile.Columns[c].Rows),"Grouped native events changed a flanking column's row ratios");
         passed.Add("Native-style grouped flanking resizes are corrected; extra neighbor start/end events cannot take ownership of the active height pair.");
         Focus(forms[0].Handle); Check(NativeMethods.GetForegroundWindow()==forms[0].Handle,"Test window could not acquire foreground");
-        Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Flyout did not open"); Pump(2200);
-        Check(Open(),"Flyout disappeared without a selection or outside click"); Check(NativeMethods.GetForegroundWindow()==forms[0].Handle,"Flyout took foreground focus");
+        var focusChanges=new List<long>();bool externalMouse=false,escapeDown=false;
+        NativeMethods.WinEventProc focusProbe=delegate(IntPtr hook,uint evt,IntPtr window,int obj,int child,uint thread,uint time){if(window!=forms[0].Handle)focusChanges.Add(window.ToInt64());};
+        IntPtr focusHook=NativeMethods.SetWinEventHook(3,3,IntPtr.Zero,focusProbe,0,0,0);
+        try {
+            Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Flyout did not open");
+            var until=DateTime.UtcNow.AddMilliseconds(2200);
+            while(DateTime.UtcNow<until) {Pump(20);externalMouse|=(NativeMethods.GetAsyncKeyState(1)&0x8000)!=0 || (NativeMethods.GetAsyncKeyState(2)&0x8000)!=0;escapeDown|=(NativeMethods.GetAsyncKeyState(27)&0x8000)!=0;}
+            Check(Open(),"Flyout persistence check failed; other foreground HWNDs="+string.Join(",",focusChanges)+"; current foreground="+NativeMethods.GetForegroundWindow().ToInt64()+"; target="+forms[0].Handle.ToInt64()+"; mouseDownObserved="+externalMouse+"; EscapeObserved="+escapeDown+"; displayRefreshes="+(string)State().Attribute("displayRefreshes"));
+            Check(NativeMethods.GetForegroundWindow()==forms[0].Handle,"Flyout took foreground focus");
+        } finally {if(focusHook!=IntPtr.Zero)NativeMethods.UnhookWinEvent(focusHook);GC.KeepAlive(focusProbe);}
         Check((long)State().Attribute("target")==forms[0].Handle.ToInt64(),"Original window target was lost"); passed.Add("Flyout stays open and preserves the target window and foreground focus.");
         Command(0x312,200,IntPtr.Zero); Check(!Open(),"Escape shortcut route did not dismiss flyout");
         Command(SixSlotSnap.ShowCommand,0,receiver); Wait(Open,"Flyout could not recover the last external target");

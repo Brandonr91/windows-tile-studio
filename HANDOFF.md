@@ -1,5 +1,35 @@
 # Handoff
 
+## Latest repeat phase 1–4 check
+
+2026-10-27, starting at `53d589f`. Application source unchanged. PASS:
+186297 geometry/configuration checks; compiled and source-hosted real-loop
+launcher paint tests (70 DPI transitions each); full compiled integration;
+final full hosted integration with recovery and compatibility subcases; legacy
+supersession/restoration; source installer/hosting tests; archive source/content
+checks. Both archives matched all six app sources and excluded runtime data/binaries.
+
+Keep the failed attempts visible: first compiled run failed selector persistence
+without recording a dismissal reason. A diagnostic compiled rerun passed. The
+next hosted attempt could not acquire foreground focus before selector testing.
+Test-only changes now capture foreign foreground HWNDs, mouse/Escape state and
+refresh count on persistence failures, and retry the disposable target's focus
+setup for up to two seconds. Final hosted run passed. The initial selector
+failure's cause remains unconfirmed; do not label it fixed or definitively blame
+user input. No application behavior was changed or new phase implemented.
+
+Current compiled controller restored using repo `data/`; six assignments recovered,
+recoveryRequired=false. Keep current data and verify actual process/runtime before
+desktop work. The saved launcher position changed during this recheck interval;
+only LauncherPositionSet/X/Y differ from the initial snapshot. Retain this latest
+position rather than overwriting it. Snapshot: `work/phase-recheck-20261027-145329`.
+Reports: `outputs/windows-tile-studio-phase-recheck-*`; accepted desktop runs are
+`phase-recheck-compiled.txt` and `phase-recheck-hosted-final.txt`. Initial failures
+remain in `phase-recheck-core.txt` and `phase-recheck-hosted.txt`. No public push.
+Physical multi-monitor/docking/sleep, elevated/hung apps and remaining manual UI
+coverage remain open, as described in docs/PHASE-AUDIT.md. Preserve this distinction
+when answering status questions or resuming development.
+
 ## Latest fix: launcher paint exception
 
 2026-10-27, following `1a3c193`, user reported the .NET "Parameter is not valid"
