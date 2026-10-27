@@ -4,8 +4,8 @@ A small Windows desktop controller with a persistent custom-layout flyout,
 editable layouts and hotkeys, and connected window resizing. Its default
 layout is three columns by two rows, with independent row dividers.
 
-**Basic preview version 0.2.** See [the roadmap](docs/ROADMAP.md) for the boundary
-between the working basic build and planned polish.
+**Polish preview.** Keyboard selection, pair-only height resizing, and source
+launchers are available. See [the roadmap](docs/ROADMAP.md) for further work.
 
 This is the configurable-layout successor to
 [Six Slot Snap](https://github.com/Brandonr91/six-slot-snap), published in a
@@ -38,6 +38,12 @@ their own desktop tools.
 controller runs locally without an AI service, API key, or network connection.
 
 ## Start
+
+The launch-mode polish branch adds **Start-Hosted.cmd**, which runs the
+controller inside Windows PowerShell without generating a standalone app EXE,
+and **Get-FromGitHub.ps1**, which installs source into versioned local folders.
+See [launch modes](docs/LAUNCHING.md) for instructions, publication requirements,
+and tests. The compiled mode below remains available.
 
 Download or clone this repository into a writable folder, then double-click
 **Start.cmd**. The first launch compiles the source using the .NET Framework
@@ -87,14 +93,23 @@ them to its resizing group.
 
 ## Resize the grid
 
+In the flyout, use **arrows** to move the highlighted zone, **Tab/Shift+Tab**
+to change layouts, and **Enter** to place the original window. **Escape** closes
+the panel. Navigation keys are released when it closes or you switch apps.
+If another application reserves a navigation key, mouse selection remains
+available and the panel reports that keyboard navigation is unavailable.
+
 - Drag a shared **left/right edge** to resize neighboring columns in both rows.
 - Drag a shared **top/bottom edge** to resize that column's two windows.
 - Each column keeps its own row divider. A horizontal boundary does not move
   the row dividers in other columns.
+- Height dragging affects only the two windows sharing that boundary, from
+  either side. Width dragging preserves each window's existing height.
 - Moving a window away releases its slot. Snap it again to reconnect it.
 
-The controller saves profiles, proportions, and hotkeys in `bin/settings.xml`.
-It keeps the previous file in `bin/settings.xml.bak` when replacing settings.
+The launch scripts save profiles, proportions, and hotkeys in `data/settings.xml`.
+The previous file is kept in `data/settings.xml.bak` when replacing settings.
+Earlier portable builds used `bin/`; their settings are imported on first use.
 An invalid settings file is preserved while defaults run; a warning explains
 the recovery. When the controller starts, it
 reconnects windows already occupying the saved columns. Current complementary
@@ -145,8 +160,8 @@ you want to retain it as a fallback; only one controller can run at a time.
   geometry, so overlapping duplicate windows may need manual reassignment.
 - Full-screen apps, unusual window frames, and additional display configurations
   need broader testing.
-- Mouse zone selection, Escape, and direct zone hotkeys are available; arrow-key
-  navigation inside the flyout is planned rather than implemented.
+- Keyboard navigation needs its temporary keys to be available; a conflict
+  keeps mouse selection available without capturing a partial set of keys.
 - This version uses rectangular column stacks, not arbitrary overlapping zones.
 
 ## Development and verification
@@ -168,7 +183,7 @@ Actual desktop checks also verified a customized global hotkey, outside-click
 dismissal, Escape, and saving a custom layout and shortcut through the GUI.
 
 Before reporting a resizing problem, include the app names, display scaling,
-which edge was dragged, and the relevant lines from `bin/status.log`.
+which edge was dragged, and the relevant lines from the data folder's `status.log`.
 
 ## Recreate or expand it with Codex
 
