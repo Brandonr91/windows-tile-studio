@@ -152,6 +152,25 @@ class IntegrationTests {
         Check(Equal(Bounds(forms[0].Handle),Model().RectFor(1)),"Selected zone did not place original target"); Check(Equal(unchanged,Bounds(forms[1].Handle)),"Changing layouts moved an unrelated window"); passed.Add("Actual flyout button selects a different layout and moves only the original target.");
         Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Flyout did not reopen"); Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Check(!Open(),"Flyout shortcut toggle failed");
         passed.Add("Escape route and repeated flyout command dismiss cleanly.");
+        Focus(forms[0].Handle); Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Keyboard flyout did not open");
+        SendKeys.SendWait("{RIGHT}"); Pump(150); SendKeys.SendWait("{ENTER}"); Pump(250);
+        Check(!Open(),"Enter did not select the highlighted zone");
+        Check(Equal(Bounds(forms[0].Handle),Model().RectFor(1)),"Arrow/Enter did not place the original target in zone 2");
+        Focus(forms[0].Handle); Command(SixSlotSnap.ShowCommand,0,forms[0].Handle);
+        SendKeys.SendWait("{TAB}"); Pump(100); SendKeys.SendWait("+{TAB}"); Pump(100); SendKeys.SendWait("{ENTER}"); Pump(250);
+        Check(!Open() && Equal(Bounds(forms[0].Handle),Model().RectFor(0)),"Tab/Shift+Tab did not return to the original layout");
+        using(var keyProbe=new Form()) {
+            for(int i=0;i<7;i++) {
+                var keys=new[]{Keys.Left,Keys.Right,Keys.Up,Keys.Down,Keys.Tab,Keys.Tab,Keys.Enter};
+                Check(NativeMethods.RegisterHotKey(keyProbe.Handle,950+i,0x4000u|(i==5?4u:0u),(uint)keys[i]),"Flyout navigation key leaked after close");
+                NativeMethods.UnregisterHotKey(keyProbe.Handle,950+i);
+            }
+            Check(NativeMethods.RegisterHotKey(keyProbe.Handle,970,0x4000,(uint)Keys.Up),"Could not reserve conflict key");
+            Command(SixSlotSnap.ShowCommand,0,forms[0].Handle); Wait(Open,"Navigation conflict prevented mouse flyout");
+            Check(NativeMethods.RegisterHotKey(keyProbe.Handle,971,0x4000,(uint)Keys.Left),"Partial navigation registration was not rolled back");
+            NativeMethods.UnregisterHotKey(keyProbe.Handle,971); Command(0x312,200,IntPtr.Zero); NativeMethods.UnregisterHotKey(keyProbe.Handle,970);
+        }
+        passed.Add("Actual arrow/Enter and Tab/Shift+Tab input selects the original target; navigation keys release on close and roll back on conflicts.");
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Controller did not exit cleanly");
         var duplicate=new Form(); IntPtr handle=duplicate.Handle;
         var shortcut=AppSettings.Defaults().FlyoutShortcut; Check(NativeMethods.RegisterHotKey(handle,900,0x4000|(uint)shortcut.Modifiers,(uint)shortcut.Key),"Flyout hotkey was not released on exit"); NativeMethods.UnregisterHotKey(handle,900); duplicate.Dispose();

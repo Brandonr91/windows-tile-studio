@@ -4,9 +4,9 @@ This polish milestone adds two entry points: a source downloader for GitHub,
 and a Windows PowerShell host that does not generate a standalone app EXE.
 
 The hosted launcher must be present in the revision you download. An older
-published basic revision cannot provide it. While this branch is unpublished,
-use its local source or hosted package; the existing public basic version can
-still be installed explicitly with `-Mode Compiled`.
+published basic revision cannot provide it. Use the current polish revision
+for hosted mode; older basic revisions can still be installed explicitly
+with `-Mode Compiled`.
 
 ## Run without a standalone application EXE
 

@@ -4,8 +4,8 @@ A small Windows desktop controller with a persistent custom-layout flyout,
 editable layouts and hotkeys, and connected window resizing. Its default
 layout is three columns by two rows, with independent row dividers.
 
-**Basic preview version 0.2.** See [the roadmap](docs/ROADMAP.md) for the boundary
-between the working basic build and planned polish.
+**Polish preview.** Keyboard selection, pair-only height resizing, and source
+launchers are available. See [the roadmap](docs/ROADMAP.md) for further work.
 
 This is the configurable-layout successor to
 [Six Slot Snap](https://github.com/Brandonr91/six-slot-snap), published in a
@@ -92,6 +92,12 @@ them to its resizing group.
 ![Illustration of the custom-layout flyout](docs/flyout-preview.svg)
 
 ## Resize the grid
+
+In the flyout, use **arrows** to move the highlighted zone, **Tab/Shift+Tab**
+to change layouts, and **Enter** to place the original window. **Escape** closes
+the panel. Navigation keys are released when it closes or you switch apps.
+If another application reserves a navigation key, mouse selection remains
+available and the panel reports that keyboard navigation is unavailable.
 
 - Drag a shared **left/right edge** to resize neighboring columns in both rows.
 - Drag a shared **top/bottom edge** to resize that column's two windows.

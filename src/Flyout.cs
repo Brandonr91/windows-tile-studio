@@ -1,6 +1,7 @@
 using System;
 using System.Drawing;
 using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -16,6 +17,14 @@ public class LayoutCard : UserControl {
     public Action<string,int> ZoneSelected;
     readonly LayoutProfile profile;
     readonly double scale;
+    readonly List<Button> zones=new List<Button>();
+    public void Highlight(int slot) {
+        for(int i=0;i<zones.Count;i++) {
+            zones[i].BackColor=i==slot?Color.FromArgb(28,112,183):Color.FromArgb(63,71,84);
+            zones[i].FlatAppearance.BorderColor=i==slot?Color.FromArgb(175,222,255):Color.FromArgb(91,107,129);
+            zones[i].FlatAppearance.BorderSize=i==slot?2:1;
+        }
+    }
     public LayoutCard(LayoutProfile source,bool active,double dpiScale) {
         profile=source.Clone(); scale=dpiScale;
         Width=S(238); Height=S(148); Margin=new Padding(S(7));
@@ -30,6 +39,7 @@ public class LayoutCard : UserControl {
             button.FlatAppearance.BorderColor=Color.FromArgb(91,107,129); button.FlatAppearance.MouseOverBackColor=Color.FromArgb(44,116,181);
             button.Click+=delegate { if(ZoneSelected!=null) ZoneSelected(profile.Id,slot); };
             Controls.Add(button);
+            zones.Add(button);
         }
     }
     int S(int n) { return (int)Math.Round(n*scale); }
@@ -39,6 +49,31 @@ public class SnapFlyout : NonactivatingForm {
     public Action<string,int> ZoneSelected;
     public Action ManageRequested;
     public Action DismissRequested;
+    readonly List<LayoutCard> layoutCards=new List<LayoutCard>();
+    readonly List<LayoutProfile> profiles=new List<LayoutProfile>();
+    readonly FlowLayoutPanel cardPanel;
+    readonly Label keyboardHint;
+    int selectedCard,selectedSlot;
+    public void KeyboardAvailable(bool available) { keyboardHint.Text=available?"Arrows: zone · Tab: layout · Enter: place":"Keyboard navigation unavailable · use mouse"; }
+    void Highlight() { for(int i=0;i<layoutCards.Count;i++) layoutCards[i].Highlight(i==selectedCard?selectedSlot:-1); cardPanel.ScrollControlIntoView(layoutCards[selectedCard]); }
+    public void Navigate(Keys key,bool reverse) {
+        if(key==Keys.Tab) { selectedCard=(selectedCard+(reverse?profiles.Count-1:1))%profiles.Count; selectedSlot=0; }
+        else if(key==Keys.Enter) { if(ZoneSelected!=null) ZoneSelected(profiles[selectedCard].Id,selectedSlot); return; }
+        else {
+            var model=new LayoutModel(profiles[selectedCard]); model.Work=new SixSlotSnap.RECT{R=10000,B=10000};
+            var start=model.RectFor(selectedSlot); double x=(start.L+start.R)/2.0,y=(start.T+start.B)/2.0,best=double.MaxValue;
+            int candidate=selectedSlot;
+            for(int i=0;i<profiles[selectedCard].SlotCount;i++) {
+                var r=model.RectFor(i); double dx=(r.L+r.R)/2.0-x,dy=(r.T+r.B)/2.0-y;
+                double forward=key==Keys.Left?-dx:key==Keys.Right?dx:key==Keys.Up?-dy:dy;
+                double sideways=key==Keys.Left||key==Keys.Right?Math.Abs(dy):Math.Abs(dx);
+                if(forward<=0) continue; double score=forward+sideways*4;
+                if(score<best) { best=score; candidate=i; }
+            }
+            selectedSlot=candidate;
+        }
+        Highlight();
+    }
     public SnapFlyout(AppSettings settings,string target,double scale,int availableWidth,int availableHeight) {
         Text="Six Slot Snap — choose a layout";
         FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
@@ -46,8 +81,8 @@ public class SnapFlyout : NonactivatingForm {
         AccessibleName="Six Slot Snap layout flyout";
         Func<int,int> s=n=>(int)Math.Round(n*scale);
         int count=settings.Profiles.Count,columns=Math.Max(1,Math.Min(3,(availableWidth-s(32))/s(252)));
-        Width=Math.Min(availableWidth-s(16),s(columns*252+28));
-        Height=Math.Min(availableHeight-s(32),s(126+Math.Min(3,(int)Math.Ceiling(count/(double)columns))*162));
+        Width=Math.Min(availableWidth-s(16),s(columns*252+40));
+        Height=Math.Min(availableHeight-s(32),s(146+Math.Min(3,(int)Math.Ceiling(count/(double)columns))*162));
         var header=new Label{Text="Choose a layout and zone",Font=new Font("Segoe UI",12,FontStyle.Bold),Bounds=new Rectangle(s(18),s(12),Width-s(70),s(28))}; Controls.Add(header);
         var close=new Button{Text="×",AccessibleName="Close layout flyout",FlatStyle=FlatStyle.Flat,Bounds=new Rectangle(Width-s(46),s(10),s(30),s(28)),ForeColor=Color.White,BackColor=BackColor,TabStop=false}; close.FlatAppearance.BorderSize=0; close.Click+=delegate { if(DismissRequested!=null) DismissRequested(); }; Controls.Add(close);
         Controls.Add(new Label{Text="Place "+target+" · "+settings.FlyoutShortcut+" opens this panel",ForeColor=Color.FromArgb(170,184,204),AutoEllipsis=true,Bounds=new Rectangle(s(18),s(43),Width-s(36),s(22))});
@@ -55,8 +90,13 @@ public class SnapFlyout : NonactivatingForm {
         foreach(var profile in settings.Profiles) {
             var card=new LayoutCard(profile,profile.Id==settings.ActiveProfileId,scale);
             card.ZoneSelected=delegate(string id,int slot) { if(ZoneSelected!=null) ZoneSelected(id,slot); }; cards.Controls.Add(card);
+            profiles.Add(profile.Clone()); layoutCards.Add(card);
         }
+        cardPanel=cards;
+        selectedCard=Math.Max(0,profiles.FindIndex(p=>p.Id==settings.ActiveProfileId));
         Controls.Add(cards);
+        keyboardHint=new Label{ForeColor=Color.FromArgb(175,198,222),AutoEllipsis=true,Bounds=new Rectangle(s(18),s(64),Width-s(36),s(22))};
+        cards.Top=s(91); cards.Height=Height-s(139); Controls.Add(keyboardHint); KeyboardAvailable(false); Highlight();
         var manage=new Button{Text="Manage layouts & hotkeys",UseMnemonic=false,AccessibleName="Manage layouts and hotkeys",FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(43,52,66),Bounds=new Rectangle(s(17),Height-s(40),s(214),s(28)),TabStop=false};
         manage.FlatAppearance.BorderColor=Color.FromArgb(80,96,119); manage.Click+=delegate { if(ManageRequested!=null) ManageRequested(); }; Controls.Add(manage);
         Controls.Add(new Label{Text="Esc or click outside to close",ForeColor=Color.FromArgb(160,174,194),TextAlign=ContentAlignment.MiddleRight,Bounds=new Rectangle(s(240),Height-s(39),Width-s(257),s(26))});

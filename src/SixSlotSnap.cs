@@ -72,6 +72,19 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
+    readonly List<int> navigationHotkeys=new List<int>();
+    static readonly Keys[] navigationKeys={Keys.Left,Keys.Right,Keys.Up,Keys.Down,Keys.Tab,Keys.Tab,Keys.Enter};
+    void RegisterNavigation() {
+        for(int i=0;i<navigationKeys.Length;i++) {
+            int id=201+i;
+            if(!NativeMethods.RegisterHotKey(receiver.Handle,id,0x4000u|(i==5?4u:0u),(uint)navigationKeys[i])) {
+                ReleaseNavigation(); Log("Flyout keyboard navigation unavailable: a navigation key is reserved."); return;
+            }
+            navigationHotkeys.Add(id);
+        }
+        flyout.KeyboardAvailable(true);
+    }
+    void ReleaseNavigation() { foreach(int id in navigationHotkeys) NativeMethods.UnregisterHotKey(receiver.Handle,id); navigationHotkeys.Clear(); }
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L,T,R,B; }
     public const string ControllerCaption="SixSlotSnap.Controller.v2";
     public const int ShowCommand=0x8001,SettingsCommand=0x8002,QuitCommand=0x8003,SnapCommand=0x8004,ProfileCommand=0x8005;
@@ -240,15 +253,16 @@ public class SixSlotSnap : ApplicationContext {
         flyout.ZoneSelected=delegate(string id,int slot) { IntPtr chosen=targetWindow; HideFlyout(); if(SnapTo(chosen,id,slot)) NativeMethods.SetForegroundWindow(chosen); };
         flyout.ManageRequested=delegate { HideFlyout(); OpenSettings(); }; flyout.DismissRequested=HideFlyout;
         if(launcher!=null) launcher.Hide(); mouseWasDown=MouseDown(); escapeWasDown=Down(27); escapeRegistered=NativeMethods.RegisterHotKey(receiver.Handle,200,0x4000,27);
-        flyout.ShowUnfocused(); flyoutTimer.Start(); WriteState();
+        RegisterNavigation(); flyout.ShowUnfocused(); flyoutTimer.Start(); WriteState();
     }
     public void HideFlyout() {
-        flyoutTimer.Stop(); if(escapeRegistered) NativeMethods.UnregisterHotKey(receiver.Handle,200); escapeRegistered=false;
+        flyoutTimer.Stop(); ReleaseNavigation(); if(escapeRegistered) NativeMethods.UnregisterHotKey(receiver.Handle,200); escapeRegistered=false;
         if(flyout!=null) { var old=flyout; flyout=null; old.Hide(); old.Dispose(); }
         if(launcher!=null && !disposed) launcher.ShowUnfocused(); WriteState();
     }
     void PollFlyout() {
         if(flyout==null) return; bool mouse=MouseDown(),escape=Down(27);
+        if(NativeMethods.GetForegroundWindow()!=targetWindow) { HideFlyout(); return; }
         if((mouse && !mouseWasDown && !flyout.Bounds.Contains(Cursor.Position)) || (escape && !escapeWasDown)) { HideFlyout(); return; }
         mouseWasDown=mouse; escapeWasDown=escape;
     }
@@ -269,6 +283,7 @@ public class SixSlotSnap : ApplicationContext {
         try {
             if(message==0x312) {
                 int id=a.ToInt32(); if(id==100) OpenFlyout(NativeMethods.GetForegroundWindow(),null); else if(id==200) HideFlyout();
+                else if(id>=201 && id<=207 && flyout!=null && navigationHotkeys.Contains(id)) flyout.Navigate(navigationKeys[id-201],id==206);
                 else if(id>=1 && id<=16) { IntPtr target=flyout==null?NativeMethods.GetForegroundWindow():targetWindow; HideFlyout(); if(id<=grid.Profile.SlotCount) SnapTo(target,settings.ActiveProfileId,id-1); }
                 else if(id>=300 && id<300+settings.Profiles.Count) OpenFlyout(NativeMethods.GetForegroundWindow(),settings.Profiles[id-300].Id);
             } else if(message==ShowCommand) OpenFlyout(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b,null);

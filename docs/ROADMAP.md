@@ -22,20 +22,23 @@ particular release date.
 - Exercise mixed app frames, minimum sizes, minimize/restore, and app restarts.
 - Check display changes, sleep/resume, and competing window-management utilities.
 - Improve startup recovery when a configured shortcut becomes unavailable.
-- Add keyboard navigation inside the flyout; the basic flyout currently uses
-  mouse selection, Escape, and configurable direct zone shortcuts.
+- Broaden keyboard navigation checks across mixed layouts and competing apps.
 
-## Launch-mode polish — implemented locally
+## First polish milestone — implemented
 
 - Windows PowerShell-hosted mode, with no standalone application EXE generated.
 - GitHub source downloader with versioned code folders and persistent data.
 - An explicit hosted/compiled mode choice and a no-launch installation option.
 - Offline install/update/path tests and a live GitHub source-download test.
 - Full cross-process desktop integration coverage against the hosted controller.
+- Highlighted keyboard selection: arrows for zones, Tab/Shift+Tab for layouts,
+  Enter to place, with temporary registration cleanup and conflict rollback.
+- Pair-only height changes, preserving actual flanking heights during width
+  resizing and correcting unwanted native group changes.
 
-See [launch modes](LAUNCHING.md). The hosted source files must be published
-before a GitHub-hosted installation can retrieve that mode. Local hosted use
-is already available. The original `six-slot-snap` repository is unchanged.
+See [launch modes](LAUNCHING.md). Hosted installations require a revision
+containing the hosted launchers. The original `six-slot-snap` repository
+is unchanged.
 
 ## Polished version
 
