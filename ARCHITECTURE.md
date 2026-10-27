@@ -1,7 +1,7 @@
 # Architecture
 
 Context established 2026-10-26 from base application `48b96b2`; updated
-2026-10-27 for local phase-5 preview `0.3.0-preview.5`. Earlier milestones and
+2026-10-27 for local phase-6 preview `0.3.0-preview.6`. Earlier milestones and
 decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
@@ -13,7 +13,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all eight `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all eleven `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 `Start.ps1` only builds if the EXE is missing: after source changes explicitly
@@ -37,6 +37,28 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/DisplayState.cs` | Native fresh monitor inventory, per-monitor saved geometry, pure session ownership/topology and draft merge transitions. |
 | `src/VisualEditor.cs` | Pure draft gesture/history session, painted draggable preview and nested visual editor. |
 | `src/PortableLayouts.cs` | Separate bounded XML transfer schema, atomic export, copy/replace candidate construction and shortcut validation. |
+| `src/Workspaces.cs` | Local capture DTO/store, live app identity and pure matching/restore planning. |
+| `src/StartupRegistration.cs` | Owned per-user shortcut registration, mode/data-preserving command construction and isolated storage seam. |
+| `src/WorkspaceForm.cs` | Immediate capture/preview/restore, optional launch and startup controls; independent of settings drafts. |
+
+Phase 6 stores captures in separate bounded/backed-up workspaces.xml. Durable
+matching uses executable path/class and optional exact title; live HWND/PID/start
+data exist only in preview. Ambiguity needs a user choice, disconnected-display
+fallback is explicit, and restore revalidates instances/current catalog/display
+before verified native placement. Compatible unselected slots are retained;
+geometry changes release incompatible assignments without moving those windows.
+Relaunch is a separate confirmed local-executable action with no saved arguments.
+No workspace is restored automatically at login, resume or controller startup.
+
+StartupRegistration writes only its owned current-user Startup shortcut on
+explicit Enable; Disable removes that shortcut. Windows Shell COM operations
+are short-lived and tested in a temporary folder; actual account startup remains
+untouched in tests. Start-Hosted.ps1 passes source root to Main so the command
+retains both source and data locations. CLI --workspaces / IPC 0x8006 opens the
+dialog. ShowManagedDialog queues an explicit native show after Load to counter
+the first-form hidden state inherited from a background process launch. Cold
+compiled and hosted visibility regressions cover both settings/workspace dialogs.
+See [workspace/startup guide](docs/WORKSPACES-AND-STARTUP.md).
 
 Phase 5 adds a draft-only visual modal from Layouts and a Share layouts tab.
 VisualLayoutSession clones the source; a gesture changes one adjacent pair with
@@ -117,8 +139,9 @@ Assignments are HWNDs in a 16-entry in-memory array, one window per slot.
 Moving an unchanged-size window away releases its slot at move/size end.
 Recovery enumerates visible eligible windows with a less-than-16-pixel edge
 tolerance. Two-row columns also recognize complementary top/bottom pairs and
-recover their divider from actual bounds. No app identity or workspace session
-is persisted. Phase 4 replaces the single assignment array with one session per
+recover their divider from actual bounds. This automatic recovery remains
+geometry-only; phase-6 opt-in saved workspaces are separate. Phase 4 replaces
+the single assignment array with one session per
 monitor; the controller binds its grid/assignment references to the active session.
 Monitor-affinity checks prevent recovery/reflow/resize from pulling windows across
 screens. Profile switches clear only that display's assignments. Destroy events
@@ -143,7 +166,7 @@ stored HWNDs are not treated as durable workspace identity.
 Phase-1 UI uses a third Appearance settings tab for launcher visibility and
 draft position reset. Cancel discards those changes. The tray also offers an
 immediate bar reset and About with `SixSlotSnap.ProductVersion` (currently
-`0.3.0-preview.5`). Visible UI names are Windows Tile Studio; compatibility
+`0.3.0-preview.6`). Visible UI names are Windows Tile Studio; compatibility
 identifiers remain unchanged. `LayoutProfile.GeometryMatches` compares segment
 counts/weights with tolerance `1e-8`; `ApplySettings` only reflows the same active
 profile when its geometry changed, preserving actual frames on appearance-only

@@ -1,5 +1,80 @@
 # Handoff
 
+## Current checkpoint: phase 6
+
+2026-10-27, following `3f6eee1`. Local `0.3.0-preview.6` implements explicit
+workspace capture/preview/restore, a separate missing-app launch action, and
+owned per-user login startup shortcut controls. Startup is OFF in the daily
+installation, and no real workspace was captured/restored by the agent. Read
+[workspace/startup guide](docs/WORKSPACES-AND-STARTUP.md) before changing behavior.
+No public push, service, scheduled task or registry Run entry was added.
+
+New files: Workspaces.cs (DTO/store/live identity/planning), WorkspaceForm.cs
+(immediate user controls), StartupRegistration.cs (mode/data command and owned
+Startup shortcut backend). Eleven src/*.cs files are compiled dynamically.
+Local workspaces.xml is bounded to 1 MB/depth 32, backed up atomically, and
+separate from settings/portable layout transfer. Captures use app EXE/class and
+optional titles, never saved HWND/PID. Preview requires choices for ambiguity
+and explicit disconnected-display fallback. Restore revalidates process start/
+identity/current display/layout, preserves compatible unselected slots and
+reports per-window failures. Relaunch is a separately confirmed local EXE with
+zero arguments; it does not recreate app documents/URLs/sessions. Shared hosts
+and inaccessible apps are skipped. Workspace/startup actions are immediate,
+not settings drafts; placement hotkeys focus the open workspace dialog.
+
+Startup uses Windows Tile Studio.lnk in the current user's Startup folder. A
+dedicated shortcut avoids long hosted Run-command limits. No entry is created
+on installation/open/status inspection. Enable explicitly preserves current
+compiled or hosted source/data paths, Disable removes only an owned entry, and
+unrelated/unreadable entries are preserved. Real startup was not enabled/tested
+through login/logout; native shortcut tests use a fresh temporary folder only.
+Start-Hosted.ps1 now forwards --source-root; Main/IPC adds --workspaces/0x8006.
+
+Verification:
+
+- Pure geometry/configuration/matching/store/startup checks PASS: 198558.
+- Real-loop WorkspaceUiTests PASS: capture/preview/injected selected restore,
+  launch guard, confirmation cancel/enable/disable with memory storage, painting,
+  named selection and visible/footer bounds. Native Windows shortcut roundtrip,
+  hosted arguments and removal tested only in an isolated temp folder.
+- WorkspaceNativeTests PASS: two external disposable windows captured, saved/
+  loaded, previewed and restored to actual saved visible frames; stale process
+  reference refused; compatible unselected assignments retained. Explicit launch
+  runs only an inert probe in a path with spaces/apostrophe, with zero arguments.
+- Full compiled and hosted regressions PASS during this phase, including all
+  prior resize/editor/hidden launcher/font/recovery/compatibility cases and
+  opening/closing the real workspace UI without writing workspace files.
+- Subsequent targeted native/UI tests cover docked footer/column repair,
+  compatible-slot preservation and shared-host exclusion. Native readiness file
+  publication had a test-only File.Exists/write race; atomic publication fixed it.
+- Live inspection reproduced a hidden first workspace dialog after background
+  startup with the bar off (native handle existed, WS_VISIBLE false). Queued
+  explicit ShowManagedDialog after Load fixes both workspace and settings. Cold
+  first-dialog visibility tests PASS for compiled and source-hosted starts. The
+  corrected installed workspace dialog was then visually inspected and closed.
+- Windows PowerShell 5.1 STA WorkspaceUiTests.ps1 and LauncherTests.ps1 PASS,
+  covering in-memory source compilation and updated launcher/install handling.
+- Window inventories and relevant Application crash events were sampled: no
+  unexpected Windows/.NET error windows or matching crash events observed.
+  This is not continuous notification-area monitoring. Physical mixed-DPI,
+  docking/sleep, virtual desktops, elevated/hung apps and real login remain gates.
+
+Current controller: compiled repo bin/SixSlotSnap.exe with repo data/, preview.6,
+six recovered assignments, hidden launcher, no recovery warning. Settings hash
+matches pre-phase; the real Startup shortcut stayed absent/unchanged. Hosted
+src AND Start-Hosted.ps1 updated, separate data retained, no second controller.
+Verify live process/runtime before tests. Fallback source/settings/startup
+snapshot: work/phase-six-fallback; prior code is also Git 3f6eee1.
+
+Reports outside Git use outputs/windows-tile-studio-phase-six- prefix:
+full-tests.txt, final-tests.txt, workspace-final.txt, native-final.txt,
+visibility-tests.txt, hosted-visibility.txt, hosted-ui.txt, pure-final.txt,
+launcher-tests.txt, deployment.json and windows-errors.json. Full suites preceded
+the later targeted fixes; the targeted/cold checks validate final affected paths.
+Rendered workspace/startup PNGs are under bin/phase-six/workspace-ui-data and
+copied to outputs for review. Source packages refreshed after the local commit.
+Next planned phase is 7 (accessibility/visuals/support); follow latest user intent.
+
 ## Current checkpoint: phase 5
 
 2026-10-27, following `4ca3c9b`. User requested phase 5 and attention to Windows

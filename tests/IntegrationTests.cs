@@ -390,6 +390,12 @@ class IntegrationTests {
             NativeMethods.UnregisterHotKey(keyProbe.Handle,971); Command(0x312,200,IntPtr.Zero); NativeMethods.UnregisterHotKey(keyProbe.Handle,970);
         }
         passed.Add("Actual arrow/Enter and Tab/Shift+Tab input selects the original target; navigation keys release on close and roll back on conflicts.");
+        string workspacePath=Path.Combine(data,"workspaces.xml");string workspaceBefore=File.Exists(workspacePath)?File.ReadAllText(workspacePath):null;
+        Command(SixSlotSnap.WorkspacesCommand,0,IntPtr.Zero);IntPtr workspaceDialog=IntPtr.Zero;
+        Wait(()=>{workspaceDialog=NativeMethods.FindWindow(null,"Windows Tile Studio — workspaces & startup");return workspaceDialog!=IntPtr.Zero;},"Workspace dialog did not open from the running controller");
+        NativeMethods.PostMessage(workspaceDialog,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(workspaceDialog),"Workspace dialog did not close");
+        Check(!controller.HasExited&&(File.Exists(workspacePath)?File.ReadAllText(workspacePath):null)==workspaceBefore,"Opening/closing workspace controls changed saved workspaces or stopped the controller");
+        passed.Add("The running controller opens/closes workspace/startup controls without capturing/restoring apps or changing workspace files.");
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Controller did not exit cleanly");
         var duplicate=new Form(); IntPtr handle=duplicate.Handle;
         var shortcut=AppSettings.Defaults().FlyoutShortcut; Check(NativeMethods.RegisterHotKey(handle,900,0x4000|(uint)shortcut.Modifiers,(uint)shortcut.Key),"Flyout hotkey was not released on exit"); NativeMethods.UnregisterHotKey(handle,900); duplicate.Dispose();

@@ -4,7 +4,8 @@ param(
     [ValidateSet('Run','Show','Settings','Quit','Preview','Validate')]
     [string]$Action = 'Run',
     [switch]$NoRecover,
-    [switch]$RunInProcess
+    [switch]$RunInProcess,
+    [string]$StartupOwner
 )
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DataDirectory)) { $DataDirectory = Join-Path $PSScriptRoot 'data' }
@@ -73,6 +74,8 @@ if ($Action -eq 'Run') {
 $applicationArguments = [Collections.Generic.List[string]]::new()
 $applicationArguments.Add('--data-dir')
 $applicationArguments.Add($DataDirectory)
+$applicationArguments.Add('--source-root')
+$applicationArguments.Add($PSScriptRoot)
 switch ($Action) {
     'Show' { $applicationArguments.Add('--show') }
     'Settings' { $applicationArguments.Add('--settings') }

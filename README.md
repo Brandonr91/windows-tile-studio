@@ -210,6 +210,12 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
+Phase 6 adds tray **Workspaces & login startup**: capture assigned windows,
+preview matches, choose ambiguous windows and explicitly restore selected rows.
+Missing-app launch is a separate confirmed action. Login startup has explicit
+enable/status/remove controls and remains off until you choose it. See
+[workspace and startup guide](docs/WORKSPACES-AND-STARTUP.md).
+
 Phase-5 preview adds **Layouts → Edit visually...** and a **Share layouts** tab.
 Drag dividers, Undo/Redo or cancel the preview, then use **Save changes** in
 settings to apply. Share layouts exports portable XML and imports copies or a
@@ -231,8 +237,9 @@ Use **Exit** in the tray menu to stop the controller.
 - Elevated apps may require running the controller with matching privileges.
 - The selector is a separate panel. This does not add a Windows Snap flyout
   layout or provide drag-to-zone snapping.
-- App identities are not saved across app restarts. Recovery uses visible
-  geometry, so overlapping duplicate windows may need manual reassignment.
+- Automatic recovery uses visible geometry and can be ambiguous. Opt-in saved
+  workspaces match executable/class and optionally exact titles; they require a
+  preview and manual choices for ambiguous windows. Documents/sessions are not recreated.
 - Full-screen apps, unusual window frames, and additional display configurations
   need broader testing.
 - Keyboard navigation needs its temporary keys to be available; a conflict
@@ -280,10 +287,10 @@ For persistent project context, read [architecture](ARCHITECTURE.md),
 [handoff](HANDOFF.md). Consult them together with the actual checkout before
 continuing development after a new session or context compaction.
 
-Per-monitor layouts and minimum-size negotiation are implemented in the local
-preview within their documented test scope. Next steps include saved app
-assignments, and an optional login launcher. These are development ideas rather
-than features already implemented; see [the roadmap](docs/ROADMAP.md).
+Per-monitor layouts, minimum-size negotiation, visual/portable layouts and
+opt-in workspace/startup controls are implemented in the local preview within
+their documented test scope. Next is accessibility, visuals and support;
+see [the roadmap](docs/ROADMAP.md) for remaining verification/release gates.
 
 ## License and project notes
 

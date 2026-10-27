@@ -115,12 +115,32 @@ availability is checked on Save. Replacing a catalog is explicit and requires
 re-snapping; no hidden app relaunch/auto-assignment. Undo import is a confirmed
 checkpoint restore because it can also discard later catalog/hotkey draft edits.
 
+## Phase 6 decision update
+
+Phase 6 uses executable path/class and optional opt-in exact titles, not saved
+HWNDs/PIDs or enumeration order. Ambiguous windows require a choice; disconnected
+monitors need explicit fallback, and replaced grids require recapture. Restore
+revalidates process instances and never relaunches apps. A separate confirmed
+launch action accepts only a full local EXE path, with no arguments; documents,
+URLs and sessions are not recreated. Captures are local immediate actions in a
+separate backed-up file, excluded from portable layout transfer.
+
+Login startup uses an owned current-user Startup shortcut, preserving compiled
+or hosted source/data paths. The short Run-key approach was rejected because
+long hosted commands can exceed Windows' documented limit. Startup is never
+enabled by installation/tests. Unrelated shortcuts are preserved; removal is
+available independently of corrupt workspace data. Windows policy can override
+registration. First managed dialogs explicitly show after Load because hidden
+process startup was reproduced hiding the first workspace form; cold-start tests
+cover settings and workspace UI in both modes.
+
 ## Proposed, not yet implemented
 
 App-specific minimum-size negotiation, per-monitor persistence, a graphical
-divider editor and portable transfer are implemented in phases 3–5 within
-documented limits. Optional app/workspace restoration, optional login startup, and
-release signing remain roadmap candidates. Do not treat them as user approval
+divider editor, portable transfer, opt-in workspace restore/launch and optional
+startup registration are implemented in phases 3–6 within documented limits.
+Broader accessibility, release packaging/signing and external beta coverage remain
+roadmap work. Do not treat them as user approval
 to install services, enable startup, publish releases or change system settings.
 
 When changing an established decision, append its replacement and rationale;

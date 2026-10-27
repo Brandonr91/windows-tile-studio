@@ -18,7 +18,7 @@ gaps remain explicit; this does not implement phase 5.
 | 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Core implemented and representative matrix verified locally as `0.3.0-preview.3`; elevated/hung-app limits remain explicit. |
 | 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Core implemented locally as `0.3.0-preview.4`; simulated topology and single-display notifications verified. Physical multi-monitor/docking/sleep release gates remain. |
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Implemented locally as `0.3.0-preview.5`; pure, real-loop compiled/source-hosted editor and controller regressions pass within documented scope. |
-| 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Planned. |
+| 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Implemented locally as `0.3.0-preview.6`; pure/UI/native restore, temporary startup shortcut and cold-start checks pass. No real startup was enabled; actual login and broader hardware/app cases remain release gates. |
 | 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Planned. |
 | 8. Production delivery | Consistent executable/package identity; install/update/rollback/uninstall and legacy recovery; Windows CI, reproducible builds, versioned signing/checksums/release notes, clean-account/external beta testing. | Exact packages pass install/use/update/remove/rollback; documentation matches release; original repository is preserved. | Planned. |
 
@@ -123,17 +123,32 @@ regressions, launcher paint/close-to-tray and source installer checks pass. No
 unexpected Windows/.NET dialogs or relevant crash events were observed in sampled
 checks. See [visual/portable guide](VISUAL-AND-PORTABLE.md) for exact limits.
 
-## Exact next work: phase 6
+## Phase 6 result
 
-Define durable app/window identity and an explicit workspace capture/restore
-policy before persisting assignments. HWNDs are not durable identity. Start with
-opt-in capture, preview of matching/missing apps and restore without relaunch;
-make any relaunch an additional explicit choice. Define stale/multiple-window
-matching and per-monitor fallback before native placement. Add optional login
-startup only with visible status and an equally usable disable/removal path;
-never enable it automatically. Preserve hidden launcher preferences and all
-existing geometry/fit/undo/recovery safeguards. Hardware display tests remain
-separate release gates.
+Local workspaces capture assigned app identities and geometry with optional
+titles; previews require manual ambiguity choices and explicit disconnected-screen
+fallback. Restore revalidates live instances, preserves compatible unselected
+slots, verifies app frames and never launches apps. Relaunch is a separate
+confirmed EXE-only/no-arguments action. Startup has explicit status/enable/remove
+controls using an owned per-user shortcut; tests touch only isolated storage.
+Saved workspaces are separate from local settings and portable layout exports.
+Pure checks: 198558 PASS. Real-loop UI, native disposable restore, inert launch
+probe, source hosting, shortcut roundtrip and cold hidden-start dialogs pass.
+Full compiled/hosted regressions pass within their recorded scope; targeted
+tests cover the later layout/visibility and compatible-slot fixes. See
+[guide](WORKSPACES-AND-STARTUP.md). Startup is still off in the daily installation.
+
+## Exact next work: phase 7
+
+Start with a keyboard/screen-reader/high-contrast and small-display audit of
+settings, visual editor, workspace selection and tray controls. Make focus,
+disabled/error/loading states and text/target feedback consistent, retaining
+numeric editing and hidden-to-tray behavior. Improve layout/scaling from actual
+reproductions, not broad theme replacement. Define a local diagnostic export
+that omits titles, app/session content, raw monitor IDs and user paths by default;
+make inclusion explicit. Measure packaged startup/idle/resize costs before claims.
+Retain cold hidden-dialog, font lifetime, pair-only height, draft/import and
+workspace/startup opt-in regressions. Hardware/login/elevated-app beta gates remain.
 
 ## Before pushing a production release
 

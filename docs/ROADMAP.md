@@ -65,6 +65,12 @@ is unchanged.
 
 ## Polished version
 
+Phase 6 local checkpoint: `0.3.0-preview.6` adds opt-in workspace capture/preview/
+restore, a separate missing-app launch action and explicit startup shortcut
+controls. See [workspace/startup guide](WORKSPACES-AND-STARTUP.md). No real login
+startup was enabled; phase 7 accessibility/visuals/support is next. Earlier
+checkpoint paragraphs below retain milestone history, not a competing next phase.
+
 Phase 5 local checkpoint: `0.3.0-preview.5` adds the draft visual divider editor
 and validated portable layout/hotkey transfer. See [guide](VISUAL-AND-PORTABLE.md).
 The next planned phase is optional workspaces/startup, with no relaunch or login

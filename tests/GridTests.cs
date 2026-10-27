@@ -195,6 +195,45 @@ class GridTests {
         File.WriteAllText(path,xml);var before=File.ReadAllText(path);bool failed=false;using(var locked=File.Open(path,FileMode.Open,FileAccess.Read,FileShare.None)){try{PortableLayouts.Export(path,AppSettings.Defaults());}catch(IOException){failed=true;}}
         Check(failed&&File.ReadAllText(path)==before,"Failed portable export replaced the destination");
     }
+    class FakeStartup : IStartupValue {public string Value;public int Writes,Removals;public string Read(){return Value;}public void Write(string value){Value=value;Writes++;}public void Remove(){Value=null;Removals++;}}
+    static void WorkspacesAndStartup(string root) {
+        var profile=AppSettings.Defaults().Profiles[0].Clone();string exe=@"C:\Apps\Editor.exe";
+        var saved=new SavedWorkspace{Name="Work",MatchTitles=true,Displays={new SavedWorkspaceDisplay{MonitorId="monitor-a",Layout=profile,Windows={new SavedPlacement{ApplicationPath=exe,WindowClass="Editor",WindowTitle="One",Slot=0},new SavedPlacement{ApplicationPath=exe,WindowClass="Editor",WindowTitle="Two",Slot=3}}}}};
+        var display=new DisplayDescriptor{Id="monitor-a",Name="A",Primary=true,Work=new SixSlotSnap.RECT{R=5120,B=2160}};
+        var one=new LiveWorkspaceWindow{Handle=new IntPtr(101),ProcessId=10,ProcessStarted=100,ApplicationPath=exe,WindowClass="Editor",Title="One"};
+        var two=new LiveWorkspaceWindow{Handle=new IntPtr(102),ProcessId=10,ProcessStarted=100,ApplicationPath=exe,WindowClass="Editor",Title="Two"};
+        var windows=new[]{one,two};var layouts=new[]{profile};var plan=WorkspacePlanner.Build(saved,windows,new[]{display},layouts,null);
+        Check(plan.SelectedRows().Count==2&&plan.Rows[0].Chosen==one&&plan.Rows[1].Chosen==two,"Exact-title workspace preview did not uniquely match windows");
+        saved.MatchTitles=false;plan=WorkspacePlanner.Build(saved,windows,new[]{display},layouts,null);Check(plan.Rows.All(r=>!r.Selected&&r.Chosen==null),"Ambiguous app windows were matched by order");
+        plan.Rows[0].Chosen=one;plan.Rows[0].Selected=true;plan.Rows[1].Chosen=one;plan.Rows[1].Selected=true;Reject(()=>plan.SelectedRows(),"Duplicate window selection accepted");plan.Rows[1].Chosen=two;Check(plan.SelectedRows().Count==2,"Manual disambiguation failed");
+        plan=WorkspacePlanner.Build(saved,new[]{one},new[]{display},layouts,null);Check(plan.Rows.All(r=>!r.Selected),"One current window was automatically assigned to several saved slots");
+        plan=WorkspacePlanner.Build(saved,new LiveWorkspaceWindow[0],new[]{display},layouts,null);Check(plan.Rows.All(r=>r.Candidates.Count==0&&!r.Selected),"Missing apps were marked ready");
+        var primary=new DisplayDescriptor{Id="other-monitor",Name="Primary",Primary=true,Work=new SixSlotSnap.RECT{L=-2560,R=0,B=1400}};
+        plan=WorkspacePlanner.Build(saved,windows,new[]{primary},layouts,null);Check(plan.Rows.All(r=>r.Target==null&&r.Issue!=null),"Disconnected display silently fell back");
+        saved.MatchTitles=true;saved.Displays[0].Windows[0].WindowTitle="One";saved.Displays[0].Windows[1].WindowTitle="Two";plan=WorkspacePlanner.Build(saved,windows,new[]{primary},layouts,primary.Id);Check(plan.SelectedRows().Count==2&&plan.Rows.All(r=>r.Target==primary),"Explicit display fallback failed");
+        plan=WorkspacePlanner.Build(saved,windows,new[]{display},new LayoutProfile[0],null);Check(plan.Rows.All(r=>r.Issue!=null&&!r.Selected),"Removed saved layout was silently replaced");
+        var other=profile.Clone();other.Columns[0].Rows.Add(1);other.Normalize();plan=WorkspacePlanner.Build(saved,windows,new[]{display},new[]{other},null);Check(plan.Rows.All(r=>r.Issue!=null),"Changed saved grid was accepted");
+        var stale=new LiveWorkspaceWindow{Handle=one.Handle,ProcessId=one.ProcessId,ProcessStarted=999,ApplicationPath=one.ApplicationPath,WindowClass=one.WindowClass};Check(!WorkspaceApps.SameInstance(one,stale),"Reused process/window identity accepted");
+        Check(!WorkspaceApps.ValidPath(@"\\server\app.exe")&&!WorkspaceApps.ValidPath(@"relative.exe")&&!WorkspaceApps.ValidPath(@"C:\app.cmd")&&!WorkspaceApps.ValidPath("C:\\app.exe\n"),"Unsafe relaunch identity accepted");
+        saved.MatchTitles=false;string file=Path.Combine(root,"workspaces.xml");var library=new WorkspaceLibrary{Workspaces={saved}};WorkspaceStore.Save(file,library);string xml=File.ReadAllText(file);
+        Check(!xml.Contains("<WindowTitle>")&&!xml.Contains("<Handle>")&&!xml.Contains("<ProcessId>"),"Workspace persisted titles without consent or transient handles");
+        Check(WorkspaceStore.Load(file).Workspaces.Count==1,"Workspace round trip failed");WorkspaceStore.Save(file,library);Check(File.Exists(file+".bak"),"Workspace replacement lost backup");
+        bool failed=false;using(var locked=File.Open(file,FileMode.Open,FileAccess.Read,FileShare.None)){try{WorkspaceStore.Save(file,library);}catch(IOException){failed=true;}}Check(failed&&File.ReadAllText(file)==xml,"Failed workspace save replaced the file");
+        File.WriteAllText(file,"broken");bool rejected=false;try{WorkspaceStore.Load(file);}catch(Exception){rejected=true;}Check(rejected&&File.ReadAllText(file)=="broken","Corrupt workspace file was not preserved");
+        foreach(string bad in new[]{xml.Replace("<Version>1</Version>","<Version>999</Version>"),"<!DOCTYPE root [<!ENTITY x SYSTEM 'file:///never-read'>]><TileStudioWorkspaces>&x;</TileStudioWorkspaces>",new string(' ',WorkspaceStore.MaximumBytes+1),string.Concat(Enumerable.Repeat("<nested>",40))+string.Concat(Enumerable.Repeat("</nested>",40))}) {File.WriteAllText(file,bad);bool badRejected=false;try{WorkspaceStore.Load(file);}catch(Exception){badRejected=true;}Check(badRejected&&File.ReadAllText(file)==bad,"Unsafe/unsupported workspace XML was accepted or changed");}
+        var browser=new LiveWorkspaceWindow{Handle=new IntPtr(103),ProcessId=11,ProcessStarted=200,ApplicationPath=@"C:\Apps\Browser.exe",WindowClass="Browser",Title="Browser"};
+        var collision=new SavedWorkspace{Name="Fallback collision",MatchTitles=true,Displays={new SavedWorkspaceDisplay{MonitorId="gone-one",Layout=profile.Clone(),Windows={new SavedPlacement{ApplicationPath=exe,WindowClass="Editor",WindowTitle="One",Slot=0}}},new SavedWorkspaceDisplay{MonitorId="gone-two",Layout=profile.Clone(),Windows={new SavedPlacement{ApplicationPath=browser.ApplicationPath,WindowClass="Browser",WindowTitle="Browser",Slot=1}}}}};
+        var colliding=WorkspacePlanner.Build(collision,new[]{one,browser},new[]{primary},layouts,primary.Id);Reject(()=>colliding.SelectedRows(),"Two saved displays were silently merged into a fallback screen");
+        string app=Path.Combine(root,"startup-app.exe"),script=Path.Combine(root,"Start hosted.ps1");File.WriteAllText(app,"test fixture, never launched");File.WriteAllText(script,"# fixture, never launched");
+        var spec=new StartupLaunchSpec{Executable=app,DataDirectory=root};var memory=new FakeStartup();var startup=new StartupRegistration(spec,memory);
+        Check(startup.Current==null&&memory.Writes==0&&startup.Status.Contains("off"),"Startup was enabled during inspection");startup.Enable(false);Check(memory.Value==spec.Command&&memory.Writes==1,"Explicit startup enable failed");startup.Disable();Check(memory.Value==null&&memory.Removals==1,"Startup removal failed");
+        memory.Value="unrelated startup";RejectInvalid(()=>startup.Enable(true),"Unrelated startup was overwritten");RejectInvalid(startup.Disable,"Unrelated startup was removed");Check(memory.Value=="unrelated startup","Startup conflict changed the entry");
+        memory.Value="old installation --startup-owner WindowsTileStudio";RejectInvalid(()=>startup.Enable(false),"Older startup replaced without explicit approval");startup.Enable(true);Check(memory.Value==spec.Command,"Explicit owned startup update failed");
+        var hosted=new StartupLaunchSpec{Executable=app,SourceScript=script,DataDirectory=root};Check(hosted.Command.Contains("-File \"")&&hosted.Command.Contains("-RunInProcess")&&hosted.Command.EndsWith("-StartupOwner WindowsTileStudio"),"Hosted startup command lost source/data/owner marker");
+        var trailing=new StartupLaunchSpec{Executable=app,DataDirectory=root+"\\"};Check(trailing.Command.Contains(root+"\\\\\""),"Trailing data path was not safely quoted");
+        var missing=new StartupRegistration(new StartupLaunchSpec{Executable=app,DataDirectory=root,SourceScript=Path.Combine(root,"missing.ps1")},memory);RejectInvalid(()=>missing.Enable(true),"Missing hosted source was registered");
+    }
+    static void RejectInvalid(Action action,string reason){try{action();}catch(InvalidOperationException){checks++;return;}throw new Exception(reason);}
     static int Main() {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
@@ -205,6 +244,7 @@ class GridTests {
             MinimumConstraints();
             Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             VisualDrafts();Portable(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            WorkspacesAndStartup(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }

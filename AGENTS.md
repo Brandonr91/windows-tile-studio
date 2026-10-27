@@ -88,6 +88,14 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
   Merge current monitor snapshots when saving an older settings draft. Consult
   docs/DISPLAYS.md and do not claim physical mixed-DPI/hotplug coverage from tests.
 - Keep the controller local: no network service or AI runtime dependency.
+- Workspaces are opt-in and separate from layout drafts/portable export. Never
+  persist HWND/PID identity or choose ambiguous windows by order. Revalidate live
+  process instances, layouts and displays before restore; relaunch is a separate
+  confirmed, argument-free local EXE action. Titles need explicit capture opt-in.
+  Login startup remains off unless enabled through its explicit action. Preserve
+  unrelated startup shortcuts and provide owned removal. Run WorkspaceUi and
+  WorkspaceIntegration plus source-hosted/cold hidden-dialog checks for changes.
+  See docs/WORKSPACES-AND-STARTUP.md. No real account startup writes in tests.
 - Visual edits/imports remain draft-only until main settings Save. Preserve
   adjacent-pair height scope, per-gesture undo/redo/Escape and numeric fallback.
   Portable exports must exclude monitor IDs/HWNDs/appearance/runtime data. Validate

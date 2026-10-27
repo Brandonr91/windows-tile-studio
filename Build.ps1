@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[string]$HostedSourceRoot,[string]$OutputDirectory)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -34,6 +34,24 @@ if ($EditorUi) {
     if ($LASTEXITCODE -ne 0) { throw 'Editor UI test compilation failed.' }
     & $editorTest (Join-Path $output 'editor-ui-data')
     if ($LASTEXITCODE -ne 0) { throw 'Editor UI tests failed.' }
+}
+if ($WorkspaceUi) {
+    $workspaceTest = Join-Path $output 'WorkspaceUiTests.exe'
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll "/reference:$executable" "/out:$workspaceTest" (Join-Path $PSScriptRoot 'tests\WorkspaceUiTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Workspace UI test compilation failed.' }
+    & $workspaceTest (Join-Path $output 'workspace-ui-data')
+    if ($LASTEXITCODE -ne 0) { throw 'Workspace UI tests failed.' }
+}
+if ($WorkspaceIntegration) {
+    $nativeTest = Join-Path $output 'WorkspaceNativeTests.exe'
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll "/reference:$executable" "/out:$nativeTest" (Join-Path $PSScriptRoot 'tests\WorkspaceNativeTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Workspace native test compilation failed.' }
+    & $compiler /nologo /target:winexe ('/out:'+(Join-Path $output 'WorkspaceLaunchProbe.exe')) (Join-Path $PSScriptRoot 'tests\WorkspaceLaunchProbe.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Workspace launch probe compilation failed.' }
+    & $nativeTest
+    if ($LASTEXITCODE -ne 0) { throw 'Workspace native tests failed.' }
+    & $nativeTest --hidden-dialogs
+    if ($LASTEXITCODE -ne 0) { throw 'Hidden-startup dialog tests failed.' }
 }
 if ($Integration -or $HostedIntegration -or $Compatibility) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'

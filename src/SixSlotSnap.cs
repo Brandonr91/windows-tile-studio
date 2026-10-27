@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.5";
+    public const string ProductVersion="0.3.0-preview.6";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -115,7 +115,7 @@ public class SixSlotSnap : ApplicationContext {
     void ReleaseNavigation() { foreach(int id in navigationHotkeys) NativeMethods.UnregisterHotKey(receiver.Handle,id); navigationHotkeys.Clear(); }
     [StructLayout(LayoutKind.Sequential)] public struct RECT { public int L,T,R,B; }
     public const string ControllerCaption="SixSlotSnap.Controller.v2";
-    public const int ShowCommand=0x8001,SettingsCommand=0x8002,QuitCommand=0x8003,SnapCommand=0x8004,ProfileCommand=0x8005;
+    public const int ShowCommand=0x8001,SettingsCommand=0x8002,QuitCommand=0x8003,SnapCommand=0x8004,ProfileCommand=0x8005,WorkspacesCommand=0x8006;
     readonly string folder,settingsPath;
     AppSettings settings;
     public LayoutModel grid;
@@ -149,13 +149,15 @@ public class SixSlotSnap : ApplicationContext {
     LauncherTab launcher;
     ToolStripMenuItem launcherMenu;
     SnapSettingsForm settingsForm;
+    WorkspaceDialog workspaceForm;
+    readonly StartupLaunchSpec startupLaunch;
     readonly bool recover;
     bool preserveInvalidSettings;
     string recoveryNotice;
     class CommandWindow : NativeWindow {
         public Action<int,IntPtr,IntPtr> Received;
         public CommandWindow() { CreateHandle(new CreateParams{Caption=ControllerCaption}); }
-        protected override void WndProc(ref Message m) { if((m.Msg==0x312 || m.Msg==0x7e || m.Msg==0x1a || m.Msg==0x218 || (m.Msg>=ShowCommand && m.Msg<=ProfileCommand)) && Received!=null) Received(m.Msg,m.WParam,m.LParam); base.WndProc(ref m); }
+        protected override void WndProc(ref Message m) { if((m.Msg==0x312 || m.Msg==0x7e || m.Msg==0x1a || m.Msg==0x218 || (m.Msg>=ShowCommand && m.Msg<=WorkspacesCommand)) && Received!=null) Received(m.Msg,m.WParam,m.LParam); base.WndProc(ref m); }
     }
     void Log(string text) { try { File.AppendAllText(Path.Combine(folder,"status.log"),DateTime.Now.ToString("s")+" "+text+Environment.NewLine); } catch(IOException) {} }
     static bool Near(RECT a,RECT b) { return Math.Abs(a.L-b.L)<16 && Math.Abs(a.R-b.R)<16 && Math.Abs(a.T-b.T)<16 && Math.Abs(a.B-b.B)<16; }
@@ -454,6 +456,7 @@ public class SixSlotSnap : ApplicationContext {
         SaveSettings();WriteState();
     }
     public void OpenFlyout(IntPtr target,string onlyProfile) {
+        if(workspaceForm!=null&&!workspaceForm.IsDisposed){workspaceForm.Activate();return;}
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
         if(flyout!=null && flyout.Visible) { HideFlyout(); return; }
         if(!ValidTarget(target) && ValidTarget(lastExternalWindow)) target=lastExternalWindow;
@@ -497,15 +500,17 @@ public class SixSlotSnap : ApplicationContext {
         RefreshLauncher(); WriteState(); return null;
     }
     public void OpenSettings() {
+        if(workspaceForm!=null&&!workspaceForm.IsDisposed){workspaceForm.Activate();return;}
         HideFlyout(); if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
         workspace.Capture(); settingsMonitorId=workspace.Active.Display.Id; settingsOpened=settings.Clone();
         settingsOpened.Profiles=settings.Profiles.Select(p=>workspace.Resolve(settingsMonitorId,p.Id)).ToList();
         try {
-            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings; form.ShowDialog(); }
+            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings; ShowManagedDialog(form); }
         } finally {settingsForm=null;settingsMonitorId=null;settingsOpened=null;}
     }
     void HandleCommand(int message,IntPtr a,IntPtr b) {
         try {
+            if(workspaceForm!=null&&!workspaceForm.IsDisposed&&(message==ShowCommand||message==SnapCommand||message==ProfileCommand||message==0x312)){workspaceForm.Activate();return;}
             if(message==0x7e || message==0x1a || message==0x218) {
                 if(message==0x218 && a.ToInt32()==4) {displayTimer.Stop();CancelResizeSession();HideFlyout();SaveSettings();}
                 else if(message!=0x218 || a.ToInt32()==0x12 || a.ToInt32()==7) {displayTimer.Stop();displayTimer.Start();}
@@ -515,13 +520,66 @@ public class SixSlotSnap : ApplicationContext {
                 else if(id>=1 && id<=16) { IntPtr target=flyout==null?NativeMethods.GetForegroundWindow():targetWindow; HideFlyout(); TargetMonitor(target); if(id<=grid.Profile.SlotCount) SnapTo(target,grid.Profile.Id,id-1); }
                 else if(id>=300 && id<300+settings.Profiles.Count) OpenFlyout(NativeMethods.GetForegroundWindow(),settings.Profiles[id-300].Id);
             } else if(message==ShowCommand) OpenFlyout(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b,null);
-            else if(message==SettingsCommand) OpenSettings(); else if(message==QuitCommand) ExitThread();
+            else if(message==SettingsCommand) OpenSettings(); else if(message==WorkspacesCommand)OpenWorkspaces(); else if(message==QuitCommand) ExitThread();
             else if(message==SnapCommand) { HideFlyout(); TargetMonitor(b); SnapTo(b,grid.Profile.Id,a.ToInt32()-1); }
             else if(message==ProfileCommand && a.ToInt32()>=0 && a.ToInt32()<settings.Profiles.Count) { HideFlyout(); TargetMonitor(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b); UseProfile(settings.Profiles[a.ToInt32()].Id); WriteState(); }
         } catch(Exception e) { Log("Command: "+e); tray.ShowBalloonTip(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
     }
-    public SixSlotSnap(string dataDirectory,bool recoverWindows) {
+    public SavedWorkspace CaptureWorkspace(string name,bool matchTitles) {
+        var result=new SavedWorkspace{Name=name,MatchTitles=matchTitles};workspace.Capture();
+        foreach(var session in workspace.Sessions.Values.Where(s=>s.Connected)) {
+            var display=new SavedWorkspaceDisplay{MonitorId=session.Display.Id,DisplayName=session.Display.Name,Layout=session.Model.Profile.Clone()};display.Layout.Shortcut=new Shortcut();
+            for(int slot=0;slot<session.Model.Profile.SlotCount;slot++) {
+                var window=session.Windows[slot];if(!ValidTarget(window)||NativeMethods.MonitorFromWindow(window,2)!=session.Display.Handle)continue;var live=WorkspaceApps.Read(window);if(live==null)continue;
+                display.Windows.Add(new SavedPlacement{ApplicationPath=live.ApplicationPath,WindowClass=live.WindowClass,WindowTitle=matchTitles?live.Title:null,Slot=slot});
+            }
+            if(display.Windows.Count>0)result.Displays.Add(display);
+        }
+        result.Validate();return result;
+    }
+    public WorkspaceRestorePlan PreviewWorkspace(SavedWorkspace saved,bool fallback) {
+        var windows=new List<LiveWorkspaceWindow>();NativeMethods.EnumWindows(delegate(IntPtr window,IntPtr unused){if(ValidTarget(window)){var live=WorkspaceApps.Read(window);if(live!=null)windows.Add(live);}return true;},IntPtr.Zero);
+        return WorkspacePlanner.Build(saved,windows,DisplayInventory.Connected(),settings.Profiles,fallback?workspace.Active.Display.Id:null);
+    }
+    public string RestoreWorkspace(WorkspaceRestorePlan plan) {
+        var selected=plan.SelectedRows();var displays=DisplayInventory.Connected();int restored=0,skipped=0;var issues=new List<string>();var before=workspace.Active;
+        CancelResizeSession();HideFlyout();
+        foreach(var group in selected.GroupBy(r=>r.Target.Id,StringComparer.OrdinalIgnoreCase)) {
+            bool prepared=false;
+            foreach(var row in group) {
+                var target=displays.FirstOrDefault(d=>string.Equals(d.Id,row.Target.Id,StringComparison.OrdinalIgnoreCase));var profile=settings.Profiles.FirstOrDefault(p=>p.Id==row.LayoutId);var live=WorkspaceApps.Read(row.Chosen.Handle);
+                if(target==null||profile==null||!MonitorWorkspace.SameShape(profile,row.SavedDisplay.Layout)||!ValidTarget(row.Chosen.Handle)||!WorkspaceApps.SameInstance(row.Chosen,live)||!WorkspaceApps.Matches(row.Saved,live,false)||(plan.Workspace.MatchTitles&&live.Title!=row.Chosen.Title)) {skipped++;issues.Add("A display, layout or window changed; refresh the preview.");continue;}
+                var geometry=row.SavedDisplay.Layout.Clone();geometry.Id=profile.Id;geometry.Name=profile.Name;geometry.Shortcut=profile.Shortcut.Clone();geometry.Validate();
+                var wanted=new LayoutModel(geometry){Work=target.Work}.RectFor(row.Saved.Slot);bool maximized=NativeMethods.IsZoomed(live.Handle),minimized=NativeMethods.IsIconic(live.Handle);
+                if(maximized||minimized)NativeMethods.ShowWindow(live.Handle,9);
+                if(!PlaceWindow(live.Handle,wanted,false)){if(maximized)NativeMethods.ShowWindow(live.Handle,3);else if(minimized)NativeMethods.ShowWindow(live.Handle,6);skipped++;issues.Add("An app rejected its requested frame.");continue;}
+                ActivateMonitor(target);
+                if(!prepared) {
+                    if(workspace.Active.Model.Profile.Id!=geometry.Id||!workspace.Active.Model.Profile.GeometryMatches(geometry)){workspace.Active.Model=new LayoutModel(geometry){Work=target.Work};workspace.Active.Windows=new IntPtr[16];}
+                    workspace.Active.NeedsRecovery=false;BindActive();prepared=true;
+                }
+                ReleaseWindow(live.Handle);assigned[row.Saved.Slot]=live.Handle;restored++;
+            }
+        }
+        if(before.Connected)ActivateMonitor(before.Display);SaveSettings();WriteState();
+        string summary="Restored "+restored+" windows; skipped "+skipped+". No apps were launched.";if(issues.Count>0)summary+=" "+string.Join(" ",issues.Distinct());Log(summary);return summary;
+    }
+    public void OpenWorkspaces() {
+        HideFlyout();if(settingsForm!=null&&!settingsForm.IsDisposed){settingsForm.Activate();return;}if(workspaceForm!=null&&!workspaceForm.IsDisposed){workspaceForm.Activate();return;}
+        try {using(var form=new WorkspaceDialog(Path.Combine(folder,"workspaces.xml"),CaptureWorkspace,PreviewWorkspace,RestoreWorkspace,WorkspaceApps.Launch,new StartupRegistration(startupLaunch,new UserStartupValue()))){workspaceForm=form;ShowManagedDialog(form);}}
+        finally {workspaceForm=null;}
+    }
+    static void ShowManagedDialog(Form form) {
+        // A process launched with STARTUPINFO/SW_HIDE can hide its first Form.
+        // Queue an explicit show after that initial native show has completed.
+        form.Load+=delegate {form.BeginInvoke((Action)delegate {if(!form.IsDisposed){NativeMethods.ShowWindow(form.Handle,5);form.Activate();}});};
+        form.ShowDialog();
+    }
+    public SixSlotSnap(string dataDirectory,bool recoverWindows,string sourceDirectory=null) {
         folder=dataDirectory; Directory.CreateDirectory(folder); settingsPath=Path.Combine(folder,"settings.xml"); recover=recoverWindows;
+        string assembly=typeof(SixSlotSnap).Assembly.Location;
+        startupLaunch=new StartupLaunchSpec{Executable=assembly,DataDirectory=folder};
+        if(string.IsNullOrEmpty(assembly)){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");if(sourceDirectory==null)startupLaunch.UnavailableReason="Hosted source location is unknown. Start with Start-Hosted.cmd before enabling login startup.";else startupLaunch.SourceScript=Path.Combine(sourceDirectory,"Start-Hosted.ps1");}
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); string warning; settings=SettingsStore.Load(settingsPath,out warning); preserveInvalidSettings=warning!=null;
         if(!File.Exists(settingsPath)) SettingsStore.MigrateLegacy(Path.Combine(folder,"layout.txt"),settings);
         settings.Validate(); workspace=new MonitorWorkspace(settings); workspace.UpdateDisplays(DisplayInventory.Connected()); workspace.Activate(DisplayInventory.ForWindow(NativeMethods.GetForegroundWindow())); BindActive();
@@ -531,6 +589,7 @@ public class SixSlotSnap : ApplicationContext {
         var menu=new ContextMenuStrip();
         menu.Items.Add("Choose layout  "+settings.FlyoutShortcut,null,delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); });
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
+        menu.Items.Add("Workspaces & login startup",null,delegate {OpenWorkspaces();});
         launcherMenu=(ToolStripMenuItem)menu.Items.Add("Show Layouts bar",null,delegate {SetLauncherVisible(!settings.ShowLauncherTab);});
         menu.Items.Add("Reset Layouts bar position",null,delegate { ResetLauncherPosition(); });
         menu.Items.Add("Reset active layout proportions",null,delegate { if(MessageBox.Show("Reset this layout to equal columns and rows? Its assigned windows will be resized. Choose No to keep the current proportions.","Reset layout proportions?",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)!=DialogResult.Yes) return; CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
@@ -556,6 +615,7 @@ public class SixSlotSnap : ApplicationContext {
     protected override void ExitThreadCore() {
         if(disposed) return;
         if(settingsForm!=null && !settingsForm.IsDisposed) { var open=settingsForm; open.DialogResult=DialogResult.Cancel; open.Close(); if(!open.IsDisposed && open.DialogResult==DialogResult.None) return; }
+        if(workspaceForm!=null&&!workspaceForm.IsDisposed)workspaceForm.Close();
         disposed=true;
         resizeTimer.Stop(); settleTimer.Stop(); displayTimer.Stop(); SaveSettings(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose(); displayTimer.Dispose();
         if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); if(destroyHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(destroyHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
@@ -563,10 +623,10 @@ public class SixSlotSnap : ApplicationContext {
     [STAThread] public static void Main(string[] args) {
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); Application.EnableVisualStyles();
         string folder=AppDomain.CurrentDomain.BaseDirectory; int data=Array.IndexOf(args,"--data-dir"); if(data>=0 && data+1<args.Length) folder=Path.GetFullPath(args[data+1]);
-        string command=args.FirstOrDefault(a=>a=="--show"||a=="--settings"||a=="--quit"||a=="--snap"||a=="--layout");
+        string command=args.FirstOrDefault(a=>a=="--show"||a=="--settings"||a=="--workspaces"||a=="--quit"||a=="--snap"||a=="--layout");
         if(command!=null) {
             IntPtr existing=NativeMethods.FindWindow(null,ControllerCaption); if(existing==IntPtr.Zero) { MessageBox.Show("Start Windows Tile Studio before sending a command.","Windows Tile Studio"); return; }
-            int message=command=="--show"?ShowCommand:command=="--settings"?SettingsCommand:command=="--quit"?QuitCommand:command=="--snap"?SnapCommand:ProfileCommand;
+            int message=command=="--show"?ShowCommand:command=="--settings"?SettingsCommand:command=="--workspaces"?WorkspacesCommand:command=="--quit"?QuitCommand:command=="--snap"?SnapCommand:ProfileCommand;
             int number=0,at=Array.IndexOf(args,command); if((message==SnapCommand||message==ProfileCommand) && (at+1>=args.Length||!int.TryParse(args[at+1],out number))) return;
             NativeMethods.PostMessage(existing,message,new IntPtr(number),NativeMethods.GetForegroundWindow()); return;
         }
@@ -575,7 +635,8 @@ public class SixSlotSnap : ApplicationContext {
         }
         bool created; using(var mutex=new Mutex(true,"Local\\SixSlotSnapController",out created)) {
             if(!created) return;
-            try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"))); }
+            int source=Array.IndexOf(args,"--source-root");string sourceRoot=source>=0&&source+1<args.Length?Path.GetFullPath(args[source+1]):null;
+            try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"),sourceRoot)); }
             catch(Exception e) { Directory.CreateDirectory(folder); File.AppendAllText(Path.Combine(folder,"status.log"),e+Environment.NewLine); MessageBox.Show(e.Message,"Windows Tile Studio could not start"); Environment.ExitCode=1; }
         }
     }
