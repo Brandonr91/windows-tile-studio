@@ -160,8 +160,8 @@ you want to retain it as a fallback; only one controller can run at a time.
   geometry, so overlapping duplicate windows may need manual reassignment.
 - Full-screen apps, unusual window frames, and additional display configurations
   need broader testing.
-- Mouse zone selection, Escape, and direct zone hotkeys are available; arrow-key
-  navigation inside the flyout is planned rather than implemented.
+- Keyboard navigation needs its temporary keys to be available; a conflict
+  keeps mouse selection available without capturing a partial set of keys.
 - This version uses rectangular column stacks, not arbitrary overlapping zones.
 
 ## Development and verification
