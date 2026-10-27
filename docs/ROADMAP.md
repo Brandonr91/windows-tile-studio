@@ -62,6 +62,14 @@ is unchanged.
 
 ## Polished version
 
+Local phased progress (2026-10-27): phases 1–4 implement controls/identity,
+editing/startup recovery, representative app-size compatibility, and independent
+monitor state/display notifications. See [phase plan](POLISH-PHASES.md) and
+[display coverage](DISPLAYS.md); physical multi-monitor/docking/sleep tests remain.
+Phase 5 starts the visual builder and portable layout import/export. The list
+below retains the broader original polished scope, not an assertion all items
+are complete or published.
+
 - More visual proportion editing and better settings presentation.
 - Per-monitor state and display-change recovery.
 - App minimum-size negotiation and clearer fit feedback.

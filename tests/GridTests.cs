@@ -115,6 +115,51 @@ class GridTests {
         model.MinimumWidths[0]=1400;model.MinimumWidths[1]=1400;source=model.RectFor(0);proposed=source;proposed.R+=100;
         Check(!model.Adjust(0,source,proposed) && p.GeometryMatches(before),"Impossible width constraints changed the grid");Cover(model);
     }
+    static void Monitors(string root) {
+        var settings=AppSettings.Defaults();var state=new MonitorWorkspace(settings);
+        var primary=new DisplayDescriptor{Id="sim-primary",Name="Primary",Primary=true,Bounds=new SixSlotSnap.RECT{R=5120,B=2160},Work=new SixSlotSnap.RECT{R=5120,B=2112}};
+        var secondary=new DisplayDescriptor{Id="sim-secondary",Name="Left",Bounds=new SixSlotSnap.RECT{L=-2560,T=-500,R=0,B=940},Work=new SixSlotSnap.RECT{L=-2560,T=-500,R=0,B=900}};
+        Check(state.UpdateDisplays(new[]{primary,secondary}),"Initial display inventory ignored");
+        state.Activate(primary);state.Active.Model.Profile.Columns[1].Rows=new System.Collections.Generic.List<double>{0.6,0.4};state.Active.Windows[0]=new IntPtr(101);state.Capture();
+        var first=state.Active;state.Activate(secondary);state.SelectProfile("four-grid");
+        state.Active.Model.Profile.Columns[0].Rows=new System.Collections.Generic.List<double>{0.7,0.3};state.Active.Windows[0]=new IntPtr(202);var second=state.Active;state.Capture();
+        Cover(first.Model);Cover(second.Model);
+        state.Activate(primary);Check(state.Active.Windows[0]==new IntPtr(101) && state.Active.Model.Profile.Id=="six-grid" && state.Active.Model.Profile.Columns[1].Rows[0]==0.6,"Monitor switching lost independent profile/assignment/ratios");
+        Check(second.Windows[0]==new IntPtr(202) && second.Model.Profile.Columns[0].Rows[0]==0.7,"Primary switch overwrote secondary");
+        var beforeSecond=second.Model.Profile.Clone();var source=first.Model.RectFor(1);var after=source;after.B+=60;first.Model.Adjust(1,source,after);
+        Check(second.Model.Profile.GeometryMatches(beforeSecond) && first.Model.HeightAffectedSlots.Length==2,"Height resizing crossed monitors");state.Capture();
+        string path=Path.Combine(root,"monitor-settings.xml");SettingsStore.Save(path,settings);string warning;var loaded=SettingsStore.Load(path,out warning);
+        Check(warning==null && loaded.Monitors.Count==2,"Monitor settings did not round trip");
+        var restart=new MonitorWorkspace(loaded);restart.UpdateDisplays(new[]{primary,secondary});restart.Activate(secondary);
+        Check(restart.Active.Model.Profile.Id=="four-grid" && restart.Active.Model.Profile.Columns[0].Rows[0]==0.7 && restart.Active.Windows.All(w=>w==IntPtr.Zero),"Restart lost profile or persisted transient HWNDs");
+        var cloned=loaded.Clone();cloned.Monitors[0].Profiles[0].Columns[0].Rows[0]+=0.1;
+        Check(!cloned.Monitors[0].Profiles[0].GeometryMatches(loaded.Monitors[0].Profiles[0]),"Monitor clone shares mutable geometry");
+        cloned=loaded.Clone();cloned.Monitors.Add(cloned.Monitors[0].Clone());Reject(cloned.Validate,"Duplicate monitor identity accepted");
+        state.Activate(secondary);state.UpdateDisplays(new[]{primary});
+        Check(state.Active==first && !second.Connected && second.Windows.All(w=>w==IntPtr.Zero) && first.Windows[0]==new IntPtr(101),"Disconnect disturbed the other display or retained live ownership");
+        state.UpdateDisplays(new[]{primary,secondary});state.Activate(secondary);
+        Check(second.Connected && second.NeedsRecovery && second.Windows.All(w=>w==IntPtr.Zero) && second.Model.Profile.Columns[0].Rows[0]==0.7,"Reconnect lost saved geometry or resurrected HWNDs");
+        first.NeedsReflow=false;second.NeedsReflow=false;
+        var changed=new DisplayDescriptor{Id=secondary.Id,Name=secondary.Name,Bounds=secondary.Bounds,Work=new SixSlotSnap.RECT{L=-2560,T=-500,R=0,B=850}};
+        state.UpdateDisplays(new[]{primary,changed});Check(second.NeedsReflow && !first.NeedsReflow && second.Model.Work.B==850,"Work-area change affected the wrong display");Cover(second.Model);
+        state.UpdateDisplays(new[]{primary,changed});Check(state.Active==second,"Unchanged topology lost active display");
+        state.Activate(primary);state.Capture();var opened=settings.Clone();opened.Profiles=settings.Profiles.Select(p=>state.Resolve(primary.Id,p.Id)).ToList();var draft=opened.Clone();
+        first.Model.Profile.Columns[0].Rows=new System.Collections.Generic.List<double>{0.55,0.45};
+        draft.ShowLauncherTab=false;draft.Profiles[0].Name="Renamed on both displays";
+        var edited=draft.Profiles.First(p=>p.Id=="four-grid");edited.Columns[0].Rows=new System.Collections.Generic.List<double>{0.8,0.2};
+        state.PrepareDraft(draft,opened);draft.Validate();
+        Check(draft.Profiles[0].Columns[0].Rows[0]==0.55,"Appearance save overwrote a concurrent resize");
+        Check(!state.Rebind(draft),"Unchanged active geometry requested a reflow");
+        Check(state.Resolve(primary.Id,"four-grid").Columns[0].Rows[0]==0.8 && state.Resolve(secondary.Id,"four-grid").Columns[0].Rows[0]==0.7,"Editing an inactive layout overwrote another monitor or was lost");
+        var removed=draft.Clone();removed.Profiles.RemoveAll(p=>p.Id=="four-grid");removed.Validate();state.Rebind(removed);
+        Check(second.Model.Profile.Id!="four-grid" && second.Windows.All(w=>w==IntPtr.Zero),"Removed profile left a stale monitor model");
+        var reshaped=removed.Clone();reshaped.Profiles[0].Columns[0].Rows.Add(1);reshaped.Profiles[0].Normalize();reshaped.Validate();
+        Check(state.Rebind(reshaped) && first.Windows.All(w=>w==IntPtr.Zero) && first.Model.Profile.Columns[0].Rows.Count==3,"Shared grid shape change retained stale assignments");
+        var old=AppSettings.Defaults();SettingsStore.Save(path,old);var xml=File.ReadAllText(path).Replace("  <Monitors />\r\n","").Replace("  <Monitors />\n","");File.WriteAllText(path,xml);
+        old=SettingsStore.Load(path,out warning);Check(warning==null && old.Monitors.Count==0,"Pre-monitor schema migration failed");
+        var migrated=new MonitorWorkspace(old);migrated.UpdateDisplays(new[]{primary});Check(migrated.Active.Model.Profile.Id==old.ActiveProfileId,"First monitor did not inherit old selected layout");
+        Check(LauncherTab.SizeForScale(1.25)==new System.Drawing.Size(338,34) && LauncherTab.SizeForScale(2)==new System.Drawing.Size(540,54),"Launcher physical scaling failed");
+    }
     static int Main() {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
@@ -123,6 +168,7 @@ class GridTests {
             Config(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             HeightPair();
             MinimumConstraints();
+            Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }

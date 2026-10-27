@@ -76,8 +76,10 @@ class IntegrationTests {
             Check(!cancelled.Draft.LauncherPositionSet && original.LauncherPositionSet && original.LauncherX==456,"Resetting the draft changed live settings before save");
         }
         using(var editor=new SnapSettingsForm(original)) {
+            editor.DisplayContext("Simulated display");
             editor.ConfirmAction=delegate { return true; };
             editor.StartPosition=FormStartPosition.Manual; editor.Location=new Point(-30000,-30000); editor.ShowInTaskbar=false; editor.Show(); Pump(50);
+            Check(((TabControl)Find(editor,c=>c is TabControl)).Top>=36,"Monitor context overlaps the settings tabs");
             ((Button)Find(editor,c=>c is Button && c.Text=="Add layout")).PerformClick();
             ((TextBox)Find(editor,c=>c is TextBox && c.AccessibleName=="Layout name")).Text="Editor acceptance test";
             ((NumericUpDown)Find(editor,c=>c is NumericUpDown && c.AccessibleName=="Number of columns")).Value=2;
@@ -259,6 +261,15 @@ class IntegrationTests {
         receiver=new IntPtr((long)State().Attribute("controller")); Check(receiver!=IntPtr.Zero,"Controller handle missing");
         for(int i=0;i<6;i++) Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle);
         CheckAll(); Check(State().Elements("Zone").Count()==6,"Not all six zones were assigned"); passed.Add("Six external-process test windows placed and tracked.");
+        var displayBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();int refreshes=(int)State().Attribute("displayRefreshes");
+        foreach(int notification in new[]{0x7e,0x1a,0x218}) {
+            IntPtr notificationResult;
+            Check(SendMessageTimeout(receiver,(uint)notification,new IntPtr(notification==0x218?0x12:0),IntPtr.Zero,2,2000,out notificationResult)!=IntPtr.Zero,"Could not deliver display notification");
+            Wait(()=>(int)State().Attribute("displayRefreshes")>refreshes,"Display notification did not refresh inventory");refreshes=(int)State().Attribute("displayRefreshes");
+            Check(State().Elements("Zone").Count()==6 && State().Element("Monitors").Elements("Monitor").Any(m=>(bool)m.Attribute("connected")),"Display refresh lost assignments or monitor state");
+            for(int i=0;i<6;i++) Check(Equal(displayBaseline[i],Bounds(forms[i].Handle)),"Unchanged display notification moved a test window");
+        }
+        CheckAll();passed.Add("Display/work-area and synthetic resume notifications refresh live inventory without moving six assigned windows on unchanged hardware; no OS settings or power state changed.");
         for(int row=0;row<2;row++) for(int edge=0;edge<2;edge++) {
             int index=1+row*3; var beforeModel=Model(); var beforeRows=beforeModel.Profile.Columns.Select(c=>c.Rows.ToArray()).ToArray();
             BeginResize(forms[index].Handle); Pump(100); var r=Bounds(forms[index].Handle); if(edge==0) r.L+=50; else r.R-=45; Move(index,r); Pump(180);

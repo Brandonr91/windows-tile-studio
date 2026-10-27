@@ -1,6 +1,77 @@
 # Handoff
 
-## Current checkpoint: phase 3
+## Current checkpoint: phase 4
+
+2026-10-27, following `9785a92`. Phase 4 core is implemented locally as
+`0.3.0-preview.4`. Read [display support/verification](docs/DISPLAYS.md) and
+the phase plan alongside the actual repository before continuing. Next requested
+phase is phase 5: draft visual builder and portable layout/hotkey import/export.
+No public push or production release was performed in this phase.
+
+Implemented: `DisplayState.cs` native inventory and pure `MonitorWorkspace`;
+optional schema-1 monitor records; independent selected profiles, proportions
+and HWND arrays; shared names/grids/hotkeys; same-monitor ownership checks;
+debounced display/work-area/resume refresh; disconnect releases transient HWNDs,
+retaining preferences; reconnect can recover matching visible geometry. Reflow
+verifies eligible same-monitor frames and releases unsupported assignments.
+No cross-screen return, app relaunch, startup registration or OS display change.
+Launcher creation/DPI changes/topology refresh scale and clamp its visible bounds.
+Settings banner identifies its monitor, retains drafts on disconnect, merges
+current monitor snapshots and preserves untouched concurrent geometry.
+
+Verification on final source:
+
+- `Build.ps1 -Test`: PASS, 186297 geometry/configuration checks, including
+  simulated two-monitor negative-origin/different-size geometry, independent
+  profiles/assignments/heights, restart, disconnect/reconnect, work-area flags,
+  clone/XML migration, concurrent draft merge, profile removal/shared shape.
+- `Build.ps1 -HostedIntegration`: PASS, native synthetic display/work-area/resume
+  notifications preserve six disposable frames/assignments on unchanged hardware;
+  existing full resize/flyout/editor/hotkey/recovery and compiled compatibility
+  subcases pass. Banner layout has a non-overlap regression check.
+- Focused `Build.ps1 -Compatibility`: PASS, including minimums, pair-only 3/4-row
+  sides, lifecycle, delayed query and isolated Chrome. Final full run: 20 corner
+  updates 1480 ms including deliberate pumps/settling, 125 ms controller CPU;
+  idle one-second sample 0 ms; no growing GDI count. These are short local samples.
+- Windows PowerShell 5.1 `tests/LauncherTests.ps1`: PASS, source-only hosting,
+  installed-source validation, repeat installs/data preservation and unsafe ZIP
+  rejection. No network download test was needed for this unpublished source.
+
+During development, a notification test needed synchronous delivery for Windows'
+pointer-bearing WM_SETTINGCHANGE; PostMessage was rejected. A settings title
+suffix broke an exact-title recovery lookup, so display context now lives in a
+banner. A later compatibility run exposed resize timing failure while device
+enumeration was on the drag loop. Affinity checks now use cached native monitor
+handles there; inventory/target selection resolves persistent IDs outside that
+loop. Focused and full suites passed after the correction.
+
+Available hardware remains one physical 5120 x 2160 display at 125%. No physical
+second-monitor/mixed-DPI movement, docking/unplug, taskbar/scale change or actual
+sleep/wake cycle was tested. Pure topology and synthetic notifications do not
+close those production gates. Identity can change across ports/drivers; fallback
+GDI keys are weaker. No record-removal UI or saved app workspace exists. Older
+controllers may discard new monitor fields on save; use the fallback settings
+snapshot for rollback. Phase-3 elevated/hung-app limits still apply.
+
+Final source is installed in `outputs/windows-tile-studio-hosted/src`; daily
+runtime reports preview.4, recoveryRequired=false, one connected monitor and all
+six existing assignments. Verify its current PID/command line from runtime XML
+before desktop work; these values are transient. Preserve daily data. Previous
+source/settings snapshot: `work/phase-four-fallback`. Reports outside Git:
+`outputs/windows-tile-studio-phase-four-integration-results.txt`,
+`outputs/windows-tile-studio-phase-four-compatibility-results.txt`,
+`outputs/windows-tile-studio-phase-four-launcher-results.txt`.
+Source packages refreshed after the local commit; original six-slot repository
+and legacy redirect configuration are unchanged.
+
+Next steps: inspect status/log/remotes and source; follow phase 5 in
+`docs/POLISH-PHASES.md` when requested. Begin with a draft-only visual divider
+editor, numeric fallback and undo/cancel/save tests, then validate portable
+imports without exporting monitor IDs/HWNDs/launcher location. Use isolated
+desktop windows for behavior changes, never another controller alongside daily.
+Physical display tests remain a separate explicit release checklist.
+
+## Previous checkpoint: phase 3
 
 2026-10-27, following `11f217a`. Phase 3 core is implemented locally as
 `0.3.0-preview.3`. The original user workflow, pair-only heights, source-only

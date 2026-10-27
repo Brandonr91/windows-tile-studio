@@ -1,7 +1,7 @@
 # Architecture
 
 Context established 2026-10-26 from base application `48b96b2`; updated
-2026-10-27 for local phase-3 preview `0.3.0-preview.3`. Earlier milestones and
+2026-10-27 for local phase-4 preview `0.3.0-preview.4`. Earlier milestones and
 decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
@@ -13,7 +13,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all five `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all six `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 `Start.ps1` only builds if the EXE is missing: after source changes explicitly
@@ -34,6 +34,7 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/Settings.cs` | Shortcut validation, six presets, configuration schema version 1, XML load/save/backup and legacy import. |
 | `src/Flyout.cs` | Nonactivating flyout, layout cards, zone highlight/navigation, draggable clock-area launcher bar. |
 | `src/SettingsForm.cs` | Draft-based layout/weight editor, preview and shortcut dialog; validation before applying/saving. |
+| `src/DisplayState.cs` | Native fresh monitor inventory, per-monitor saved geometry, pure session ownership/topology and draft merge transitions. |
 
 ## Geometry and resize ownership
 
@@ -92,8 +93,21 @@ Moving an unchanged-size window away releases its slot at move/size end.
 Recovery enumerates visible eligible windows with a less-than-16-pixel edge
 tolerance. Two-row columns also recognize complementary top/bottom pairs and
 recover their divider from actual bounds. No app identity or workspace session
-is persisted. A change of monitor work area clears assignments; no per-monitor
-state or display-change subscription is implemented.
+is persisted. Phase 4 replaces the single assignment array with one session per
+monitor; the controller binds its grid/assignment references to the active session.
+Monitor-affinity checks prevent recovery/reflow/resize from pulling windows across
+screens. Profile switches clear only that display's assignments. Destroy events
+release the HWND across every session.
+
+Schema-1 optional monitor records retain selected profiles and geometry snapshots;
+the catalog and shortcuts remain shared. Windows device-interface paths identify
+monitors, with GDI names as fallback. Port/driver changes can change identity.
+Display/work-area/power messages use a 350 ms debounce and fresh native inventory.
+Disconnect releases runtime ownership, retaining preferences; changed connected
+work areas request verified frames only for eligible same-monitor assignments.
+Reconnect uses geometry recovery, not app relaunch. Settings drafts preserve
+concurrent monitor snapshots and target the display named when opened. See
+[display checkpoint](docs/DISPLAYS.md) for migration, behavior and hardware limits.
 
 A separate EVENT_OBJECT_DESTROY hook releases closed top-level windows and is
 unhooked on exit. A recreated/restarted window must be explicitly snapped;
@@ -104,7 +118,7 @@ stored HWNDs are not treated as durable workspace identity.
 Phase-1 UI uses a third Appearance settings tab for launcher visibility and
 draft position reset. Cancel discards those changes. The tray also offers an
 immediate bar reset and About with `SixSlotSnap.ProductVersion` (currently
-`0.3.0-preview.1`). Visible UI names are Windows Tile Studio; compatibility
+`0.3.0-preview.4`). Visible UI names are Windows Tile Studio; compatibility
 identifiers remain unchanged. `LayoutProfile.GeometryMatches` compares segment
 counts/weights with tolerance `1e-8`; `ApplySettings` only reflows the same active
 profile when its geometry changed, preserving actual frames on appearance-only
@@ -118,7 +132,10 @@ system drag threshold. Dragging changes the bar's location, not app assignments;
 release saves `LauncherPositionSet`, `LauncherX`, `LauncherY` in schema-1 settings.
 Older settings omit these fields and receive the new default. Clone and XML
 round-trip preserve them. Restored/dragged bounds are clamped to a screen's work
-area; this does not add full display-change or mixed-DPI migration support.
+area using fresh native monitor geometry. Phase 4 also scales the owned launcher
+font/dimensions at creation and WM_DPICHANGED, clamps suggested bounds, and
+recreates/clamps it after display notifications. Physical mixed-DPI crossing
+remains unverified on the single available display.
 
 The flyout uses a nonactivating topmost tool window. It retains the external
 target HWND and returns selection to that target. Arrows choose a zone using

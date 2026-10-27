@@ -69,6 +69,12 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
   mouse selection working if registration conflicts.
 - Failed hotkey changes must restore the previous registered shortcuts.
 - A move-out releases a slot; a resize keeps neighboring edges joined.
+- Keep independent monitor sessions and saved proportions. Never pull a moved
+  window back across displays during reflow or resize. Disconnect clears HWND
+  ownership, retaining preferences; reconnect is geometry recovery, not relaunch.
+  Shared names/grids/hotkeys and per-monitor proportions must remain distinct.
+  Merge current monitor snapshots when saving an older settings draft. Consult
+  docs/DISPLAYS.md and do not claim physical mixed-DPI/hotplug coverage from tests.
 - Keep the controller local: no network service or AI runtime dependency.
 - Appearance-only and shortcut/name-only saves must not reflow managed app
   windows. Keep appearance edits draft-only until Save; launcher reset from

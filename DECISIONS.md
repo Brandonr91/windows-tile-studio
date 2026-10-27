@@ -61,8 +61,24 @@ are explicitly labeled. Consult actual source before relying on them.
 
 ## Proposed, not yet decided or implemented
 
-App-specific minimum-size negotiation, a graphical divider editor, per-monitor
-persistence, optional app/workspace restoration, optional login startup, and
+Phase 4 supersedes D10's single-work-area limitation: per-monitor sessions retain
+selected layouts, geometry and transient assignment arrays. Windows device-interface
+paths (GDI fallback) provide identity without guessing across port/driver changes.
+Schema 1 adds optional monitor snapshots, retaining old-file loading. The current
+active geometry also mirrors into the shared catalog for existing tools. Names,
+grid shapes and hotkeys stay shared; proportions are per-monitor. Draft saves
+merge latest runtime snapshots and preserve untouched concurrent geometry.
+
+Display notifications are debounced, not polled. Work-area changes reflow only
+eligible same-monitor assignments with verified placement; disconnect releases
+HWND ownership and reconnect performs optional geometry recovery. No automatic
+cross-screen return, app relaunch, service or startup changes. Single-display
+native notification tests plus pure topology cases do not establish physical
+mixed-DPI/docking/sleep coverage. See [display checkpoint](docs/DISPLAYS.md).
+
+App-specific minimum-size negotiation and per-monitor persistence are implemented
+in phases 3–4 within documented limits. A graphical divider editor,
+optional app/workspace restoration, optional login startup, and
 release signing remain roadmap candidates. Do not treat them as user approval
 to install services, enable startup, publish releases or change system settings.
 

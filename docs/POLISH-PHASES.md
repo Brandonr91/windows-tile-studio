@@ -11,7 +11,7 @@ background work or promise dates. Preserve independent height pairs throughout.
 | 1. Everyday controls and identity | Settings organization, launcher reset/visibility, consistent visible branding, tray version/About. | Appearance save/cancel works, no unnecessary window reflow, existing resize/flyout tests pass. | Implemented and verified locally as `0.3.0-preview.1`; not published. |
 | 2. Editing safeguards and recovery | Unsaved changes, reversible grid edits/reset confirmation, actionable errors, startup hotkey conflicts, corrupt settings and missing-manager recovery. | Isolated failure reproductions preserve original files/working shortcuts and provide usable recovery. | Implemented and verified locally as `0.3.0-preview.2`; not published. |
 | 3. Window compatibility and responsiveness | App minimum sizes/fit feedback, unusual frames, elevated apps, corners, fast dragging, minimize/restore, app restarts, resize performance/resource cleanup. | Minimum-size and 3+ row cases pass; unrelated heights never move; real-app/timing limitations are explicit. | Core implemented and representative matrix verified locally as `0.3.0-preview.3`; elevated/hung-app limits remain explicit. |
-| 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Planned. |
+| 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Core implemented locally as `0.3.0-preview.4`; simulated topology and single-display notifications verified. Physical multi-monitor/docking/sleep release gates remain. |
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Planned. |
 | 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Planned. |
 | 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Planned. |
@@ -86,14 +86,33 @@ notifications, minimize/restore and app restarts. Reproduce failures before
 changing negotiation or resize ownership; preserve nonadjacent heights and
 measure responsiveness. Multi-monitor support belongs to phase 4.
 
-## Exact next work: phase 4
+## Phase 4 result
 
-Inspect monitor/work-area selection and define stable monitor identity and
-backward-compatible profile/state storage before changing window ownership.
-Add simulated negative-origin, mixed-DPI and work-area-change cases, then verify
-available physical displays, disconnect/reconnect and sleep/resume explicitly.
-Keep the launcher visible and preserve per-monitor independent height pairs.
-Do not claim hardware coverage from simulations alone.
+Independent monitor sessions, optional schema-1 monitor records, per-monitor
+profile/proportion selection, same-monitor ownership checks, display/work-area
+and power notification handling, launcher DPI/clamping and display-scoped settings
+draft merges are implemented. Disconnect retains saved geometry and releases
+HWNDs; reconnect uses optional geometry recovery, never automatic app launch or
+cross-screen return. Inventory enumeration is outside the drag-frame loop.
+
+Pure tests cover negative origins, differently sized physical-coordinate displays,
+switch/restart/disconnect/reconnect, XML migration, shape/removal fallback and
+concurrent draft preservation. The hosted suite checks native display/work-area
+and synthetic resume messages without changing Windows settings. Existing
+resizing/recovery/compatibility and source-launcher suites pass within their scope.
+Only one physical display is connected; mixed-DPI movement, physical docking,
+taskbar changes and actual sleep/wake remain release gates. See
+[display checkpoint](DISPLAYS.md).
+
+## Exact next work: phase 5
+
+Start with a draft-only graphical divider editor using the existing normalized
+layout model. Dragging a height boundary affects its adjacent pair in its column;
+numeric controls remain available. Add undo/save/cancel semantics, then portable
+layout/hotkey export/import that excludes monitor device IDs, HWNDs and launcher
+coordinates. Validate schema/size/weights and shortcut conflicts before replacing
+any draft or live settings. Re-run pair-only height, draft isolation and hosted
+source tests. Physical display validation can proceed when hardware is available.
 
 ## Before pushing a production release
 

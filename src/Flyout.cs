@@ -104,6 +104,28 @@ public class SnapFlyout : NonactivatingForm {
 }
 
 public class LauncherTab : NonactivatingForm {
+    Font ownedFont;
+    public static Size SizeForScale(double scale) { return new Size(Math.Max(1,(int)Math.Round(270*scale)),Math.Max(1,(int)Math.Round(27*scale))); }
+    void SetScale(double scale) {
+        Size=SizeForScale(scale); var previous=ownedFont;
+        ownedFont=new Font("Segoe UI",(float)(12*scale),FontStyle.Regular,GraphicsUnit.Pixel); Font=ownedFont;
+        if(previous!=null) previous.Dispose();
+    }
+    protected override void OnHandleCreated(EventArgs e) {
+        base.OnHandleCreated(e); uint dpi=NativeMethods.GetDpiForWindow(Handle); if(dpi>0) SetScale(dpi/96.0);
+        var work=DisplayInventory.ForWindow(Handle).Work;
+        Location=ClampPosition(Location,Size,Rectangle.FromLTRB(work.L,work.T,work.R,work.B));
+    }
+    protected override void WndProc(ref Message m) {
+        if(m.Msg==0x2e0) {
+            var suggested=(SixSlotSnap.RECT)System.Runtime.InteropServices.Marshal.PtrToStructure(m.LParam,typeof(SixSlotSnap.RECT));
+            SetScale((m.WParam.ToInt64()&0xffff)/96.0);
+            var work=DisplayInventory.ForPoint(suggested.L,suggested.T).Work;
+            Location=ClampPosition(new Point(suggested.L,suggested.T),Size,Rectangle.FromLTRB(work.L,work.T,work.R,work.B)); m.Result=IntPtr.Zero; return;
+        }
+        base.WndProc(ref m);
+    }
+    protected override void Dispose(bool disposing) { base.Dispose(disposing); if(disposing && ownedFont!=null) {ownedFont.Dispose();ownedFont=null;} }
     public Action OpenRequested;
     public Action<Point> PositionChanged;
     Point pressPoint,startLocation;
@@ -115,7 +137,7 @@ public class LauncherTab : NonactivatingForm {
         Text="Windows Tile Studio — layout button";
         StartPosition=FormStartPosition.Manual;
         FormBorderStyle=FormBorderStyle.None; ShowInTaskbar=false; TopMost=true; AutoScaleMode=AutoScaleMode.None;
-        Width=(int)(270*scale); Height=(int)(27*scale); BackColor=Color.FromArgb(33,39,49); ForeColor=Color.FromArgb(210,222,239); Font=new Font("Segoe UI",9); AccessibleName="Open custom Snap layouts";
+        SetScale(scale); BackColor=Color.FromArgb(33,39,49); ForeColor=Color.FromArgb(210,222,239); AccessibleName="Open custom Snap layouts";
         var label=new Label{Dock=DockStyle.Fill,Text="Layouts  ·  "+shortcut,TextAlign=ContentAlignment.MiddleCenter,Cursor=Cursors.SizeAll,AccessibleName="Open custom Snap layouts; drag to move"};
         label.MouseDown+=delegate(object sender,MouseEventArgs e) {
             if(e.Button!=MouseButtons.Left) return;
@@ -125,7 +147,8 @@ public class LauncherTab : NonactivatingForm {
             if(!pressed) return; Point current=Cursor.Position;
             if(!moved && Math.Abs(current.X-pressPoint.X)<SystemInformation.DragSize.Width/2 && Math.Abs(current.Y-pressPoint.Y)<SystemInformation.DragSize.Height/2) return;
             moved=true;
-            Location=ClampPosition(new Point(startLocation.X+current.X-pressPoint.X,startLocation.Y+current.Y-pressPoint.Y),Size,Screen.FromPoint(current).WorkingArea);
+            var work=DisplayInventory.ForPoint(current.X,current.Y).Work;
+            Location=ClampPosition(new Point(startLocation.X+current.X-pressPoint.X,startLocation.Y+current.Y-pressPoint.Y),Size,Rectangle.FromLTRB(work.L,work.T,work.R,work.B));
         };
         label.MouseUp+=delegate(object sender,MouseEventArgs e) {
             if(e.Button!=MouseButtons.Left || !pressed) return;

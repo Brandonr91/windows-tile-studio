@@ -210,8 +210,9 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
-- One monitor is managed at a time; snapping on another monitor switches the
-  active layout and clears the previous monitor's window assignments.
+- Displays retain independent selected layouts, proportions and live assignments.
+  Names, grids and shortcuts are shared. See [display support and hardware
+  verification limits](docs/DISPLAYS.md); real multi-monitor/docking tests remain.
 - Only the most recently snapped window in each slot participates in resizing.
 - Advertised minimum sizes are checked, and actual placement is verified, but
   arbitrary app restrictions may still prevent an exact fit. Minimized and maximized neighbors
@@ -268,7 +269,8 @@ For persistent project context, read [architecture](ARCHITECTURE.md),
 [handoff](HANDOFF.md). Consult them together with the actual checkout before
 continuing development after a new session or context compaction.
 
-Next steps include per-monitor layouts, minimum-size negotiation, saved app
+Per-monitor layouts and minimum-size negotiation are implemented in the local
+preview within their documented test scope. Next steps include saved app
 assignments, and an optional login launcher. These are development ideas rather
 than features already implemented; see [the roadmap](docs/ROADMAP.md).
 
