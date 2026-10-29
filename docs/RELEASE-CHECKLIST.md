@@ -38,6 +38,11 @@ with an actual Windows logout/login or a short sample with several days of use.
 
 ## Manual/beta gates still open
 
+- [x] User-reported core acceptance, 2026-10-29: extensive six-slot layout and
+      dynamic-resize use works quite well on the current installation. Other
+      layouts are not used by this tester; duration/app matrix were not specified.
+      This supplements automated tests without closing the broader gates below.
+
 - [x] Existing compiled-installation acceptance: real settings/backup validation,
       owned shortcut execution (397 ms) and 184.988-second passive runtime observation
       pass; settings/shortcut bytes preserved, no heartbeat/Recovery/crash samples.

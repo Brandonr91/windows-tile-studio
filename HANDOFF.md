@@ -1,5 +1,25 @@
 # Handoff
 
+## Latest checkpoint: user-reported six-slot acceptance, 2026-10-29
+
+The user reports extensive testing of the six-slot layout and its dynamic resizing,
+which works quite well on the current installation. They do not use the other
+layouts. Record this as positive real-use user testimony for that specific core
+workflow, supplementing the existing automated/native checks. No new defect was
+reported; no exact duration, app matrix or gesture breakdown was supplied.
+
+Do not extend this report to other layouts, workspace/portable/general features,
+other machines or all production gates. Existing automated coverage for those
+features remains valid within its earlier scope; user coverage is narrower.
+No app change, new beta version, repackaging or additional test run is warranted
+merely to record this feedback. Beta.2 release/tag/assets remain unchanged.
+These feedback records are local until an authorized documentation push.
+
+Next: follow the user's priority and address concrete defects or requested polish.
+The six-slot workflow now has explicit positive user acceptance; do not repeatedly
+ask the user to retest it without a change or new concern. Other feature/manual
+limits remain distinct rather than erased or inferred from this report.
+
 ## Latest checkpoint: beta.2 merged, tagged and published, 2026-10-29
 
 The user explicitly requested PR review/merge, exact-source tagging and unsigned

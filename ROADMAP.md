@@ -2,6 +2,12 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+User feedback, 2026-10-29: extensive real-use testing of the six-slot layout and
+dynamic resizing works quite well on the existing installation. The user does
+not use the other layouts. This adds user-reported acceptance of the core workflow
+without extending that acceptance to other features/machines or a measured
+multi-day interval. No defect or need for a new beta was reported.
+
 Published update, 2026-10-29: PR #1 is merged; unsigned prerelease v0.3.0-beta.2
 is public with tested source/compiled ZIPs, SHA256SUMS and release-info. All public
 downloads match the frozen reviewed hashes. Tag points to 89613a2; merge main and
