@@ -58,18 +58,32 @@ unchanged; keyboard paths, accessible names and hidden-bar behavior remain sound
 
 ## 3. Modern manager interface
 
-Design a cohesive manager UI with clear sidebar navigation, a visual six-slot
-dashboard, consistent typography/spacing, well-defined focus/hover states and
-readable per-zone status/recovery feedback. Define a small reusable design system
-before replacing screens. Scale appropriately on the user's 5K2K/DPI setup and
-constrained displays; retain system contrast support and keyboard accessibility.
+The user clarified that modern means matching Windows 11's clean visual style,
+not an unspecified custom dashboard aesthetic. Provide an Appearance choice:
+
+- System (default): follow Windows light/dark appearance and relevant system/accent
+  colors, updating when Windows appearance changes while the app is running.
+- Light: an explicit light appearance independent of the Windows light/dark choice.
+- Dark: an explicit dark appearance independent of the Windows light/dark choice.
+
+Use clean native-looking navigation/controls, consistent typography, restrained
+colors, clear grouping, comfortable spacing and subtle borders/rounded geometry.
+Sidebar navigation, the six-slot overview and status/recovery feedback must feel
+like one cohesive Windows 11-style application. Define reusable design tokens
+before replacing screens; avoid decorative density and inconsistent legacy panels.
+Keep titlebar, dialogs and custom surfaces visually consistent where supported.
+Retain system high contrast as the accessibility override, readable focus/hover
+states, keyboard navigation and scaling on 5K2K/DPI and constrained displays.
+Theme preference edits must respect settings Save/Cancel and never reflow managed
+windows. Visual matching does not itself select a UI framework or require Mica.
 
 This is the manager interface; preserve the validated resizing behavior and the
 nonactivating flyout's targeting/shortcut contract. No framework migration,
 embedded web runtime, new dependency or removal of source-hosted delivery has
 been selected. Review a concrete visual prototype and implementation tradeoffs
-before committing to a new UI stack. User-selectable themes/text sizes remain
-planned unless actually implemented and verified.
+before committing to a new UI stack. The three appearance modes are required
+planned functionality, not current implementation. Separate custom text-size
+controls have not been requested by this clarification.
 
 Acceptance: approved visual direction, complete everyday and General flows,
 consistent components, accessible navigation and DPI/paint regressions checked.

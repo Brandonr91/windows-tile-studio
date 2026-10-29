@@ -300,3 +300,13 @@ a very modern manager UI (#6) is explicitly requested. Prioritize recovery,
 simplification, then modern UI, preserving validated six-slot behavior. This
 records scope, not completion or a selected framework/runtime migration. See
 docs/NEXT-MILESTONES.md for acceptance criteria and the freeze-after-probe repro.
+
+## Windows 11 visual direction, 2026-10-29
+
+The user clarified modern as matching Windows 11's clean UI and following system
+colors or selecting Light/Dark. Require three appearance modes: System default
+with live Windows appearance/accent following, plus explicit Light and Dark.
+Keep high contrast, keyboard/DPI support, cohesive native-looking surfaces and
+draft Save/Cancel without geometry changes. This specifies the visual/behavioral
+target, not a selected framework or completed theme implementation. Current beta.2
+does not provide the three-mode selector. Recovery remains the first priority.

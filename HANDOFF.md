@@ -1,5 +1,20 @@
 # Handoff
 
+## Latest clarification: Windows 11 appearance, 2026-10-29
+
+The requested modern manager should match Windows 11's clean visual style and
+offer System/Light/Dark selection. System is the planned default, following
+Windows appearance and relevant system/accent colors while running; Light/Dark
+are explicit overrides. Preserve high-contrast accessibility, keyboard/DPI support,
+settings Save/Cancel and managed-window geometry. This refines milestone 3 in
+docs/NEXT-MILESTONES.md; recovery still leads the development sequence.
+
+These are requirements/plans only. The current beta.2 has system high-contrast
+support and its existing palette, not these user-selectable appearance modes.
+No new UI stack, runtime dependency, Mica requirement, text-size feature, app code,
+test result or release is implied by the clarification. Keep local planning records
+separate from unchanged published beta.2 assets.
+
 ## Latest checkpoint: next recovery/UI priorities, 2026-10-29
 
 User priority update after extensive positive six-slot testing: #1 reset need is

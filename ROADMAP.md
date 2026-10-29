@@ -9,6 +9,10 @@ behavior. Follow [next milestones](docs/NEXT-MILESTONES.md): recovery first,
 simpler six-slot-focused navigation, then a cohesive modern interface. Those
 changes are planned, not implemented. Preserve the validated six-slot behavior
 and the published beta.2 bytes. No UI framework migration has been chosen.
+The modern UI target is specifically Windows 11 cleanliness and consistent
+controls, with required System/Light/Dark selection. System follows Windows
+appearance/accent updates; explicit modes override light/dark choice. These modes
+are planned, not present in beta.2. High contrast and Save/Cancel remain protected.
 
 ## Current: beta/release validation, 2026-10-28
 
