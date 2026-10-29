@@ -1,3 +1,7 @@
+## Appearance implementation update, 2026-10-29
+
+The user explicitly requested immediate implementation. Local beta.3 now includes System/Light/Dark, draft previews, shared styling and manager navigation rails. See [appearance](docs/APPEARANCE.md). This supersedes older statements below that these controls are only planned. Recovery hardening and the fuller six-slot overview/simplification remain pending; broader UI/OS validation remains separate. Published beta.2 is unchanged.
+
 # Roadmap and next work
 
 ## Next development priorities, 2026-10-29

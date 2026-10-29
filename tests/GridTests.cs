@@ -152,7 +152,7 @@ class GridTests {
         state.UpdateDisplays(new[]{primary,changed});Check(state.Active==second,"Unchanged topology lost active display");
         state.Activate(primary);state.Capture();var opened=settings.Clone();opened.Profiles=settings.Profiles.Select(p=>state.Resolve(primary.Id,p.Id)).ToList();var draft=opened.Clone();
         first.Model.Profile.Columns[0].Rows=new System.Collections.Generic.List<double>{0.55,0.45};
-        draft.ShowLauncherTab=false;draft.Profiles[0].Name="Renamed on both displays";
+        draft.Appearance=AppearanceMode.Dark;draft.ShowLauncherTab=false;draft.Profiles[0].Name="Renamed on both displays";
         var edited=draft.Profiles.First(p=>p.Id=="four-grid");edited.Columns[0].Rows=new System.Collections.Generic.List<double>{0.8,0.2};
         state.PrepareDraft(draft,opened);draft.Validate();
         Check(draft.Profiles[0].Columns[0].Rows[0]==0.55,"Appearance save overwrote a concurrent resize");
@@ -182,14 +182,14 @@ class GridTests {
     }
     static void Portable(string root) {
         string path=Path.Combine(root,"portable.tilelayouts.xml");var current=AppSettings.Defaults();
-        current.ShowLauncherTab=false;current.LauncherPositionSet=true;current.LauncherX=12345;current.Monitors.Add(new MonitorConfiguration{Id="PRIVATE-MONITOR-ID",ActiveProfileId=current.ActiveProfileId});
+        current.Appearance=AppearanceMode.Dark;current.ShowLauncherTab=false;current.LauncherPositionSet=true;current.LauncherX=12345;current.Monitors.Add(new MonitorConfiguration{Id="PRIVATE-MONITOR-ID",ActiveProfileId=current.ActiveProfileId});
         PortableLayouts.Export(path,current);string xml=File.ReadAllText(path);var bundle=PortableLayouts.Load(path);
         Check(bundle.Version==1&&bundle.Profiles.Count==6,"Portable round trip failed");
-        Check(!xml.Contains("PRIVATE-MONITOR-ID")&&!xml.Contains("LauncherX")&&!xml.Contains("ShowLauncherTab")&&!xml.Contains("Monitors"),"Portable export leaked machine/appearance data");
+        Check(!xml.Contains("PRIVATE-MONITOR-ID")&&!xml.Contains("LauncherX")&&!xml.Contains("ShowLauncherTab")&&!xml.Contains("Monitors")&&!xml.Contains("Appearance"),"Portable export leaked machine/appearance data");
         var added=PortableLayouts.Candidate(current,bundle,false,false);
         Check(added.Profiles.Count==12&&added.Profiles.Select(p=>p.Id).Distinct().Count()==12&&added.Profiles.Select(p=>p.Name.ToLowerInvariant()).Distinct().Count()==12,"Add copies did not generate independent IDs/names");
         Check(added.Profiles.Skip(6).All(p=>!p.Shortcut.Enabled)&&current.Profiles.Count==6,"Import without shortcuts mutated current settings or kept copied keys");
-        Check(added.LauncherX==12345&&!added.ShowLauncherTab&&added.Monitors[0].Id=="PRIVATE-MONITOR-ID","Portable import replaced local appearance/monitor identity");
+        Check(added.Appearance==AppearanceMode.Dark&&added.LauncherX==12345&&!added.ShowLauncherTab&&added.Monitors[0].Id=="PRIVATE-MONITOR-ID","Portable import replaced local appearance/monitor identity");
         var replaced=PortableLayouts.Candidate(current,bundle,true,true);Check(replaced.Profiles.Count==6&&!replaced.Profiles.Any(p=>current.Profiles.Any(c=>c.Id==p.Id)),"Replacement reused local monitor geometry identity");
         Check(replaced.FlyoutShortcut.ToString()==bundle.FlyoutShortcut.ToString(),"Portable global shortcuts were lost");
         Reject(()=>PortableLayouts.Candidate(added,bundle,false,false),"Import beyond profile limit succeeded");

@@ -22,6 +22,42 @@ public class AccessibilityUiTests {
         string root=args.Length>0?args[0]:Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"accessibility-ui-data");Directory.CreateDirectory(root);
         try {
             var source=AppSettings.Defaults();var original=source.Profiles[0].Clone();
+            // Resolve both OS modes without changing this account's Windows appearance.
+            var accent=Color.FromArgb(130,50,170);
+            Check(UiTheme.Resolve(AppearanceMode.System,false,true,accent).Background==UiTheme.Resolve(AppearanceMode.Dark,false,false,accent).Background,"System dark resolution failed");
+            Check(UiTheme.Resolve(AppearanceMode.System,false,false,accent).Background==UiTheme.Resolve(AppearanceMode.Light,false,true,accent).Background,"System light resolution failed");
+            foreach(AppearanceMode mode in Enum.GetValues(typeof(AppearanceMode))) {
+                Check(UiTheme.Resolve(mode,true,true,accent).Text==SystemColors.WindowText,"Explicit mode overrode high contrast");
+                Check(UiTheme.Resolve(mode,false,false,accent).Line==accent,"Accent did not follow Windows color");
+                var candidate=source.Clone();candidate.Appearance=mode;string path=Path.Combine(root,"appearance-settings.xml");SettingsStore.Save(path,candidate);string warning;
+                Check(SettingsStore.Load(path,out warning).Appearance==mode&&warning==null&&candidate.Clone().Appearance==mode,"Appearance persistence/clone failed");
+            }
+            string legacyPath=Path.Combine(root,"appearance-legacy.xml");SettingsStore.Save(legacyPath,source);var legacy=XDocument.Load(legacyPath);legacy.Root.Element("Appearance").Remove();legacy.Save(legacyPath);string legacyWarning;
+            Check(SettingsStore.Load(legacyPath,out legacyWarning).Appearance==AppearanceMode.System&&legacyWarning==null,"Older settings did not default to System");
+            legacy.Root.Add(new XElement("Appearance","UnknownTheme"));legacy.Save(legacyPath);string invalidBytes=File.ReadAllText(legacyPath);SettingsStore.Load(legacyPath,out legacyWarning);
+            Check(legacyWarning!=null&&File.ReadAllText(legacyPath)==invalidBytes,"Invalid theme did not preserve settings in Recovery");
+            using(var themed=new SnapSettingsForm(source)) {
+                themed.ConfirmAction=delegate{return true;};themed.Show();((Button)Find(themed,"Open General")).PerformClick();
+                var categories=(TabControl)Find(themed,"General settings categories");((Button)Find(themed,"Open Appearance")).PerformClick();
+                Check(categories.SelectedTab.Text=="Appearance"&&((TabControl)categories.Parent.Parent).SelectedTab.Text=="General","Navigation buttons did not select the requested pages");
+                var rail=Find(themed,"Settings navigation");Check(rail.Visible&&rail.Right<=themed.Controls.OfType<TabControl>().Single().Left,"Navigation rail overlaps the editor");
+                var choice=(ComboBox)Find(themed,"App appearance");Check(choice.Items.Count==3&&choice.SelectedIndex==0,"Three-mode appearance selector missing");
+                foreach(var mode in new[]{AppearanceMode.Light,AppearanceMode.Dark}) {
+                    choice.SelectedIndex=(int)mode;Application.DoEvents();
+                    Check(themed.Draft.Appearance==mode&&source.Appearance==AppearanceMode.System&&UiTheme.Mode==AppearanceMode.System,"Preview escaped its draft");
+                    Check(themed.BackColor==UiTheme.Resolve(mode,SystemInformation.HighContrast,false,UiTheme.Accent()).Background,"Preview did not update surfaces");
+                    Render(themed,Path.Combine(root,"appearance-"+mode+".png"));
+                    var tabs=themed.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=0;Application.DoEvents();Render(themed,Path.Combine(root,"layouts-"+mode+".png"));tabs.SelectedTab=categories.Parent as TabPage;
+                }
+                themed.SaveRequested=delegate{return "Injected save failure";};themed.ReportError=delegate{};((Button)Find(themed,"Save changes")).PerformClick();
+                Check(themed.Visible&&source.Appearance==AppearanceMode.System,"Failed save applied theme/closed draft");
+                ((Button)Find(themed,"Cancel")).PerformClick();Check(source.Appearance==AppearanceMode.System&&source.Profiles[0].GeometryMatches(original),"Cancel changed saved appearance or geometry");
+            }
+            using(var themed=new SnapSettingsForm(source)) {
+                themed.Show();((ComboBox)Find(themed,"App appearance")).SelectedIndex=2;bool savedTheme=false;
+                themed.SaveRequested=delegate(AppSettings draft){savedTheme=draft.Appearance==AppearanceMode.Dark&&draft.Profiles[0].GeometryMatches(original);return null;};
+                ((Button)Find(themed,"Save changes")).PerformClick();Check(savedTheme&&themed.DialogResult==DialogResult.OK,"Theme Save omitted draft or changed geometry");
+            }
             using(var editor=new VisualLayoutDialog(original)) {
                 editor.Show();editor.Activate();editor.Canvas.Focus();Application.DoEvents();var canvas=editor.Canvas;
                 Focus(editor,canvas);SendKeys.SendWait("{RIGHT}");Pump(150);Check(!canvas.Session.Profile.GeometryMatches(original),"Actual keyboard input did not reach the canvas");Key(canvas,Keys.Control|Keys.Z);

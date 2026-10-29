@@ -52,3 +52,7 @@ layout/monitor identities, keys and window identifiers and uploads nothing.
 See [accessibility and support](ACCESSIBILITY-AND-SUPPORT.md) for fields, keyboard
 editing, contrast/scaling support and remaining manual checks. User-selectable
 theme/text-size controls remain unimplemented. Startup is never enabled by an update.
+
+## Appearance (local beta.3)
+
+Choose System, Light or Dark under General → Appearance. System follows Windows app mode/accent; high contrast takes priority. Preview is draft-only until Save changes. Cancel keeps the saved theme. See [appearance implementation and limits](APPEARANCE.md).

@@ -112,7 +112,7 @@ current settings/display counts and process counters, not draft edits or raw
 runtime XML/logs. DiagnosticReport explicitly constructs its XML fields so
 identities cannot leak through DTO serialization. See the
 [phase-7 guide](docs/ACCESSIBILITY-AND-SUPPORT.md) for the field allowlist and
-manual verification gaps. No user-selectable theme/text-size settings exist yet.
+manual verification gaps. Beta.2 has no theme selector; local beta.3 now adds System/Light/Dark as documented below. Custom text-size controls remain unimplemented.
 
 General interlude (`0.3.0-preview.6.1`, 2026-10-28): the third settings tab is
 General, with Startup & tray, Layouts bar, Flyout shortcut and Support categories.
@@ -426,3 +426,7 @@ sends actual keyboard input. It requires the existing controller stopped.
 `LauncherTests.ps1` checks hosted compilation/serialization, version updates,
 path quoting, data preservation and unsafe archive rejection. See [HANDOFF](HANDOFF.md)
 for recorded evidence; these tests do not establish universal app compatibility.
+
+## Local beta.3 appearance implementation, 2026-10-29
+
+UiSupport now supplies UiTheme, native-page-backed navigation rails and rounded managed buttons. AppSettings.Appearance is a validated enum (System default, Light, Dark), cloned/persisted but excluded from portable export. UiLayout installs form theming; settings supplies a draft-mode provider, while the controller applies the saved mode at load/successful Save. SystemEvents refreshes cached form palettes on the UI thread; disposal removes subscriptions/caches. Native DWM titlebar/corner hints are best-effort. See docs/APPEARANCE.md for scope, tests and OS-owned widget limits.

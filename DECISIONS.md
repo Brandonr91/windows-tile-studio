@@ -310,3 +310,7 @@ Keep high contrast, keyboard/DPI support, cohesive native-looking surfaces and
 draft Save/Cancel without geometry changes. This specifies the visual/behavioral
 target, not a selected framework or completed theme implementation. Current beta.2
 does not provide the three-mode selector. Recovery remains the first priority.
+
+## Implement appearance now, 2026-10-29
+
+The user's explicit request to implement themes/UI now supersedes the earlier recovery-first execution order for this scoped change. Keep framework/source-hosting compatibility: use shared WinForms palette/navigation/button components with documented Windows 11 DWM hints. Add one enum preference, System by default; preview only the settings draft and inherit it in owned dialogs. Apply globally only after successful persistence. Preserve high contrast, native providers and geometry. Cache colors outside paint; remove static system-event subscriptions on disposal. This delivers themes/basic navigation refresh, not the planned six-slot overview or freeze-after-probe recovery fix. No public release/push is implied.

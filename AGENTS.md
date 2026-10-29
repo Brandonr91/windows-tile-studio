@@ -234,3 +234,5 @@ frozen release assets. The user subsequently authorized PR #1 merge and beta.2
 publication on 2026-10-29; those actions are complete. Never repeat publication,
 move v0.3.0-beta.2 or replace its frozen assets. Future fixes need a new version and
 verified provenance; old beta validation does not imply production readiness.
+
+Appearance follow-up: consult docs/APPEARANCE.md. Preserve System/Light/Dark, high-contrast priority, draft-only preview and Save/Cancel. Keep user-preference handlers marshalled to the form thread and unsubscribe on disposal; cache palette lookups outside paint. Retain accessible navigation providers and run compiled/hosted AccessibilityUi plus LauncherUi for changes. Never change the user's Windows theme to test this automatically.

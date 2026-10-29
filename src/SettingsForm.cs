@@ -19,12 +19,13 @@ public class ShortcutDialog : Form {
         allowed.AddRange(new[]{Keys.Space,Keys.Tab,Keys.Left,Keys.Right,Keys.Up,Keys.Down,Keys.Home,Keys.End,Keys.PageUp,Keys.PageDown});
         foreach(var k in allowed) key.Items.Add(k); key.SelectedItem=initial.Key; if(key.SelectedIndex<0) key.SelectedIndex=0;
         key.AccessibleName="Shortcut key"; key.Location=new Point(15,62); Controls.Add(key);
-        var save=new Button{Text="Use shortcut",Bounds=new Rectangle(235,115,135,31)}; Controls.Add(save); AcceptButton=save;
-        var cancel=new Button{Text="Cancel",Bounds=new Rectangle(135,115,90,31),DialogResult=DialogResult.Cancel}; Controls.Add(cancel); CancelButton=cancel;
+        var save=new StudioButton{Text="Use shortcut",Bounds=new Rectangle(235,115,135,31)}; Controls.Add(save); AcceptButton=save;
+        var cancel=new StudioButton{Text="Cancel",Bounds=new Rectangle(135,115,90,31),DialogResult=DialogResult.Cancel}; Controls.Add(cancel); CancelButton=cancel;
         save.Click+=delegate {
             var value=new Shortcut{Modifiers=(ctrl.Checked?ShortcutModifiers.Control:0)|(alt.Checked?ShortcutModifiers.Alt:0)|(shift.Checked?ShortcutModifiers.Shift:0)|(win.Checked?ShortcutModifiers.Windows:0),Key=(Keys)key.SelectedItem};
             try { value.Validate(); Value=value; DialogResult=DialogResult.OK; Close(); } catch(Exception e) { MessageBox.Show(this,e.Message,"Shortcut",MessageBoxButtons.OK,MessageBoxIcon.Information); }
         };
+        UiTheme.Attach(this,null);
     }
 }
 
@@ -68,8 +69,8 @@ public partial class SnapSettingsForm : Form {
     }
     public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null,Func<string> diagnostics=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
-        AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
-        var tabs=new TabControl{Dock=DockStyle.Fill,AccessibleName="Settings pages"}; Controls.Add(tabs);
+        AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(1080,700); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
+        var tabs=new NavigationTabs(true){Dock=DockStyle.Fill,AccessibleName="Settings pages"}; Controls.Add(tabs);
         var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); generalPage=new TabPage("General"); var appearancePage=new TabPage("Layouts bar"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,generalPage});
         ConfigureGeneral(generalPage,appearancePage,login,dataDirectory,diagnostics);
         TabPage recoveryPage=null;
@@ -77,30 +78,30 @@ public partial class SnapSettingsForm : Form {
             recoveryPage=new TabPage("Recovery"); tabs.TabPages.Add(recoveryPage);
             recoveryPage.Controls.Add(new Label{Text="Settings need your attention",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,25)});
             recoveryPage.Controls.Add(new TextBox{Text=recoveryNotice+"\r\n\r\nYour existing settings file has not been replaced. Review the layouts and shortcuts, then Save changes. The tray menu remains available. Cancel keeps the existing file.",Multiline=true,ReadOnly=true,ScrollBars=ScrollBars.Vertical,Bounds=new Rectangle(24,65,810,280),AccessibleName="Settings recovery details"});
-            var editHotkeys=new Button{Text="Review hotkeys",Bounds=new Rectangle(24,370,180,34)}; editHotkeys.Click+=delegate { tabs.SelectedTab=shortcutPage; }; recoveryPage.Controls.Add(editHotkeys);
+            var editHotkeys=new StudioButton{Text="Review hotkeys",Bounds=new Rectangle(24,370,180,34)}; editHotkeys.Click+=delegate { tabs.SelectedTab=shortcutPage; }; recoveryPage.Controls.Add(editHotkeys);
         }
         var footer=new Panel{Dock=DockStyle.Bottom,Height=57}; Controls.Add(footer); tabs.BringToFront();
-        var save=new Button{Text="Save changes",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(742,12,140,32)}; footer.Controls.Add(save);
-        var cancel=new Button{Text="Cancel",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(636,12,96,32),DialogResult=DialogResult.Cancel}; footer.Controls.Add(cancel); CancelButton=cancel;
+        var save=new StudioButton{Text="Save changes",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(922,12,140,32)}; footer.Controls.Add(save);
+        var cancel=new StudioButton{Text="Cancel",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(816,12,96,32),DialogResult=DialogResult.Cancel}; footer.Controls.Add(cancel); CancelButton=cancel;
         footer.Controls.Add(new Label{Text="Save applies draft edits. Startup buttons apply separately.",Bounds=new Rectangle(15,8,590,41),Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right});
         layouts.Bounds=new Rectangle(12,16,216,393); layouts.AccessibleName="Saved layouts"; layoutPage.Controls.Add(layouts);
-        var add=new Button{Text="Add layout",Bounds=new Rectangle(12,420,104,31)}; var remove=new Button{Text="Remove",Bounds=new Rectangle(124,420,104,31)}; layoutPage.Controls.Add(add); layoutPage.Controls.Add(remove);
+        var add=new StudioButton{Text="Add layout",Bounds=new Rectangle(12,420,104,31)}; var remove=new StudioButton{Text="Remove",Bounds=new Rectangle(124,420,104,31)}; layoutPage.Controls.Add(add); layoutPage.Controls.Add(remove);
         layoutPage.Controls.Add(new Label{Text="Layout name",Bounds=new Rectangle(250,18,125,22)}); name.Bounds=new Rectangle(380,15,450,26); name.AccessibleName="Layout name"; layoutPage.Controls.Add(name);
         layoutPage.Controls.Add(new Label{Text="Columns",Bounds=new Rectangle(250,59,90,22)}); columns.Bounds=new Rectangle(340,56,65,26); columns.AccessibleName="Number of columns"; layoutPage.Controls.Add(columns);
         layoutPage.Controls.Add(new Label{Text="Rows per column",Bounds=new Rectangle(425,59,130,22)}); rows.Bounds=new Rectangle(555,56,65,26); rows.AccessibleName="Default rows per column"; layoutPage.Controls.Add(rows);
-        var reshape=new Button{Text="Set grid size",Bounds=new Rectangle(650,54,180,30)}; layoutPage.Controls.Add(reshape);
+        var reshape=new StudioButton{Text="Set grid size",Bounds=new Rectangle(650,54,180,30)}; layoutPage.Controls.Add(reshape);
         proportions.Bounds=new Rectangle(250,102,580,147); proportions.AllowUserToAddRows=false; proportions.AllowUserToDeleteRows=false; proportions.RowHeadersVisible=false; proportions.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill; proportions.AccessibleName="Column and row proportions";
         proportions.Columns.Add(new DataGridViewTextBoxColumn{Name="column",HeaderText="Column",ReadOnly=true,FillWeight=55});
         proportions.Columns.Add(new DataGridViewTextBoxColumn{Name="width",HeaderText="Width weight",FillWeight=75}); proportions.Columns.Add(new DataGridViewTextBoxColumn{Name="rows",HeaderText="Row weights, separated by commas",FillWeight=180}); layoutPage.Controls.Add(proportions);
         layoutPage.Controls.Add(new Label{Text="Examples: widths 1, 2, 1 create a wider center; rows 2, 1 create a taller top window.",Bounds=new Rectangle(250,258,605,38)});
-        var update=new Button{Text="Update preview",Bounds=new Rectangle(250,302,170,30)}; layoutPage.Controls.Add(update);
-        var undoGrid=new Button{Text="Undo grid change",AccessibleName="Undo last grid change",Bounds=new Rectangle(440,302,190,30)};
+        var update=new StudioButton{Text="Update preview",Bounds=new Rectangle(250,302,170,30)}; layoutPage.Controls.Add(update);
+        var undoGrid=new StudioButton{Text="Undo grid change",AccessibleName="Undo last grid change",Bounds=new Rectangle(440,302,190,30)};
         undoGrid.Click+=delegate {
             Stack<LayoutProfile> history;
             if(selected==null || !gridHistory.TryGetValue(selected.Id,out history) || history.Count==0) return;
             selected.Columns=history.Pop().Columns.Select(c=>c.Clone()).ToList(); dirty=true; FillEditor();
         }; layoutPage.Controls.Add(undoGrid);
-        var visual=new Button{Text="Edit visually...",AccessibleName="Edit proportions visually",Bounds=new Rectangle(650,302,180,30)};layoutPage.Controls.Add(visual);
+        var visual=new StudioButton{Text="Edit visually...",AccessibleName="Edit proportions visually",Bounds=new Rectangle(650,302,180,30)};layoutPage.Controls.Add(visual);
         visual.Click+=delegate {
             if(!ReadEditor())return;
             using(var dialog=new VisualLayoutDialog(selected))if(dialog.ShowDialog(this)==DialogResult.OK && !selected.GeometryMatches(dialog.Result)) {
@@ -108,12 +109,12 @@ public partial class SnapSettingsForm : Form {
             }
         };
         preview.Bounds=new Rectangle(250,344,300,172); preview.BackColor=Color.FromArgb(24,28,35); layoutPage.Controls.Add(preview);
-        layoutPage.Controls.Add(new Label{Text="Each column keeps its own row dividers.\n\nPicking a zone in another layout moves only the selected window. Re-snap other windows to link them to that layout.",Bounds=new Rectangle(570,350,270,130)});
+        layoutPage.Controls.Add(new Label{Text="Each column keeps its own row dividers.\n\nPicking a zone in another layout moves only the selected window. Re-snap other windows to link them to that layout.",Bounds=new Rectangle(570,350,270,190)});
         appearancePage.Controls.Add(new Label{Text="Layouts bar",Font=new Font(Font,FontStyle.Bold),AutoSize=true,Location=new Point(24,26)});
         launcher.Location=new Point(24,65); launcher.Checked=Draft.ShowLauncherTab; launcher.AccessibleName="Show floating Layouts bar"; appearancePage.Controls.Add(launcher);
         appearancePage.Controls.Add(new Label{Text="Click the bar to choose a layout. Hold the left mouse button and drag to move it.\nIts position is remembered. The default location is near the taskbar clock.",Bounds=new Rectangle(24,104,800,50)});
         var positionStatus=new Label{Text=Draft.LauncherPositionSet?"Position: custom":"Position: default near clock",Bounds=new Rectangle(24,174,500,25),AccessibleName="Launcher position status"}; appearancePage.Controls.Add(positionStatus);
-        var resetPosition=new Button{Text="Reset bar position",Bounds=new Rectangle(24,212,190,34),AccessibleName="Reset Layouts bar position"};
+        var resetPosition=new StudioButton{Text="Reset bar position",Bounds=new Rectangle(24,212,190,34),AccessibleName="Reset Layouts bar position"};
         resetPosition.Click+=delegate { Draft.LauncherPositionSet=false; dirty=true; positionStatus.Text="Position: default near clock (applied when saved)"; }; appearancePage.Controls.Add(resetPosition);
         appearancePage.Controls.Add(new Label{Text="Bar changes apply when you choose Save changes. Cancel keeps the current bar preferences.\nClosing or minimizing the bar hides it to tray and remembers that choice. Tray Exit quits the manager.",Bounds=new Rectangle(24,274,800,56)});
         appearancePage.Controls.Add(new Label{Text="Windows Tile Studio  "+SixSlotSnap.ProductVersion,AutoSize=true,Location=new Point(24,375)});
@@ -124,11 +125,11 @@ public partial class SnapSettingsForm : Form {
         var sharePage=new TabPage("Share layouts");tabs.TabPages.Add(sharePage);
         sharePage.Controls.Add(new Label{Text="Portable layouts",AutoSize=true,Location=new Point(24,24)});
         sharePage.Controls.Add(new Label{Text="Export this draft's layouts and shortcuts. Monitor identities, app windows and launcher position stay private.\nImport changes only this draft until Save changes. Windows shortcut availability is checked when you save.",Bounds=new Rectangle(24,56,810,64)});
-        var export=new Button{Text="Export layouts...",Bounds=new Rectangle(24,134,190,34),AccessibleName="Export portable layouts"};sharePage.Controls.Add(export);
+        var export=new StudioButton{Text="Export layouts...",Bounds=new Rectangle(24,134,190,34),AccessibleName="Export portable layouts"};sharePage.Controls.Add(export);
         var mode=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList,Bounds=new Rectangle(24,218,300,28),AccessibleName="Import layout mode"};mode.Items.AddRange(new object[]{"Add as copies","Replace layout catalog"});mode.SelectedIndex=0;sharePage.Controls.Add(mode);
         var importKeys=new CheckBox{Text="Import shortcuts too (checked for conflicts)",AutoSize=true,Location=new Point(24,267),AccessibleName="Import shortcuts"};sharePage.Controls.Add(importKeys);
-        var import=new Button{Text="Import layouts...",Bounds=new Rectangle(24,312,190,34),AccessibleName="Import portable layouts"};sharePage.Controls.Add(import);
-        undoImport=new Button{Text="Undo import",Bounds=new Rectangle(234,312,150,34),Enabled=false,AccessibleName="Undo portable import"};sharePage.Controls.Add(undoImport);
+        var import=new StudioButton{Text="Import layouts...",Bounds=new Rectangle(24,312,190,34),AccessibleName="Import portable layouts"};sharePage.Controls.Add(import);
+        undoImport=new StudioButton{Text="Undo import",Bounds=new Rectangle(234,312,150,34),Enabled=false,AccessibleName="Undo portable import"};sharePage.Controls.Add(undoImport);
         sharePage.Controls.Add(new Label{Text="Add as copies keeps existing layouts. Replace removes the old catalog when saved; re-snap windows to link\nthem to imported layouts. Turn off Import shortcuts to keep your current global keys and leave copied keys empty.",Bounds=new Rectangle(24,373,810,65)});
         importStatus=new Label{Text="No import staged.",Bounds=new Rectangle(24,455,810,40),AccessibleName="Portable import status"};sharePage.Controls.Add(importStatus);
         export.Click+=delegate {
@@ -192,7 +193,12 @@ public partial class SnapSettingsForm : Form {
             if(!savedSuccessfully && dirty && !Confirm("Discard unsaved changes?","Discard the changes in this settings window? Choose No to keep editing.")) { e.Cancel=true; DialogResult=DialogResult.None; }
         };
         if(recoveryPage!=null) tabs.SelectedTab=recoveryPage;
+        tabs.AddNavigation(this,true);
+        var heading=new Panel{Dock=DockStyle.Top,Height=76};
+        heading.Controls.Add(new Label{Text="Windows Tile Studio",Font=new Font(Font.FontFamily,19,FontStyle.Regular),AutoSize=true,Location=new Point(20,10)});
+        Controls.Add(heading);
         UiLayout.Install(this);
+        UiTheme.Attach(this,delegate{return Draft.Appearance;});
     }
     void RefreshList(LayoutProfile select) { refreshing=true; layouts.DataSource=null; layouts.DataSource=Draft.Profiles; layouts.SelectedItem=select; selected=select; refreshing=false; FillEditor(); }
     void FillEditor() {
@@ -201,7 +207,7 @@ public partial class SnapSettingsForm : Form {
         name.Text=selected.Name; columns.Value=selected.Columns.Count; rows.Value=selected.Columns[0].Rows.Count;
         proportions.Rows.Clear(); for(int i=0;i<selected.Columns.Count;i++) proportions.Rows.Add(i+1,selected.Columns[i].Width.ToString("0.########",CultureInfo.InvariantCulture),string.Join(", ",selected.Columns[i].Rows.Select(v=>v.ToString("0.########",CultureInfo.InvariantCulture))));
         while(preview.Controls.Count>0) preview.Controls[0].Dispose();
-        var card=new LayoutCard(selected,true,1); card.Dock=DockStyle.Fill; card.ZoneSelected=delegate {}; preview.Controls.Add(card);
+        var card=new LayoutCard(selected,true,1); card.Dock=DockStyle.Fill; card.ZoneSelected=delegate {}; preview.Controls.Add(card);card.ApplyPalette(UiTheme.PaletteFor(this));
         refreshing=previousRefresh;
     }
     bool ReadEditor() {

@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-beta.2";
+    public const string ProductVersion="0.3.0-beta.3";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -493,7 +493,7 @@ public class SixSlotSnap : ApplicationContext {
         draft.Validate(); HideFlyout(); CancelResizeSession(); var previousBindings=hotkeys.Snapshot(); string error; if(!hotkeys.Replace(draft,out error)) return error;
         try { SettingsStore.Save(settingsPath,draft); } catch(Exception e) { string rollback=hotkeys.Restore(previousBindings); return "Could not save settings: "+e.Message+" Check the data folder is writable and not locked by another program."+(rollback==null?"":" "+rollback); }
         bool same=grid.Profile.Id==draft.ActiveProfileId;
-        settings=draft; preserveInvalidSettings=false; recoveryNotice=null;
+        settings=draft; UiTheme.SetMode(settings.Appearance); preserveInvalidSettings=false; recoveryNotice=null;
         bool geometryChanged=workspace.Rebind(settings); BindActive();
         if(same && geometryChanged) ApplyLayout();
         tray.ContextMenuStrip.Items[0].Text="Choose layout  "+settings.FlyoutShortcut;
@@ -582,7 +582,7 @@ public class SixSlotSnap : ApplicationContext {
         if(string.IsNullOrEmpty(assembly)){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");if(sourceDirectory==null)startupLaunch.UnavailableReason="Hosted source location is unknown. Start with Start-Hosted.cmd before enabling login startup.";else startupLaunch.SourceScript=Path.Combine(sourceDirectory,"Start-Hosted.ps1");}
         string installed=StartupLaunchSpec.InstalledLauncher(sourceDirectory??(string.IsNullOrEmpty(assembly)?null:Path.GetDirectoryName(Path.GetDirectoryName(assembly))),folder);
         if(installed!=null){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");startupLaunch.SourceScript=null;startupLaunch.InstalledScript=installed;startupLaunch.UnavailableReason=null;}
-        NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); string warning; settings=SettingsStore.Load(settingsPath,out warning); preserveInvalidSettings=warning!=null;
+        NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); string warning; settings=SettingsStore.Load(settingsPath,out warning); UiTheme.SetMode(settings.Appearance); preserveInvalidSettings=warning!=null;
         if(!File.Exists(settingsPath)) SettingsStore.MigrateLegacy(Path.Combine(folder,"layout.txt"),settings);
         settings.Validate(); workspace=new MonitorWorkspace(settings); workspace.UpdateDisplays(DisplayInventory.Connected()); workspace.Activate(DisplayInventory.ForWindow(NativeMethods.GetForegroundWindow())); BindActive();
         receiver=new CommandWindow(); hotkeys=new HotkeyRegistry(receiver.Handle); string conflict;

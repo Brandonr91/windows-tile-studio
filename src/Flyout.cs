@@ -110,7 +110,7 @@ public class SnapFlyout : NonactivatingForm {
         var manage=new Button{Text="Manage layouts & hotkeys",UseMnemonic=false,AccessibleName="Manage layouts and hotkeys",FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(43,52,66),Bounds=new Rectangle(s(17),Height-s(40),s(214),s(28)),TabStop=false};
         manage.FlatAppearance.BorderColor=Color.FromArgb(80,96,119); manage.Click+=delegate { if(ManageRequested!=null) ManageRequested(); }; Controls.Add(manage);
         Controls.Add(new Label{Text="Esc or click outside to close",ForeColor=Color.FromArgb(160,174,194),TextAlign=ContentAlignment.MiddleRight,Bounds=new Rectangle(s(240),Height-s(39),Width-s(257),s(26))});
-        ApplyPalette(UiPalette.Current);
+        ApplyPalette(UiPalette.Current); UiTheme.Attach(this,null);
     }
 }
 
@@ -188,6 +188,6 @@ public class LauncherTab : NonactivatingForm {
         Controls.Add(label);
         closeButton=new Button{Text="×",Dock=DockStyle.Right,Width=Height,FlatStyle=FlatStyle.Flat,TabStop=false,Cursor=Cursors.Hand,ForeColor=ForeColor,BackColor=BackColor,AccessibleName="Hide Layouts bar to tray"};
         closeButton.FlatAppearance.BorderSize=0;closeButton.Click+=delegate{HideToTray();};Controls.Add(closeButton);label.BringToFront();
-        UiPalette.Apply(this,UiPalette.Current);
+        UiPalette.Apply(this,UiPalette.Current); UiTheme.Attach(this,null);
     }
 }

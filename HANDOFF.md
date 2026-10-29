@@ -1,5 +1,51 @@
 # Handoff
 
+## Latest implementation: appearance and manager refresh, 2026-10-29
+
+The user explicitly requested implementation now, overriding the earlier planned
+recovery-first order for this scoped change. Local **0.3.0-beta.3** (file 0.3.0.11)
+implements General → Appearance → System / Light / Dark, System as the default,
+Windows accent following, system-event refresh, high-contrast priority and
+Save/Cancel-isolated preview. Manager navigation uses an accessible button rail
+and General strip backed by native TabControl page selection. Shared surfaces,
+grids, inputs, rounded buttons and supported DWM titlebar/corner hints replace
+mixed legacy styling. See docs/APPEARANCE.md. No framework/runtime dependency was
+added. OS-owned widgets remain partly native-rendered; full six-slot overview and
+recovery hardening remain pending. Published beta.2/tag/assets are unchanged.
+
+Verification this turn:
+- Build -Test: 198564 checks; theme-only draft geometry rebinding avoids reflow;
+  portable export excludes Appearance/import retains it.
+- Compiled AccessibilityUi (new mode/persistence/legacy/invalid Recovery/draft
+  Cancel/failed Save/navigation/paint checks), WorkspaceUi, LauncherUi and EditorUi
+  pass. Final header cleanup was rechecked with compiled/hosted AccessibilityUi.
+- Windows PowerShell 5.1 STA hosted AccessibilityUi, WorkspaceUi, LauncherUi and
+  EditorUi pass. Light/Dark screenshots inspected; live Windows 11 System-dark
+  manager/Appearance page and dark titlebar observed through Computer Use.
+- Compiled full native Integration passes during the change, including six-slot
+  pair-only resize, keyboard/flyout, recovery and compatibility fixtures. Later
+  changes only remove a clipped decorative subtitle and preserve ampersands.
+- Hosted full native Integration is INCOMPLETE: first attempt failed flyout reopen;
+  second recorded outside mouse input and foreground changing to a daily app
+  during persistence testing. No host crash logged. Focused hosted UI suites pass;
+  do not claim the full hosted native suite passed this turn.
+- Final daily compiled process 61588 verified against actual process/runtime:
+  beta.3, six identical HWND assignments and unchanged outer bounds, no Recovery,
+  bar hidden, original Startup shortcut bytes unchanged; zero sampled app-specific
+  crash events over preceding 45 minutes. PIDs are transient; re-verify next session.
+- Existing hosted source delivery src/ mirrors updated fourteen files. Its separate
+  data is retained; no second controller remains. Daily repo data retained and
+  Appearance defaults to System. Local backup in bin/appearance-deploy-backup;
+  private snapshots/results under bin/appearance-* must not ship.
+
+Exact next steps: let the user use/review the new General → Appearance controls.
+If revising visuals, inspect the live UI and preserve keyboard/high-contrast/DPI
+contracts. If resuming broader roadmap, implement the disposable freeze-after-probe
+repro from docs/NEXT-MILESTONES.md before selecting bounded placement recovery.
+OS theme changes/Narrator/mixed-DPI hardware remain unverified; no OS settings were
+changed. Local-only work: no GitHub push/tag/release or frozen asset replacement.
+
+
 ## Latest clarification: Windows 11 appearance, 2026-10-29
 
 The requested modern manager should match Windows 11's clean visual style and

@@ -331,3 +331,5 @@ executables, and machine-specific helper scripts. See
 the current verification limits. This is an independent project, not an
 official Microsoft or OpenAI product.
 
+
+Local development beta.3 adds **General → Appearance → System / Light / Dark**, draft previews and a cleaner manager navigation/style. See [appearance](docs/APPEARANCE.md). Published beta.2 downloads do not contain this local change yet.
