@@ -25,6 +25,7 @@ Record package version/hash, Windows build, scaling and monitor configuration.
 | Six-window resizing | Pair-only heights, linked widths, repeated disposable-window cycles in both modes | Sustained physical mouse dragging and varied application frames |
 | Tray/dialogs/recovery | Hidden bar, dialog churn, future-field Recovery preserving original bytes | Actual screen reader, OS contrast/text-size changes |
 | Resource sample | Bounded GDI/private-memory growth and 15-second idle CPU observation | Several days of daily use; not a long-duration leak guarantee |
+| Restricted apps | Blocked external UI before snap, responsive settings, resume/re-snap, max-size/custom-aspect rejection in both modes | Freeze after successful probe, elevated/inaccessible apps and broader real apps |
 | Displays/startup | Simulated topology and temporary owned shortcut checks | Physical mixed DPI, docking/sleep, actual logout/login |
 | Distribution | Local packages/checksums and CI definition | Remote CI execution, signing/publisher and approved publication |
 

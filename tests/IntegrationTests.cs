@@ -17,12 +17,33 @@ class IntegrationTests {
         public bool DelayMinimum;
         protected override void WndProc(ref Message message) { if(DelayMinimum && message.Msg==0x24) Thread.Sleep(200); base.WndProc(ref message); }
     }
+    class AspectForm : Form {
+        bool adjusting;
+        protected override void OnResize(EventArgs e) {
+            base.OnResize(e);
+            if(IsHandleCreated && !adjusting && WindowState==FormWindowState.Normal) {
+                adjusting=true;try{Height=Math.Max(100,Width/2);}finally{adjusting=false;}
+            }
+        }
+    }
+    static int RunBlockedProbe(string ready,string gateName) {
+        // An external process genuinely stops pumping messages. A rescue deadline
+        // prevents a failed parent test from leaving a permanently blocked app.
+        using(var gate=new EventWaitHandle(false,EventResetMode.ManualReset,gateName))
+        using(var form=new Form{Text="Disposable blocked app",StartPosition=FormStartPosition.Manual,Location=new Point(260,260),Size=new Size(500,350)})
+        using(var timer=new System.Windows.Forms.Timer{Interval=300}) {
+            timer.Tick+=delegate{timer.Stop();File.WriteAllText(ready,form.Handle.ToInt64().ToString());WaitForSingleObject(gate.SafeWaitHandle,30000);File.WriteAllText(ready+".resumed","ready");};
+            form.Shown+=delegate{timer.Start();};
+            Application.Run(form);return 0;
+        }
+    }
     [DllImport("user32.dll")] static extern void NotifyWinEvent(uint evt,IntPtr window,int objectId,int childId);
     [DllImport("user32.dll")] static extern bool EnumChildWindows(IntPtr parent,NativeMethods.EnumProc callback,IntPtr parameter);
     [DllImport("user32.dll",CharSet=CharSet.Unicode)] static extern int GetWindowText(IntPtr window,StringBuilder text,int max);
     [DllImport("user32.dll")] static extern IntPtr GetParent(IntPtr window);
     [DllImport("user32.dll",SetLastError=true)] static extern IntPtr SendMessageTimeout(IntPtr window,uint message,IntPtr wparam,IntPtr lparam,uint flags,uint timeout,out IntPtr result);
     [DllImport("kernel32.dll")] static extern uint GetCurrentThreadId();
+    [DllImport("kernel32.dll")] static extern uint WaitForSingleObject(Microsoft.Win32.SafeHandles.SafeWaitHandle handle,uint milliseconds);
     [DllImport("user32.dll")] static extern bool AttachThreadInput(uint first,uint second,bool attach);
     [DllImport("user32.dll")] static extern uint GetGuiResources(IntPtr process,uint flags);
     static readonly List<string> passed=new List<string>();
@@ -159,7 +180,7 @@ class IntegrationTests {
         data=priorData;
         passed.Add(futureFields?"Future settings fields open Recovery and suppress autosave, preserving original bytes.":reserveShortcut?"Reserved startup shortcut opens recoverable settings without replacing the saved file.":"Corrupt startup settings opens recovery while preserving the original bytes.");
     }
-    static void TestCompatibility(string directory) {
+    static void TestCompatibility(string directory,string hostedScript=null) {
         string previousData=data; data=directory; Directory.CreateDirectory(data);
         foreach(var form in forms) form.Dispose();
         var settings=AppSettings.Defaults(); settings.ShowLauncherTab=false;
@@ -167,8 +188,11 @@ class IntegrationTests {
         settings.Profiles.Add(LayoutProfile.Create("compat-four","Compatibility four rows",2,4));
         SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
         forms=new Form[6]; for(int i=0;i<6;i++) { forms[i]=new Form{Text="Disposable compatibility window "+i,StartPosition=FormStartPosition.Manual,Location=new Point(200+30*i,200+30*i),Size=new Size(500,350)}; forms[i].Show(); }
-        controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
-        Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Compatibility controller did not start"); receiver=new IntPtr((long)State().Attribute("controller"));
+        if(hostedScript==null)controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+        else controller=Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe"),"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+        Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Compatibility controller did not start",hostedScript==null?8:20); receiver=new IntPtr((long)State().Attribute("controller"));
+        passed.Add("Compatibility controller mode: "+(hostedScript==null?"Compiled":"SourceHosted")+".");
+        TestRestrictedApps();
         using(var slow=new SlowMinimumForm {Text="Disposable slow sizing query",StartPosition=FormStartPosition.Manual,Location=new Point(250,250),Size=new Size(500,350)}) {
             slow.Show();Pump(60);var before=Bounds(slow.Handle);slow.DelayMinimum=true;Command(SixSlotSnap.SnapCommand,1,slow.Handle);slow.DelayMinimum=false;
             Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==slow.Handle.ToInt64()) && Equal(Bounds(slow.Handle),before),"A timed-out size query moved or assigned the window");
@@ -241,6 +265,43 @@ class IntegrationTests {
         Command(SixSlotSnap.SnapCommand,5,forms[4].Handle);CheckAll();passed.Add("Closed windows release their slots; restarted windows require an explicit snap.");
         TestIsolatedChrome();
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Compatibility controller did not exit"); data=previousData;
+    }
+    static void TestRestrictedApps() {
+        string ready=Path.Combine(data,"blocked-"+Guid.NewGuid().ToString("N")+".txt"),gateName="Local\\WtsBlocked-"+Guid.NewGuid().ToString("N");
+        using(var gate=new EventWaitHandle(false,EventResetMode.ManualReset,gateName))
+        using(var child=Process.Start(new ProcessStartInfo(Application.ExecutablePath,"--blocked-probe \""+ready+"\" \""+gateName+"\""){UseShellExecute=false})) {
+            IntPtr window=IntPtr.Zero;
+            try {
+                Wait(()=>File.Exists(ready),"Blocked fixture did not start");window=new IntPtr(long.Parse(File.ReadAllText(ready)));uint owner;NativeMethods.GetWindowThreadProcessId(window,out owner);Check(owner==child.Id,"Blocked fixture ownership mismatch");
+                Check(NativeMethods.IsWindowVisible(window),"Blocked fixture was not visible");IntPtr ping;
+                Check(SendMessageTimeout(window,0x8701,IntPtr.Zero,IntPtr.Zero,2,100,out ping)==IntPtr.Zero,"Blocked fixture still dispatched sent messages");
+                var original=Bounds(window);Command(SixSlotSnap.SnapCommand,1,window);
+                Wait(()=>NativeMethods.IsHungAppWindow(window),"Blocked fixture was not recognized as unresponsive",12);
+                var clock=Stopwatch.StartNew();Command(SixSlotSnap.SnapCommand,1,window);
+                Wait(()=>((string)State().Attribute("placementIssue")??"").Contains("not responding"),"Hung app rejection had no feedback");clock.Stop();
+                Check(clock.ElapsedMilliseconds<2500 && !controller.HasExited,"Hung app blocked the controller");
+                Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==window.ToInt64()) && Equal(Bounds(window),original),"Hung app was moved or falsely assigned");
+                Command(SixSlotSnap.SettingsCommand,0,IntPtr.Zero);IntPtr dialog=IntPtr.Zero;Wait(()=>{dialog=NativeMethods.FindWindow(null,"Windows Tile Studio — settings");return dialog!=IntPtr.Zero&&NativeMethods.IsWindowVisible(dialog);},"Settings did not respond while target was hung");
+                NativeMethods.PostMessage(dialog,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(dialog),"Settings did not close while target was hung");
+                gate.Set();Wait(()=>File.Exists(ready+".resumed")&&!NativeMethods.IsHungAppWindow(window),"Blocked fixture did not resume");
+                Command(SixSlotSnap.SnapCommand,1,window);Wait(()=>State().Elements("Zone").Any(z=>(long)z.Attribute("window")==window.ToInt64()),"Resumed app could not be explicitly snapped");
+                Check(Equal(Bounds(window),Model().RectFor(0)),"Resumed app frame did not fit");
+                passed.Add("A separate app with a blocked UI thread is recognized as hung, rejected without movement/assignment, and leaves settings responsive; explicit snap succeeds after resume (rejection "+clock.ElapsedMilliseconds+" ms including command pump).");
+            } finally {
+                gate.Set();if(window!=IntPtr.Zero)NativeMethods.PostMessage(window,0x10,IntPtr.Zero,IntPtr.Zero);if(!child.WaitForExit(5000)){child.Kill();child.WaitForExit();}
+            }
+            Wait(()=>!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==window.ToInt64()),"Closed probe assignment was retained");
+        }
+        using(var maximum=new Form{Text="Disposable maximum size",StartPosition=FormStartPosition.Manual,Location=new Point(280,280),Size=new Size(420,300),MaximumSize=new Size(420,300)})
+        using(var aspect=new AspectForm{Text="Disposable fixed aspect",StartPosition=FormStartPosition.Manual,Location=new Point(310,310),Size=new Size(420,210)}) {
+            foreach(var restricted in new Form[]{maximum,aspect}) {
+                restricted.Show();Pump(100);var original=Bounds(restricted.Handle);Command(SixSlotSnap.SnapCommand,1,restricted.Handle);
+                Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==restricted.Handle.ToInt64()),"Restricted app was falsely assigned");
+                Check(Equal(Bounds(restricted.Handle),original),"Rejected restricted app did not regain original frame");
+                Check(((string)State().Attribute("placementIssue")??"").Contains("refused the requested frame"),"Restricted app rejection had no frame feedback");restricted.Hide();
+            }
+        }
+        passed.Add("Maximum-size and custom fixed-aspect apps reject incompatible zones without false assignments and regain their original visible frames.");
     }
     static void TestIsolatedChrome() {
         string executable=null;
@@ -443,17 +504,18 @@ class IntegrationTests {
         TestStartupRecovery(Path.Combine(data,"startup-conflict"),true);
         TestStartupRecovery(Path.Combine(data,"startup-corrupt"),false);
         TestStartupRecovery(Path.Combine(data,"startup-future"),false,true);
-        TestCompatibility(Path.Combine(data,"compatibility"));
+        TestCompatibility(Path.Combine(data,"compatibility"),hostedScript);
         File.WriteAllLines(Path.Combine(data,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
     }
     [STAThread] static int Main(string[] args) {
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); Application.EnableVisualStyles();
-        string directory=args.Length>0?args[0]:Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"integration-data");
+        if(args.Length==3 && args[0]=="--blocked-probe")return RunBlockedProbe(args[1],args[2]);
+        string directory=args.Length>0?Path.GetFullPath(args[0]):Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"integration-data");
         string hostedScript=null; int hosted=Array.IndexOf(args,"--hosted"); if(hosted>=0 && hosted+1<args.Length) hostedScript=Path.GetFullPath(args[hosted+1]);
         try {
             if(args.Contains("--compatibility-only")) {
                 Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before compatibility tests.");
-                data=directory; forms=new Form[0]; TestCompatibility(Path.Combine(directory,"compatibility"));
+                data=directory; forms=new Form[0]; TestCompatibility(Path.Combine(directory,"compatibility"),hostedScript);
                 Directory.CreateDirectory(directory); File.WriteAllLines(Path.Combine(directory,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
             } else {int soak=Array.IndexOf(args,"--beta-soak"),cycles=0;if(soak>=0){if(soak+1>=args.Length||!int.TryParse(args[soak+1],out cycles)||cycles<10||cycles>200)throw new ArgumentException("Beta soak needs 10–200 cycles.");}Run(directory,hostedScript,cycles);}
             Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0;

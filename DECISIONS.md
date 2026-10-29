@@ -213,3 +213,16 @@ Direct old executables and launchers from older bundles remain outside the guard
 Use a local unsigned beta kit and scoped upgrade/soak evidence before broader
 testing. No phase 9 or production certification is invented; external/fresh-account,
 hardware/login/accessibility and publisher/signing gates remain explicit.
+
+## Restricted-app verification decision, 2026-10-28
+
+Keep new hang/max/aspect coverage in disposable test fixtures rather than change
+application behavior without a reproduced defect. Prove an actual blocked UI
+with a bounded sent message and OS hung recognition after startup. An ordinary
+managed wait was insufficient in the first fixture; a native event wait with a
+rescue deadline supplies the intentional block. Never add this wait to product UI.
+Run compatibility with the requested controller mode rather than always compiling
+its controller during hosted integration. Normalize fixture paths so Chrome gets
+an absolute isolated profile. Existing beta.1 packages and app version remain
+unchanged; the follow-up test/docs commit is newer validation evidence, not a new
+binary release. Freeze-after-probe and physical/privilege tests remain open.

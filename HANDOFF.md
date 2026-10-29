@@ -1,5 +1,48 @@
 # Handoff
 
+## Latest checkpoint: restricted-app validation, 2026-10-29
+
+The compatibility follow-up changes tests/docs only. App source and deployed
+binary remain beta.1; bin/beta-releases and bin/beta-kit still identify clean
+application/test baseline commit 262c13a, not this later verification commit.
+No artifacts were overwritten, release published or startup preference changed.
+
+Accepted focused compiled and actual source-hosted suites pass: a separate app
+blocked after startup is independently confirmed by sent-message timeout and OS
+hung detection; snapping rejects it without movement/assignment, settings stays
+responsive, and explicit snapping succeeds after resume. Rejection samples were
+171/172 ms including command pump. Maximum-size and custom fixed-aspect fixtures
+reject unsupported frames and regain original bounds. Existing three/four-row,
+minimum/corner, lifecycle and isolated Chrome cases pass in both modes. Geometry
+checks remain 198564. Application behavior did not require a fix.
+
+Harness fixes: use a native bounded event wait in the child instead of assuming
+a managed wait/startup callback proves a hang; normalize fixture data paths to
+absolute paths for isolated Chrome. HostedIntegration's compatibility subcase now
+uses its requested hosted controller rather than silently switching to compiled.
+The 30-second rescue wait is test-only. Early failed fixtures are not accepted
+evidence. Chrome emitted a nonfatal new-tab/profile stderr diagnostic in accepted
+runs; frame/close assertions passed. See docs/COMPATIBILITY.md.
+
+External evidence: outputs/windows-tile-studio-restricted-native.txt,
+restricted-hosted.txt, restricted-before.json and restricted-final.json.
+The final report verifies the live restarted daily controller, hidden bar,
+no Recovery, preserved settings/Startup bytes and sampled Windows crash events.
+Runtime XML alone is not live-process evidence. PIDs are transient.
+
+Remaining next steps are release gates, not an invented numbered phase: fresh
+Windows account/VM, representative personal settings/workspace backups, actual
+login, physical mixed-DPI/docking/sleep, screen reader/OS text and contrast,
+elevated/inaccessible apps, competing tilers and longer daily/external beta.
+Freeze-after-successful-probe and synchronous placement/restore deadlines remain
+known risks; an already-hung target test does not close those gaps. WindowsSandbox
+was not discoverable on this host; no account/system feature was enabled.
+Remote CI, publisher/signing and approved publication remain pending. Continue
+the user's current priority, read all root context documents and actual Git/live
+state, and preserve the original six-slot repository and existing beta artifacts.
+
+The beta implementation checkpoint below remains relevant historical context.
+
 ## Current checkpoint: beta validation, 2026-10-28
 
 `0.3.0-beta.1` follows phase 8 on feature/polish-launchers. All eight phases

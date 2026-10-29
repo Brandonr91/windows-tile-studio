@@ -19,6 +19,9 @@ Record the artifact hash, source revision, machine/account and evidence for each
   library retained byte-for-byte. Representative personal captures remain untested.
 - Thirty repeated resize cycles plus dialog churn in each mode; bounded GDI/private
   growth and 15-second idle samples. Multi-day physical-input testing remains open.
+- Follow-up: genuinely blocked external app before snapping, responsive settings,
+  resume/re-snap and max-size/custom-aspect rejection/frame restoration pass in
+  compiled and actual hosted controllers. Freeze-after-probe/privilege remain open.
 
 ## Manual/beta gates still open
 

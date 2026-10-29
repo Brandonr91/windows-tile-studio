@@ -20,6 +20,14 @@ open corrupt/future files through Recovery. Direct standalone old executables
 are outside this launcher guard. The fourth installer companion is
 Test-ConfigurationCompatibility.ps1. See docs/BETA-TESTING.md for actual scope.
 
+Beta compatibility verification follow-up: IntegrationTests can run its focused
+compatibility controller in either compiled or hosted mode. A child mode owns a
+disposable form and deliberately blocks its UI in a bounded native event wait
+after startup, then resumes on the parent's event. The parent verifies actual
+message timeout/OS hung detection, controller responsiveness and explicit re-snap.
+Maximum-size/custom-aspect fixtures verify actual rejection and frame restoration.
+These are test-only mechanisms; application source/architecture remain beta.1.
+
 ## Scope and execution
 
 Windows Tile Studio is a local C#/Windows Forms controller using Win32 window

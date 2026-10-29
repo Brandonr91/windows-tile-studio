@@ -1,5 +1,53 @@
 # Compatibility checkpoint: phase 3
 
+## Beta follow-up: restricted and unresponsive apps, 2026-10-28
+
+Application source remains `0.3.0-beta.1` at `262c13a`; this follow-up adds
+verification without changing application behavior or replacing beta packages.
+Focused compatibility suites now run against both compiled and source-hosted
+controllers, including the actual hosted compatibility subcase in HostedIntegration.
+
+- A separate disposable app finishes startup, then stops processing messages in
+  a native event wait with a 30-second rescue deadline. A sent-message timeout
+  independently confirms the block, and Windows IsHungAppWindow must recognize
+  it. Snap is rejected within a 2.5-second test budget, with unchanged bounds,
+  no assignment and feedback. Settings still opens/closes while that app is blocked.
+  Signaling the event resumes it; an explicit snap must then succeed.
+- A maximum-size window and a custom 2:1 outer-frame aspect window reject an
+  incompatible tile. Neither is falsely assigned; both regain their original
+  visible frame and report the rejected frame. These are representative fixtures,
+  not exhaustive maximum/aspect negotiation or proof for every app.
+- Existing three/four-row, corner/minimum, lifecycle and isolated Chrome cases
+  pass in the same suites. Harness data paths are normalized to absolute paths;
+  relative Chrome profile arguments previously delegated into an existing browser
+  session instead of creating the expected isolated fixture.
+
+Accepted samples: hung-target rejection 171 ms compiled and 172 ms hosted,
+including the command pump. The elapsed budget guards responsiveness, not a
+universal latency promise. Chrome emitted an internal new-tab/profile diagnostic
+on stderr in each run; its isolated-window fit/close checks passed. That diagnostic
+is recorded in reports, not classified as a Tile Studio crash.
+
+The first managed-wait fixture did not prove a hang: it still answered sent
+messages or remained in startup. That failed attempt is not accepted coverage.
+The native wait is deliberately confined to the test child; product code is
+unchanged. See Microsoft's [hung-window conditions](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-ishungappwindow)
+and [native wait behavior](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject).
+
+After `Build.ps1 -Compatibility -OutputDirectory bin\beta-restricted` with the
+daily controller stopped, the focused hosted equivalent is:
+
+```powershell
+.\bin\beta-restricted\IntegrationTests.exe bin\beta-restricted\hosted-check --compatibility-only --hosted "$PWD\Start-Hosted.ps1"
+```
+
+Open risks remain: a target freezing **after** a successful size probe, synchronous
+placement/restore calls without an overall hard deadline, elevated/inaccessible
+apps, competing tilers and physical mouse/display cases. The new check covers a
+target already blocked before snapping. Fresh-account/VM, login, assistive
+technology and multi-day observations remain separate release gates. Earlier
+phase-3 results and then-current architecture below are historical.
+
 2026-10-27, local `0.3.0-preview.3`. These are representative checks, not a
 claim that all Windows applications or display configurations are supported.
 The original six-slot repository and existing browser profiles are unchanged.

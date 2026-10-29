@@ -2,6 +2,13 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+Latest verification follow-up: compiled and actual source-hosted compatibility
+suites pass a genuinely blocked external UI, responsive manager settings,
+explicit snap after resume, maximum-size and custom fixed-aspect rejection with
+original-frame restoration. Existing row/minimum/corner/lifecycle/isolated Chrome
+cases also pass. This is test coverage, with application beta.1/packages unchanged.
+See docs/COMPATIBILITY.md for limits and HANDOFF for accepted evidence.
+
 Local `0.3.0-beta.1` fixes reproduced lossy legacy settings downgrade through
 strict Recovery and installed selection guards. Geometry/settings (198564),
 compiled UI/native, full hosted integration, hosted General/accessibility,

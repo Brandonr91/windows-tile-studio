@@ -162,6 +162,11 @@ delete or replace user data when switching source versions.
 
 `./Build.ps1 -Compatibility` runs focused disposable 3/4-row, size-limit,
 lifecycle and isolated Chrome-frame checks with the daily controller stopped.
+It also tests a separate genuinely blocked app, maximum-size and fixed-aspect
+fixtures. Prove the block with a timed sent message and OS hung detection; keep
+the native event wait/rescue deadline in the disposable child only. Use absolute
+fixture data paths. HostedIntegration now runs its compatibility subcase in hosted
+mode; focused --compatibility-only accepts --hosted <Start-Hosted.ps1> too.
 It uses a separate Chrome profile and must never move existing browser windows.
 Performance samples are local observations, not universal latency/CPU promises.
 
