@@ -1,5 +1,44 @@
 # Handoff
 
+## Latest checkpoint: beta.2 merged, tagged and published, 2026-10-29
+
+The user explicitly requested PR review/merge, exact-source tagging and unsigned
+prerelease publication. PR #1 was reviewed against green ce7da2e, marked ready and
+merged as b666f3b0b19ff86aa4351cc7a3ba1ed68ae5de50, with the same reviewed tree.
+GitHub main now contains the polished manager and both histories. The original
+six-slot-snap repository remains separate and untouched.
+
+Published prerelease:
+https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.2
+Release ID 428441196; draft=false, prerelease=true. Annotated tag v0.3.0-beta.2
+resolves to tested 89613a20b63448e7b6d4a44dc27e81c63a117579, not the later merge.
+Both frozen ZIPs, SHA256SUMS.txt and release-info.json were uploaded while draft,
+verified against server size/digest, then published. All four files were downloaded
+anonymously from public URLs and hashes match. No frozen file was rebuilt/replaced
+and no certificate/signing was used. Checksums remain in docs/RELEASE-BETA-2.md.
+
+Main merge CI run 40962856677 and tag CI run 40962921659 passed. A final docs
+publication-record commit follows the merge; verify current main's latest run
+before claiming its head passed. Current exact status is recorded outside Git in
+outputs/windows-tile-studio-beta2-publication-final.json when available.
+
+Evidence outside Git: outputs/windows-tile-studio-beta2-merge.json,
+beta2-draft-release.json, beta2-uploaded-assets.json, beta2-published-release.json,
+beta2-public-downloads.json and beta2-postmerge-runs.json (same output prefix).
+The scoped API helper stays outside Git, uses authorized credentials only in
+memory and never logs/stores them. Release notes include usage, startup/data
+behavior, unsigned status and unverified limits. Private snapshots were not uploaded.
+
+Local checkout is now main, fast-forwarded without discarding local history.
+Daily app remains beta.2; publication does not install/restart/reconfigure it.
+Fresh-account validation stays waived. Actual speech/OS appearance/hardware/login/
+privilege, freeze-after-probe and multi-day limits remain recorded, not fixed.
+
+Next: verify final docs CI and public release metadata/assets, then gather beta
+feedback. Do not repeat publication, move this tag or overwrite these files.
+Future fixes need a new version/provenance and relevant checks. Older draft and
+prepublication scopes below are superseded by the completed user-authorized release.
+
 ## Latest checkpoint: draft PR published and Windows CI verified, 2026-10-29
 
 Git Credential Manager device authorization completed for Brandonr91. Normal Git

@@ -230,4 +230,7 @@ The connector can report push rights yet deny writes; use actual operation resul
 Check CI against the exact current PR head after updates, not only an older run.
 Remote jobs cover geometry/hosting/installer/package checks, not native desktop UI.
 Workflow artifacts have checkout-specific provenance and are not replacements for
-frozen release assets. Merge/tag/release remain outside the current review scope.
+frozen release assets. The user subsequently authorized PR #1 merge and beta.2
+publication on 2026-10-29; those actions are complete. Never repeat publication,
+move v0.3.0-beta.2 or replace its frozen assets. Future fixes need a new version and
+verified provenance; old beta validation does not imply production readiness.

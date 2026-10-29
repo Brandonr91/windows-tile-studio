@@ -1,11 +1,11 @@
-# Windows Tile Studio 0.3.0-beta.2 — release draft
+# Windows Tile Studio 0.3.0-beta.2 — release record
 
-Prepared 2026-10-29. This is a reviewed local beta candidate, not a published or
-production-certified release. Packages are unsigned. Review branch review/beta-2
-and [draft PR #1](https://github.com/Brandonr91/windows-tile-studio/pull/1) are now
-published; main is unchanged and no tag/GitHub Release was created. Initial push
-and PR Windows CI passed at 430a11a; inspect the PR's current head checks for later
-documentation commits.
+Published 2026-10-29 as an [unsigned beta prerelease](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.2),
+not a production-certified release. [PR #1](https://github.com/Brandonr91/windows-tile-studio/pull/1)
+was reviewed against green ce7da2e and merged as b666f3b. Tag v0.3.0-beta.2 points
+to the exact frozen artifact source 89613a2. Both ZIPs and checksum/provenance files
+are public; server digests and anonymous re-download hashes match. Main merge and
+tag CI passed. Later documentation updates retain distinct provenance.
 
 ## What this beta provides
 
@@ -133,6 +133,7 @@ Review/merge through the normal GitHub flow, preserving the original repository.
 If publishing these frozen assets, the version tag must identify their exact
 source revision 89613a2, not a later documentation-only commit. A prerelease should
 carry these checksums, scope/limits and unsigned status. The review branch and
-draft PR steps have been executed; merge, tagging and release publication remain
-pending. The initial successful [PR workflow run](https://github.com/Brandonr91/windows-tile-studio/actions/runs/40961226184)
-is historical evidence at 430a11a; always verify the latest head after updates.
+PR, merge, tag and prerelease publication steps are complete. The successful
+[main merge run](https://github.com/Brandonr91/windows-tile-studio/actions/runs/40962856677)
+and [tag run](https://github.com/Brandonr91/windows-tile-studio/actions/runs/40962921659)
+record publication-time CI; verify newer main heads after documentation changes.

@@ -277,3 +277,14 @@ Initial push/PR CI passed at 430a11a; final-head evidence must be refreshed afte
 documentation updates. CI upload is an ephemeral unsigned workflow artifact, not
 a tagged GitHub Release or a replacement of the reviewed 89613a2 assets. Local
 desktop verification and unverified manual limits remain distinct from CI coverage.
+
+## Beta.2 publication, 2026-10-29
+
+The user explicitly authorized review/merge, tagging and unsigned prerelease
+publication. Preserve history with PR #1's normal merge; tag exact frozen source
+89613a2 rather than the newer merge/docs head. Upload the two reviewed ZIPs and
+checksum/provenance sidecars as a draft, verify server digests, publish as a
+prerelease and independently verify all public download hashes. These steps are
+complete. Never move this tag or overwrite these release bytes to refresh docs.
+Future changes require a new version and relevant validation. This beta's known
+manual/placement risks remain disclosed; publication is not production certification.

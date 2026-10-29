@@ -51,7 +51,10 @@ Release-review records: docs/RELEASE-BETA-2.md separates frozen clean-89613a2
 packages from subsequent documentation/history commits. A verified history-only
 merge connects the equivalent published baseline without changing application
 files. This is delivery provenance, not an application/runtime mechanism.
-Remote review now uses draft PR #1 on review/beta-2. The read-only Windows workflow
+PR #1 was merged and v0.3.0-beta.2 published as an unsigned prerelease, with both
+delivery modes/checksums/provenance uploaded from frozen source 89613a2. The tag
+identifies that exact source; later main docs do not change asset bytes.
+The read-only Windows workflow
 has passed geometry, offline source/install lifecycle, packaging and artifact
 upload on GitHub. Each CI archive records its workflow checkout revision; these
 ephemeral builds are separate from frozen release-candidate bytes. Desktop suites

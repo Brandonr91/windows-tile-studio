@@ -1,6 +1,9 @@
 # Preview packages, install and recovery
 
-Phase 8 prepared local delivery tooling; `0.3.0-beta.1` adds guarded settings
+The [beta.2 prerelease](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.2)
+is published with frozen tested ZIPs, checksums and provenance; see the
+[release record](RELEASE-BETA-2.md). Phase 8 prepared local delivery tooling;
+`0.3.0-beta.1` added guarded settings
 compatibility and the [beta validation campaign](BETA-TESTING.md). It does not publish
 a release, sign binaries, claim a clean-account pass or close hardware/beta gates.
 The user waived fresh-account/VM validation on 2026-10-29; acceptance uses the
@@ -50,7 +53,7 @@ Test-ConfigurationCompatibility.ps1 together;
 the installer is no longer a standalone one-file download.
 
 ```powershell
-.\Get-FromGitHub.ps1 -ArchivePath 'C:\Downloads\WindowsTileStudio-0.3.0-beta.1-Source.zip' -ExpectedSha256 '<64-character hash from SHA256SUMS.txt>' -Mode Hosted -NoLaunch
+.\Get-FromGitHub.ps1 -ArchivePath 'C:\Downloads\WindowsTileStudio-0.3.0-beta.2-Source.zip' -ExpectedSha256 '<64-character hash from SHA256SUMS.txt>' -Mode Hosted -NoLaunch
 ```
 
 Replace the example hash with the real value. Default InstallRoot is the
@@ -141,7 +144,8 @@ checkout/upload-artifact actions, Windows PowerShell, geometry/configuration,
 source/installer and package-lifecycle checks. It uploads preview artifacts only;
 there is no GitHub Release/tag/push/signing job. Native desktop suites run locally
 with disposable windows, not claimed from a noninteractive hosted runner. This
-workflow is configured locally; a GitHub Actions run is unverified until pushed.
+workflow has passed for the review branch, main merge and v0.3.0-beta.2 tag.
+Verify the latest exact head after future updates; this does not cover desktop UI.
 Official references: [checkout](https://github.com/actions/checkout),
 [upload-artifact](https://github.com/actions/upload-artifact).
 

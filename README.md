@@ -47,7 +47,11 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
-Local beta.2 adds settings accessibility names to beta.1's settings-preserving
+[Download beta.2](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.2):
+the unsigned prerelease includes Source and PortableCompiled packages, checksums,
+usage instructions and known limits.
+
+Beta.2 adds settings accessibility names to beta.1's settings-preserving
 downgrade guards and a
 [beta test guide](docs/BETA-TESTING.md) to the phase-8 versioned
 Source/PortableCompiled packages, manifests/checksums, validated installation,

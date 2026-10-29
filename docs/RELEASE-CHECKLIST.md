@@ -66,8 +66,10 @@ with an actual Windows logout/login or a short sample with several days of use.
       The original six-slot repository was untouched.
 - [x] User authorized the review-branch push and draft PR #1; initial remote CI
       passed. Current-head checks must stay verified after updates.
-- [ ] User separately requests main merge/version tagging/release publication
-      after reviewing the PR, exact artifacts and remaining limits.
+- [x] User requested main merge/version tagging/unsigned beta publication. PR #1
+      merged; v0.3.0-beta.2 identifies tested 89613a2; four public asset downloads
+      match reviewed hashes. Main merge and tag CI passed. This is a prerelease;
+      production/manual verification gaps above remain open.
 
 ## Scope decisions to resolve before claiming all optional polish
 

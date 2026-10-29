@@ -2,11 +2,18 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+Published update, 2026-10-29: PR #1 is merged; unsigned prerelease v0.3.0-beta.2
+is public with tested source/compiled ZIPs, SHA256SUMS and release-info. All public
+downloads match the frozen reviewed hashes. Tag points to 89613a2; merge main and
+tag CI passed. See docs/RELEASE-BETA-2.md and latest HANDOFF. Next is beta feedback
+and scoped fixes with new versions, retaining unverified manual limits. Do not
+repeat publication or overwrite existing assets to update documentation.
+
 Remote review update, 2026-10-29: review/beta-2 is pushed; draft PR #1 targets
 unchanged main. Initial push and PR Windows CI both pass at 430a11a (geometry,
 offline source/install lifecycle, packaging and artifact upload). Check the latest
 PR head after documentation updates; final evidence is recorded outside Git.
-Next is PR review and a separately requested merge/release decision. CI's unsigned
+That merge/release decision was subsequently authorized and completed above. CI's unsigned
 workflow artifacts are distinct from frozen 89613a2 beta.2 release packages.
 
 Release-review update, 2026-10-29: exact beta.2 archives pass lifecycle, installed
