@@ -1,5 +1,30 @@
 # Handoff
 
+## Latest checkpoint: authorized review push awaiting Git sign-in, 2026-10-29
+
+The user continued the explicit next step of pushing a review branch and checking
+GitHub CI. Scope is review/beta-2 plus a draft PR to main, with no main update,
+tag or release publication. Do not ask for this authorization again.
+
+Remote main rechecked as cfdb2df; working tree clean and reviewed local head was
+f68e97d. Direct noninteractive Git push failed because Git has no saved sign-in.
+Connected GitHub metadata reported push/admin access, but actual create_branch
+was denied 403 Resource not accessible by integration. No branch or PR was created;
+do not infer actual write capability from repository permissions alone.
+
+Git Credential Manager's normal browser login was started for Brandonr91; the
+human must complete authentication. Never automate authentication/consent dialogs
+or request a token/password in chat. A pending user-input request asks for “signed
+in” after completion. Verify credential readiness and current remote refs before
+retrying a normal Git push; do not force push or replace known public history.
+
+Prepared PR body is work/beta2-pull-request-body.md outside this repository. Title:
+Prepare Windows Tile Studio beta.2 with layout editing, workspaces and verified delivery.
+After authenticated push, use the connected PR tool to create a draft, attach its
+URL to this chat, and inspect the exact PR head's checks/logs. Fix real CI failures
+within the authorized branch and keep main/release assets unchanged. CI has not run.
+App/data/artifacts are unchanged by this authentication checkpoint.
+
 ## Latest checkpoint: beta.2 release review, 2026-10-29
 
 Exact clean-89613a2 beta.2 archives now pass ReleaseTests, InstalledLaunchTests
