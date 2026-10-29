@@ -69,7 +69,7 @@ public partial class SnapSettingsForm : Form {
     public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null,Func<string> diagnostics=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
-        var tabs=new TabControl{Dock=DockStyle.Fill}; Controls.Add(tabs);
+        var tabs=new TabControl{Dock=DockStyle.Fill,AccessibleName="Settings pages"}; Controls.Add(tabs);
         var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); generalPage=new TabPage("General"); var appearancePage=new TabPage("Layouts bar"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,generalPage});
         ConfigureGeneral(generalPage,appearancePage,login,dataDirectory,diagnostics);
         TabPage recoveryPage=null;
@@ -119,7 +119,7 @@ public partial class SnapSettingsForm : Form {
         appearancePage.Controls.Add(new Label{Text="Windows Tile Studio  "+SixSlotSnap.ProductVersion,AutoSize=true,Location=new Point(24,375)});
         shortcuts.Dock=DockStyle.Fill; shortcuts.AllowUserToAddRows=false; shortcuts.AllowUserToDeleteRows=false; shortcuts.RowHeadersVisible=false; shortcuts.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill; shortcuts.AccessibleName="Global hotkey assignments";
         shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="command",HeaderText="Action",ReadOnly=true,FillWeight=170}); shortcuts.Columns.Add(new DataGridViewTextBoxColumn{Name="binding",HeaderText="Shortcut",ReadOnly=true,FillWeight=160});
-        shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="change",HeaderText="",Text="Change",UseColumnTextForButtonValue=true,FillWeight=60}); shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="clear",HeaderText="",Text="Clear",UseColumnTextForButtonValue=true,FillWeight=55}); shortcutPage.Controls.Add(shortcuts);
+        shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="change",HeaderText="Change shortcut",Text="Change",UseColumnTextForButtonValue=true,FillWeight=60}); shortcuts.Columns.Add(new DataGridViewButtonColumn{Name="clear",HeaderText="Clear shortcut",Text="Clear",UseColumnTextForButtonValue=true,FillWeight=55}); shortcutPage.Controls.Add(shortcuts);
         shortcuts.CellContentClick+=EditShortcut;
         var sharePage=new TabPage("Share layouts");tabs.TabPages.Add(sharePage);
         sharePage.Controls.Add(new Label{Text="Portable layouts",AutoSize=true,Location=new Point(24,24)});

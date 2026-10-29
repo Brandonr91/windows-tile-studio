@@ -27,6 +27,9 @@ with an actual Windows logout/login or a short sample with several days of use.
 - Follow-up: genuinely blocked external app before snapping, responsive settings,
   resume/re-snap and max-size/custom-aspect rejection/frame restoration pass in
   compiled and actual hosted controllers. Freeze-after-probe/privilege remain open.
+- Beta.2 live keyboard acceptance and named provider-tree page/action headers;
+  compiled/hosted accessible-object regressions pass. Actual screen-reader speech
+  and Windows contrast/text-size switching remain unverified.
 
 ## Manual/beta gates still open
 

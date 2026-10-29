@@ -237,3 +237,13 @@ and observe the current controller without rearranging windows or changing start
 Do not force a logout, uninstall the daily installation or introduce test corruption.
 Keep private snapshots under ignored bin/, outside distribution. Actual logout/login
 and multi-day/hardware/accessibility coverage remain distinct observations.
+
+## Live accessibility naming, 2026-10-29
+
+Actual beta.1 inspection exposed an unnamed main tab group and blank Hotkeys
+action headers. Fix these with standard AccessibleName/header text in beta.2,
+retaining the WinForms provider and existing shortcut behavior. Named header
+objects now give the action cells context; avoid a custom accessibility provider
+for this small problem. Verify both accessible objects and the installed live
+tree, plus keyboard open/Cancel/focus-return routes. Do not equate those checks
+with screen-reader announcements or change Windows appearance to claim coverage.

@@ -1,5 +1,50 @@
 # Handoff
 
+## Latest checkpoint: live keyboard/accessibility acceptance, 2026-10-29
+
+Current daily app is local `0.3.0-beta.2` (file version 0.3.0.10). Actual beta.1
+UI inspection found an unnamed main settings TabControl and blank Hotkeys action
+headers; cells consequently exposed row number/value without an action name.
+SettingsForm now names the selector Settings pages and headers Change shortcut/
+Clear shortcut. Live beta.2 provider tree confirms named headers and action cells.
+No shortcut, layout, schema or focus-routing behavior changed. AccessibilityUi
+adds accessible-object assertions for the selector and button-column headers.
+
+Current-installation acceptance used the computer-use skill for real keyboard
+navigation: Ctrl+Tab across main pages; Tab into General categories; Right/End
+between categories; Tab/Shift+Tab into/out of bar controls; Tab through Support to
+Preview diagnostic report; Space opens preview, Escape closes and returns focus
+to its launcher. Hotkeys grid Tab reaches Change, Space opens Choose shortcut,
+Escape cancels; settings Escape cancels. No binding or preference was saved.
+The provider reports grid focus at table level in some cases; a visible focus cue
+confirmed the selected Change cell. Actual screen-reader speech is unverified.
+
+Verification: 198564 pure checks PASS; compiled AccessibilityUi and WorkspaceUi
+PASS; Windows PowerShell 5.1 STA hosted AccessibilityUi PASS. New labels confirmed
+in the live installed provider tree after rebuild. Settings/Startup bytes remain
+identical to the pre-check snapshot; six daily assignments, hidden bar and no
+Recovery. Sampled Application 1000/1001/1026 app/test crash events: zero. No OS
+theme, contrast, scale or startup preference changed, and no real app was re-snapped.
+
+Evidence outside Git: outputs/windows-tile-studio-keyboard-before.json,
+keyboard-build.txt, keyboard-ui-tests.txt, keyboard-hosted-tests.txt and
+keyboard-final.json. Runtime/process state is verified in that report, but PIDs
+remain transient. Fallback binary/settings/hosted sources are in
+work/keyboard-acceptance-fallback. Hosted delivery has the new fourteen sources
+and current Start-Hosted.ps1 with its own data preserved; only one controller runs.
+Wait for verified runtime readiness before issuing CLI --settings after a restart;
+an earlier command correctly showed the not-started notice and was dismissed.
+
+New beta.2 packaging, when present, is separate from prior beta.1 artifacts;
+inspect its release-info.json for exact revision and hashes. Never overwrite the
+older beta.1 packages/kit or include private ignored snapshots. No push/release.
+Fresh-account testing stays waived by the user. Remaining work: actual screen-
+reader speech/OS appearance, actual login when naturally performed, available
+physical hardware/sleep/docking, privilege/competing-tiler/freeze-after-probe,
+longer daily use, remote CI, signing/publisher choice and approved publication.
+
+Older checkpoints below retain historical evidence and superseded app versions.
+
 ## Latest checkpoint: existing-installation acceptance, 2026-10-29
 
 User instruction: use this installation; fresh-account/VM testing is not needed.

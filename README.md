@@ -47,7 +47,8 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
-Local beta.1 adds settings-preserving downgrade guards and a
+Local beta.2 adds settings accessibility names to beta.1's settings-preserving
+downgrade guards and a
 [beta test guide](docs/BETA-TESTING.md) to the phase-8 versioned
 Source/PortableCompiled packages, manifests/checksums, validated installation,
 rollback and data-preserving uninstall. See

@@ -3,6 +3,8 @@
 The eight local polishing phases have core implementations. `0.3.0-beta.1`
 begins release validation; it is unsigned and has not been published. Passing
 local tests does not close the manual gates in [RELEASE-CHECKLIST](RELEASE-CHECKLIST.md).
+Beta.2 adds named settings page/action headers and current-installation keyboard
+acceptance. Consult each package's version/provenance; older kits retain history.
 
 ## Safe test setup
 

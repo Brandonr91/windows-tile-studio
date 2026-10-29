@@ -2,6 +2,14 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+Latest app update, 2026-10-29: local beta.2 fixes the unnamed settings page selector
+and Hotkeys action headers found in the running installation. Actual Ctrl+Tab,
+General arrows/End, Tab/Shift+Tab, diagnostic preview open/Escape/focus return and
+shortcut-editor Space/Escape routes pass with settings/startup unchanged. Compiled
+and hosted accessibility, compiled General/workspace and 198564 geometry checks
+pass. Actual screen-reader speech/OS appearance checks remain unverified. See
+docs/ACCESSIBILITY-AND-SUPPORT.md and the latest HANDOFF.
+
 User scope update, 2026-10-29: validate this existing installation. Fresh-account/VM
 testing is waived, not failed or still required. CurrentInstallationTests adds
 real settings/backup snapshot validation, explicit existing-shortcut execution

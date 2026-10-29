@@ -28,6 +28,15 @@ message timeout/OS hung detection, controller responsiveness and explicit re-sna
 Maximum-size/custom-aspect fixtures verify actual rejection and frame restoration.
 These are test-only mechanisms; application source/architecture remain beta.1.
 
+Keyboard acceptance update, 2026-10-29 (`0.3.0-beta.2`): the main settings
+TabControl has AccessibleName Settings pages. Hotkey button columns now expose
+Change shortcut/Clear shortcut headers, so the standard WinForms accessible
+provider gives cells action context as well as row/value. No custom provider,
+binding, schema, focus-routing or layout logic was added. AccessibilityUi asserts
+names through AccessibilityObject for the selector and button-column headers.
+Live current-installation keyboard checks supplement the compiled/hosted suites;
+they do not establish Narrator speech or actual OS appearance coverage.
+
 Existing-installation validation (user scope, 2026-10-29) adds a PowerShell test
 that reads the live compiled runtime/process/receiver identity, validates private
 copies of settings and existing backups with the installed assembly, optionally

@@ -149,6 +149,11 @@ Ctrl+Z/Y, Tab escape, accessible value and pair-only draft geometry. Run
 `-AccessibilityUi` and Windows PowerShell 5.1 STA tests/AccessibilityUiTests.ps1
 for accessibility/palette/viewport/report changes. Do not change actual Windows
 contrast/scaling or claim screen-reader verification from accessible properties.
+Keep the main Settings pages selector and Hotkeys Change/Clear column headers
+named. Verify their accessible objects, not just visible button text: blank
+headers left the action cells named only by row number in the live provider tree.
+Live keyboard acceptance must cancel drafts, preserve saved settings/startup and
+distinguish accessible-tree checks from actual screen-reader speech.
 DiagnosticReport must remain an allowlist of aggregate numeric/boolean/version
 data; never copy logs, titles, paths, profile/monitor IDs, keys, HWNDs or PIDs into
 it. Preview before local save; no upload/automatic report. PerformanceTests.ps1

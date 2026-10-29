@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0-beta.2 — settings accessibility labels
+
+- Name the main settings page selector and Hotkeys Change/Clear columns so their
+  accessible headers and cells carry action context. Verified from the running
+  installation's accessibility tree; shortcuts and layout behavior are unchanged.
+- Add accessibility-object regression assertions. Fresh-account testing remains
+  waived; manual screen-reader speech and Windows appearance checks remain unverified.
+
 ## 0.3.0-beta.1 — local beta validation
 
 - Prevent silent settings loss when selecting an older installed version; probe

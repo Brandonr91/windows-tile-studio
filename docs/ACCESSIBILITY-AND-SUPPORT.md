@@ -81,8 +81,24 @@ compiled and source-hosted startup readiness, one-second idle CPU, and memory
 without recovering or moving real windows. See HANDOFF for accepted reports and
 local measurements. Samples are specific to this machine, not performance promises.
 
+## Current-installation acceptance, 2026-10-29
+
+Beta.2 names the settings page selector and Hotkeys action headers after live
+provider inspection found them unnamed. Header objects and row cells now expose
+Change shortcut/Clear shortcut context. Accessible-object regressions pass in
+compiled and hosted modes; existing General/workspace checks pass too.
+
+Actual keyboard checks on the daily installation cover Ctrl+Tab, nested category
+arrows/End, Tab/Shift+Tab, Support preview Space/Escape and focus return, and
+Hotkeys Change Space/Escape without saving. Grid focus can be reported at table
+level by the provider even while a visible focus cue marks its current cell; do
+not infer cell announcements from that result. Settings/startup bytes were
+preserved, the bar stayed hidden, and no report was saved/uploaded. Real screen-
+reader announcements and actual Windows appearance settings were not tested.
+
 Manual Narrator/other screen-reader announcements, actual OS contrast switching,
 text-size-only scaling, physical mixed-DPI/docking/sleep, elevated/hung apps and
-clean-account login/install/update/remove remain beta/release gates. No screen
+login coverage remain beta/release work. The user waived fresh-account/VM testing;
+current-installation acceptance is used instead. No screen
 reader or Windows setting was enabled just to test this phase. Phase 8 is
 production delivery; passing these scoped tests does not close those gates.
