@@ -51,6 +51,11 @@ Release-review records: docs/RELEASE-BETA-2.md separates frozen clean-89613a2
 packages from subsequent documentation/history commits. A verified history-only
 merge connects the equivalent published baseline without changing application
 files. This is delivery provenance, not an application/runtime mechanism.
+Remote review now uses draft PR #1 on review/beta-2. The read-only Windows workflow
+has passed geometry, offline source/install lifecycle, packaging and artifact
+upload on GitHub. Each CI archive records its workflow checkout revision; these
+ephemeral builds are separate from frozen release-candidate bytes. Desktop suites
+remain local. Nothing in this delivery workflow adds a runtime network dependency.
 
 Windows Tile Studio is a local C#/Windows Forms controller using Win32 window
 APIs. It places and links real app windows; it does not modify Windows' built-in

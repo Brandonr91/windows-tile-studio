@@ -1,8 +1,11 @@
 # Windows Tile Studio 0.3.0-beta.2 — release draft
 
 Prepared 2026-10-29. This is a reviewed local beta candidate, not a published or
-production-certified release. Packages are unsigned. No tag, GitHub Release or
-push was performed while preparing this document.
+production-certified release. Packages are unsigned. Review branch review/beta-2
+and [draft PR #1](https://github.com/Brandonr91/windows-tile-studio/pull/1) are now
+published; main is unchanged and no tag/GitHub Release was created. Initial push
+and PR Windows CI passed at 430a11a; inspect the PR's current head checks for later
+documentation commits.
 
 ## What this beta provides
 
@@ -103,8 +106,10 @@ A target freezing after a successful size probe can still stall synchronous
 placement/restoration; already-hung rejection tests do not remove that race.
 App-specific frame restrictions can prevent a fit. Separate user-selected themes/
 text sizing, arbitrary overlapping zones and document/session recreation are not
-implemented. GitHub CI is configured locally but has not run remotely. Signing
-and a production release remain separate decisions.
+implemented. GitHub CI passed the scoped geometry/offline hosting/install/package
+jobs; it does not run native desktop suites or establish these manual cases.
+Signing and a production release remain separate decisions. CI artifacts use their
+workflow checkout provenance and do not replace the frozen archives above.
 
 ## GitHub review preparation
 
@@ -127,5 +132,7 @@ and let the configured read-only Windows CI run; do not claim a pass in advance.
 Review/merge through the normal GitHub flow, preserving the original repository.
 If publishing these frozen assets, the version tag must identify their exact
 source revision 89613a2, not a later documentation-only commit. A prerelease should
-carry these checksums, scope/limits and unsigned status. No publication step in
-this section has been executed.
+carry these checksums, scope/limits and unsigned status. The review branch and
+draft PR steps have been executed; merge, tagging and release publication remain
+pending. The initial successful [PR workflow run](https://github.com/Brandonr91/windows-tile-studio/actions/runs/40961226184)
+is historical evidence at 430a11a; always verify the latest head after updates.

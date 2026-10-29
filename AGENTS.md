@@ -223,3 +223,11 @@ changes. Public cfdb2df matched local 48b96b2 modulo EOL; d056d17 reconciles bot
 histories with an unchanged application tree. Do not repeat an ours merge for
 unknown future upstream changes. Fetch/recheck ancestry and diff before an
 authorized push; force push is not needed for the reviewed public baseline.
+
+Review branch/CI checkpoint: draft PR #1 is authorized on review/beta-2. Normal
+Git credentials are configured; do not repeat sign-in unless authentication fails.
+The connector can report push rights yet deny writes; use actual operation results.
+Check CI against the exact current PR head after updates, not only an older run.
+Remote jobs cover geometry/hosting/installer/package checks, not native desktop UI.
+Workflow artifacts have checkout-specific provenance and are not replacements for
+frozen release assets. Merge/tag/release remain outside the current review scope.

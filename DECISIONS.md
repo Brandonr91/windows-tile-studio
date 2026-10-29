@@ -262,3 +262,18 @@ changes; every subsequent public tip needs fresh review.
 Keep reviewed beta.2 archives frozen at 89613a2. Later review documentation does
 not change their provenance; a publication tag for those assets must name that
 exact source. No tag/push/release or CI pass is inferred from local preparation.
+
+## Authorized review branch and CI, 2026-10-29
+
+The user authorized continuing with review-branch push, a draft PR and CI. Keep
+main and release assets unchanged during this scope. Use normal Git transport
+after human Git Credential Manager authorization; connector metadata alone did
+not imply working write permission (actual branch/PR writes returned 403).
+The authenticated API fallback for draft creation uses the authorized Git helper
+credential only in process memory, scoped to this repository; never log/store it.
+Preserve full history rather than inventing a substitute snapshot commit.
+
+Initial push/PR CI passed at 430a11a; final-head evidence must be refreshed after
+documentation updates. CI upload is an ephemeral unsigned workflow artifact, not
+a tagged GitHub Release or a replacement of the reviewed 89613a2 assets. Local
+desktop verification and unverified manual limits remain distinct from CI coverage.

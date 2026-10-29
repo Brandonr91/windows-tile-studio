@@ -2,12 +2,19 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+Remote review update, 2026-10-29: review/beta-2 is pushed; draft PR #1 targets
+unchanged main. Initial push and PR Windows CI both pass at 430a11a (geometry,
+offline source/install lifecycle, packaging and artifact upload). Check the latest
+PR head after documentation updates; final evidence is recorded outside Git.
+Next is PR review and a separately requested merge/release decision. CI's unsigned
+workflow artifacts are distinct from frozen 89613a2 beta.2 release packages.
+
 Release-review update, 2026-10-29: exact beta.2 archives pass lifecycle, installed
 Hosted/Compiled/rollback launch and actual-public upgrade/guard tests. The concrete
 review is docs/RELEASE-BETA-2.md. Public/local equivalent early baselines are now
 reconciled locally with an unchanged source tree; force push is unnecessary.
-Next is review/authorized publication preparation, retaining explicit unverified
-manual limits. No public push, PR/tag/release, signing or remote CI run occurred.
+The subsequent remote review update above supersedes this original pre-push
+checkpoint. Manual limits, signing and release publication remain separate.
 
 Latest app update, 2026-10-29: local beta.2 fixes the unnamed settings page selector
 and Hotkeys action headers found in the running installation. Actual Ctrl+Tab,

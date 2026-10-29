@@ -1,5 +1,41 @@
 # Handoff
 
+## Latest checkpoint: draft PR published and Windows CI verified, 2026-10-29
+
+Git Credential Manager device authorization completed for Brandonr91. Normal Git
+push published full reviewed history to review/beta-2. Draft PR #1 is open and
+attached to this chat: https://github.com/Brandonr91/windows-tile-studio/pull/1.
+Main remains cfdb2df; no merge, version tag, GitHub Release or signing was performed.
+The original six-slot repository, daily app/data and frozen artifacts are unchanged.
+
+Initial remote head 430a11a passed both Windows CI events: push run 40961084350
+and pull_request run 40961226184. Checkout, 198564 geometry/configuration checks,
+offline source-hosting/installer tests, package lifecycle tests, unsigned builds
+and artifact upload all succeeded. This documentation follow-up creates a newer
+review head; verify its current runs too. Exact final head/run evidence is kept
+outside Git in outputs/windows-tile-studio-beta2-ci-final.json when available.
+Do not infer current-head success solely from an older green run.
+
+The connector's writes were denied 403 despite reported repository push rights.
+Git transport works after human authorization. Draft PR creation used the same
+authorized Git credential through a scoped local API helper, in memory without
+printing/persisting credentials. Connected GitHub read tools can inspect jobs/logs.
+No further push/draft-PR/CI approval is needed within the authorized review branch.
+Merge/tag/release publication remain separate user actions. Never automate login
+or consent, request a password/token in chat, or commit temporary device codes.
+
+CI artifacts are ephemeral unsigned builds from each workflow checkout and may
+have different source revisions/hashes from frozen clean-89613a2 beta.2 archives.
+They must not silently replace those reviewed release assets. CI does not run
+interactive desktop suites; local native/accessibility evidence still supplies
+that scope. Physical/actual speech/login/privilege/freeze-after-probe/multi-day
+limits remain; fresh-account testing stays explicitly waived.
+
+Next: verify current PR head checks and update its validation description. Leave
+the PR as draft, main unchanged and releases unpublished unless the user requests
+the next publication step. Keep project context synchronized without repeatedly
+rebuilding frozen assets. Earlier authentication/prepublication notes are history.
+
 ## Latest checkpoint: authorized review push awaiting Git sign-in, 2026-10-29
 
 The user continued the explicit next step of pushing a review branch and checking

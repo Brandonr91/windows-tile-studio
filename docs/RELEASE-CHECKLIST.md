@@ -18,7 +18,9 @@ with an actual Windows logout/login or a short sample with several days of use.
 - Default data retention, synthetic explicit purge/reinstall, owned/unrelated startup.
 - Actual installed Hosted/Compiled launch, rollback launch and running-install refusal.
 - Source-only hosting and legacy guarded restoration tests.
-- Read-only Windows CI configured; hosted CI execution still needs evidence.
+- Read-only Windows CI passed for the review branch (push and PR at 430a11a):
+  geometry, offline hosting/install lifecycle, packaging and artifact upload.
+  Verify current-head runs after further commits; native desktop suites are local.
 - Beta.1 actual public cfdb2df upgrade with synthetic preferences, blocked lossy
   install/rollback/launch and compatible backup rollback; separate empty workspace
   library retained byte-for-byte. Representative personal captures remain untested.
@@ -62,8 +64,10 @@ with an actual Windows logout/login or a short sample with several days of use.
 - [x] Reconcile reviewed local/public histories without force push: equivalent
       48b96b2/cfdb2df baselines, local d056d17 with unchanged tested source tree.
       The original six-slot repository was untouched.
-- [ ] User explicitly authorizes the intended push/tag/release after reviewing
-      scope, exact artifacts and remaining limits; remote CI runs and is verified.
+- [x] User authorized the review-branch push and draft PR #1; initial remote CI
+      passed. Current-head checks must stay verified after updates.
+- [ ] User separately requests main merge/version tagging/release publication
+      after reviewing the PR, exact artifacts and remaining limits.
 
 ## Scope decisions to resolve before claiming all optional polish
 
