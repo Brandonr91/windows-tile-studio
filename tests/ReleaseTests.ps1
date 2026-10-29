@@ -1,5 +1,6 @@
 param([string]$WorkDirectory,[string]$PackageDirectory)
 $ErrorActionPreference='Stop'
+Add-Type -AssemblyName System.Drawing,System.Windows.Forms
 $root=Split-Path -Parent $PSScriptRoot
 . (Join-Path $root 'InstallationSupport.ps1')
 if(!$WorkDirectory){$WorkDirectory=Join-Path $env:TEMP 'WtsReleaseTests'}
