@@ -44,8 +44,9 @@ daily controller stopped, the focused hosted equivalent is:
 Open risks remain: a target freezing **after** a successful size probe, synchronous
 placement/restore calls without an overall hard deadline, elevated/inaccessible
 apps, competing tilers and physical mouse/display cases. The new check covers a
-target already blocked before snapping. Fresh-account/VM, login, assistive
-technology and multi-day observations remain separate release gates. Earlier
+target already blocked before snapping. Fresh-account/VM testing was waived by
+the user on 2026-10-29; login, assistive technology and multi-day observations
+remain separate validation work. Earlier
 phase-3 results and then-current architecture below are historical.
 
 2026-10-27, local `0.3.0-preview.3`. These are representative checks, not a

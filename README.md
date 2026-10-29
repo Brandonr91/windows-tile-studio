@@ -53,7 +53,8 @@ Source/PortableCompiled packages, manifests/checksums, validated installation,
 rollback and data-preserving uninstall. See
 [release and recovery](docs/RELEASE-AND-RECOVERY.md). Packages are unsigned
 previews; the [production checklist](docs/RELEASE-CHECKLIST.md) retains manual
-account/hardware/accessibility/beta gates. No release is published automatically.
+hardware/accessibility/beta checks. Validation uses the existing installation;
+fresh-account testing was waived by the user. No release is published automatically.
 
 The first polish milestone adds **Start-Hosted.cmd**, which runs the
 controller inside Windows PowerShell without generating a standalone app EXE,

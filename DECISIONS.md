@@ -226,3 +226,14 @@ its controller during hosted integration. Normalize fixture paths so Chrome gets
 an absolute isolated profile. Existing beta.1 packages and app version remain
 unchanged; the follow-up test/docs commit is newer validation evidence, not a new
 binary release. Freeze-after-probe and physical/privilege tests remain open.
+
+## Existing-installation scope, 2026-10-29
+
+The user explicitly chose the current installation and waived fresh-account/VM
+validation. This replaces older roadmap/checklist requirements for a clean account;
+it does not assert testing on a second environment. Validate real configurations
+and backups on copies, execute the existing owned startup shortcut explicitly,
+and observe the current controller without rearranging windows or changing startup.
+Do not force a logout, uninstall the daily installation or introduce test corruption.
+Keep private snapshots under ignored bin/, outside distribution. Actual logout/login
+and multi-day/hardware/accessibility coverage remain distinct observations.

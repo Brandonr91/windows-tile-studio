@@ -3,6 +3,11 @@
 Do not label a preview production-ready solely because local automated checks pass.
 Record the artifact hash, source revision, machine/account and evidence for each gate.
 
+Scope agreed 2026-10-29: use the existing installation. Fresh Windows account/VM
+testing is waived by the user and is not a release blocker. Coverage outside this
+environment remains unverified. Do not confuse a normal startup-shortcut execution
+with an actual Windows logout/login or a short sample with several days of use.
+
 ## Local automation available
 
 - Geometry/configuration and compiled/source-hosted UI/native regressions.
@@ -25,8 +30,13 @@ Record the artifact hash, source revision, machine/account and evidence for each
 
 ## Manual/beta gates still open
 
-- [ ] Fresh Windows account or VM: source and portable install, launch, update,
-      rollback, uninstall, retained-data reinstall and explicit removal.
+- [x] Existing compiled-installation acceptance: real settings/backup validation,
+      owned shortcut execution (397 ms) and 184.988-second passive runtime observation
+      pass; settings/shortcut bytes preserved, no heartbeat/Recovery/crash samples.
+      No personal workspace file exists. This does not prove actual login or days
+      of use. Package lifecycle tests
+      already cover destructive install/remove operations in disposable folders;
+      do not uninstall the daily app to repeat them.
 - [ ] Upgrade from an actual previously published release with representative
       settings/workspaces and recovery backups; no accidental schema downgrade loss.
 - [ ] Actual logout/login for Hosted and Compiled/stable installed startup;

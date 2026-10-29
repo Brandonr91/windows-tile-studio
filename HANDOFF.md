@@ -1,5 +1,48 @@
 # Handoff
 
+## Latest checkpoint: existing-installation acceptance, 2026-10-29
+
+User instruction: use this installation; fresh-account/VM testing is not needed.
+That gate is waived and must not be reintroduced from older sections below.
+Coverage on other environments remains unverified. Application source/binary stay
+beta.1; only validation tooling/docs changed. Existing beta packages/kit retain
+their original 262c13a provenance and historical documents; none were overwritten.
+
+CurrentInstallationTests.ps1 now validates real settings and existing backup on
+private copies, verifies live runtime/process/receiver ownership, optionally quits
+normally and executes the existing owned Startup shortcut, then samples bounded
+heartbeats and process counters. It never writes preferences, enables startup,
+snaps windows, logs out, uninstalls or deliberately corrupts the daily app. A
+failed shortcut launch gets a direct-restart fallback. The test requires Windows
+PowerShell 5.1 STA and supports this current compiled checkout layout.
+
+Executed here with -ExerciseStartup -ObservationSeconds 180: current settings and
+settings.xml.bak load without warnings, each containing six profiles; both originals
+are byte-preserved. No workspaces.xml exists, so personal workspace/backup validation
+is not claimed. Existing Startup shortcut launches the same beta.1 installation in
+397 ms, with byte-identical settings/shortcut and hidden bar/no Recovery. This is
+normal shortcut execution, not Windows logout/login or StartupApproved policy proof.
+
+Observation lasted 184.988 seconds: zero heartbeat failures, zero Recovery samples,
+zero sampled Application 1000/1001/1026 app crash events, GDI growth 0, private memory
+growth -118784 bytes and process CPU 15.625 ms. These are short passive observations,
+not multi-day leak/performance claims or continuous error-dialog monitoring.
+
+Evidence: outputs/windows-tile-studio-current-installation.txt and
+windows-tile-studio-current-installation-result.json. Private raw settings/backup/
+shortcut snapshots stay in ignored bin/current-installation-<guid>; never publish
+them or include them in packages. New test helper is in the checkout, not the older
+beta.1 ZIPs. Daily process is restarted and live; verify PID/path/state rather than
+relying on this checkpoint's transient PID. No version change, push or release.
+
+Next: continue acceptance on this installation. Remaining work includes actual
+login when naturally performed, keyboard/screen-reader/OS appearance verification,
+available physical hardware/sleep/docking, privilege/competing-tiler and freeze-after-
+probe risks, longer daily observations, remote CI, signing/publisher decision and
+approved publication. Do not force logout, change system settings or create accounts
+merely to complete a checklist. All older fresh-account requirements below are
+historical and superseded by the explicit user instruction above.
+
 ## Latest checkpoint: restricted-app validation, 2026-10-29
 
 The compatibility follow-up changes tests/docs only. App source and deployed

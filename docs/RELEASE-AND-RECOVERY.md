@@ -3,6 +3,8 @@
 Phase 8 prepared local delivery tooling; `0.3.0-beta.1` adds guarded settings
 compatibility and the [beta validation campaign](BETA-TESTING.md). It does not publish
 a release, sign binaries, claim a clean-account pass or close hardware/beta gates.
+The user waived fresh-account/VM validation on 2026-10-29; acceptance uses the
+existing installation. No clean-account coverage is claimed or required.
 
 ## Build and verify
 

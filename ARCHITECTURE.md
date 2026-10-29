@@ -28,6 +28,14 @@ message timeout/OS hung detection, controller responsiveness and explicit re-sna
 Maximum-size/custom-aspect fixtures verify actual rejection and frame restoration.
 These are test-only mechanisms; application source/architecture remain beta.1.
 
+Existing-installation validation (user scope, 2026-10-29) adds a PowerShell test
+that reads the live compiled runtime/process/receiver identity, validates private
+copies of settings and existing backups with the installed assembly, optionally
+executes the already-owned Startup shortcut after a normal quit, then samples
+bounded heartbeats/resources. It does not save preferences, register startup or
+snap windows. Raw snapshots remain in ignored bin/; the result contains numeric
+aggregates and fixed configuration filenames. No runtime functionality changes.
+
 ## Scope and execution
 
 Windows Tile Studio is a local C#/Windows Forms controller using Win32 window

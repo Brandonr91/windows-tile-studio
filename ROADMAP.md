@@ -2,6 +2,12 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+User scope update, 2026-10-29: validate this existing installation. Fresh-account/VM
+testing is waived, not failed or still required. CurrentInstallationTests adds
+real settings/backup snapshot validation, explicit existing-shortcut execution
+and a bounded passive heartbeat/resource observation. Do not uninstall, corrupt
+daily data or log the user out to simulate a clean environment.
+
 Latest verification follow-up: compiled and actual source-hosted compatibility
 suites pass a genuinely blocked external UI, responsive manager settings,
 explicit snap after resume, maximum-size and custom fixed-aspect rejection with
@@ -17,8 +23,8 @@ compiled/hosted resize/dialog/resource samples pass within isolated test scope.
 See HANDOFF for evidence/artifact provenance and docs/BETA-TESTING.md for the
 campaign. A local kit tool collects only verified packages and test/recovery docs.
 
-Next: fresh account/VM install/update/rollback/remove; representative personal
-configurations and backups; actual login; physical mixed-DPI/docking/sleep;
+Next: current-installation configurations/backups and runtime validation;
+actual login; physical mixed-DPI/docking/sleep;
 screen reader and OS contrast/text-size; elevated/hung/unusual apps and competing
 tilers; several days of daily use and external feedback. Signing/publisher,
 remote CI and approved publication follow. No production push occurred and the
@@ -140,8 +146,8 @@ override by explicitly using manual positioning.
    Verify a controller process before using runtime XML; the 2026-10-28 review
    found no matching compiled/source-hosted controller, despite retained XML.
 2. Follow the user's latest request. The eight-phase implementation sequence now
-   has local core implementations. Next is beta/release validation: fresh-account
-   install/update/rollback/remove, actual login, hardware/assistive-technology and
+   has local core implementations. Next is beta/release validation on the existing
+   installation (fresh account waived), actual login, hardware/assistive-technology and
    external feedback. Run the configured CI only after an authorized push; make
    a signing/publisher decision and review actual artifacts before publication.
 3. Keep phase-7 keyboard/palette/viewport/report privacy checks and prior geometry,
@@ -151,8 +157,8 @@ override by explicitly using manual positioning.
    integration requires an isolated test interval without a daily controller.
    Explicitly rebuild compiled mode or restart source hosting.
 5. Update context/evidence and preserve data during any authorized deployment.
-   Hardware, real login, elevated/hung-app validation, clean-account upgrade/
-   removal, packaging/signing and publication remain release gates.
+   Hardware, real login, elevated/hung-app validation, current-installation
+   acceptance, packaging/signing and publication remain release work.
 
 Diagnostic export is now implemented with an explicit aggregate allowlist and
 preview/local save, separate from raw local log access. User-selectable themes/

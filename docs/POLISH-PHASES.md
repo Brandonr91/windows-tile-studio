@@ -190,6 +190,10 @@ Carry manual accessibility/hardware/login gates into the beta checklist.
 
 ## Before pushing a production release
 
+User scope update, 2026-10-29: use this installation; fresh-account/VM testing is
+waived. Older phase briefs above retain their original scope for history and do
+not reimpose that requirement. Do not claim coverage on another environment.
+
 - Review exact changes and relevant errors, naming, layout/accessibility and
   target feedback. Document unresolved limitations.
 - Test the packaged source/binaries: geometry, desktop, hosting, installer and
@@ -200,8 +204,8 @@ Carry manual accessibility/hardware/login gates into the beta checklist.
   known limits, changelog/version and persistent project context.
 - Exclude settings/logs/window identifiers/backups/temp files; inspect archives
   and the correct successor remote. Do not overwrite the original repository.
-- Verify clean-account installation, update, rollback and removal; collect beta
-  feedback from other configurations.
+- Verify acceptance on the existing installation and retain disposable package
+  lifecycle coverage; collect beta feedback from other configurations when available.
 - Publish a tagged versioned package, checksums and signing where available.
   Preview source pushes may occur earlier; they are not passed production releases.
   Reconcile the independent public/local histories without force-pushing.

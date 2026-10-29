@@ -6,7 +6,8 @@ local tests does not close the manual gates in [RELEASE-CHECKLIST](RELEASE-CHECK
 
 ## Safe test setup
 
-Use a fresh Windows account or VM and a short dedicated install path. Keep the
+The user selected the existing installation for this release; fresh-account/VM
+testing is not required. Keep the
 complete package, release-info.json and SHA256SUMS.txt together. Verify the archive
 hash against a trusted copy. Preserve a separate backup of data/ before updates.
 Exit other Tile Studio controllers and competing tilers before baseline checks.
@@ -20,7 +21,7 @@ Record package version/hash, Windows build, scaling and monitor configuration.
 
 | Area | Local automated coverage | Remaining beta work |
 | --- | --- | --- |
-| Install/update/remove | Isolated-directory lifecycle, manifest/cache/binary tamper, failed activation, retained-data reinstall | Fresh account/VM and Windows policy prompts |
+| Install/update/remove | Isolated-directory lifecycle, manifest/cache/binary tamper, failed activation, retained-data reinstall | Existing-installation acceptance and Windows policy behavior; fresh account waived |
 | Published-version upgrade | Exact public source revision `cfdb2df728466b1256383cf9b8417b21a486a1ca`, synthetic preferences, real controller launch, guarded downgrade | Representative personal configurations/backups and real app sessions |
 | Six-window resizing | Pair-only heights, linked widths, repeated disposable-window cycles in both modes | Sustained physical mouse dragging and varied application frames |
 | Tray/dialogs/recovery | Hidden bar, dialog churn, future-field Recovery preserving original bytes | Actual screen reader, OS contrast/text-size changes |
@@ -37,6 +38,21 @@ workspace without titles, preview choices, and restore explicitly. Check ambiguo
 matches require a choice. Never expect automatic app/document recreation.
 
 ## Regression commands
+
+For the current compiled checkout installation in Windows PowerShell 5.1 STA:
+The helper below is in the updated checkout; older beta.1 archives predate it.
+
+```powershell
+.\tests\CurrentInstallationTests.ps1 -InstallationRoot $PWD -ExerciseStartup -ObservationSeconds 180
+```
+
+The switch authorizes a normal quit and execution of the existing owned Startup
+shortcut; it never creates or rewrites the shortcut. Without the switch it observes
+the live app without restarting. A failed shortcut launch gets a direct-restart
+fallback. This does not log out or test Windows login policy. Settings/backup
+copies and the shortcut snapshot stay in bin/current-installation-* and are private;
+never add them to a beta kit. Workspace validation is reported only when a file
+exists. Heartbeats and process-counter samples are passive, bounded observations.
 
 Windows PowerShell 5.1, STA, from the complete checkout:
 

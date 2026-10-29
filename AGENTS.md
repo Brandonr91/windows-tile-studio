@@ -133,6 +133,17 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 
 ## Verification
 
+User scope update, 2026-10-29: use this existing installation; a fresh account/VM
+is not required for this release. Do not reintroduce that waived gate or create
+accounts/system features for it. Record broader-environment coverage as unverified.
+CurrentInstallationTests.ps1 validates copies of real settings/backups and observes
+the live compiled controller. -ExerciseStartup explicitly quits normally and
+executes its existing owned shortcut, with direct-restart fallback. Never rewrite
+startup, corrupt real files, uninstall the daily app or force logout for this test.
+Its bin/current-installation-* snapshots contain private configuration/shortcut
+bytes: keep them local and exclude them from packages/reports. Shortcut execution
+does not prove actual Windows login; short observations do not prove multi-day use.
+
 Phase 7: preserve visual-editor Page Up/Down selection, arrow/Shift nudges,
 Ctrl+Z/Y, Tab escape, accessible value and pair-only draft geometry. Run
 `-AccessibilityUi` and Windows PowerShell 5.1 STA tests/AccessibilityUiTests.ps1
