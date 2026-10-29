@@ -7,6 +7,14 @@ layout is three columns by two rows, with independent row dividers.
 **Polish preview.** Keyboard selection, pair-only height resizing, and source
 launchers are available. See [the roadmap](docs/ROADMAP.md) for further work.
 
+Phase-7 preview adds keyboard divider editing (Page Up/Down selects, arrows
+adjust, Shift for finer steps, Ctrl+Z/Y undo/redo), resizable/scrolled dialogs,
+Windows high-contrast colors and **General → Support → Preview diagnostic
+report...**. Reports contain aggregate environment/layout/process values,
+exclude window titles/paths/identifiers and stay local. See
+[accessibility and support](docs/ACCESSIBILITY-AND-SUPPORT.md) for verification
+limits and remaining manual screen-reader/hardware checks.
+
 This is the configurable-layout successor to
 [Six Slot Snap](https://github.com/Brandonr91/six-slot-snap), published in a
 separate repository so the original six-slot utility remains available.

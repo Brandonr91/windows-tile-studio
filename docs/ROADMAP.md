@@ -6,7 +6,8 @@ keep both views synchronized when a meaningful milestone or priority changes.
 
 Current-status clarification (2026-10-28 review of `7465c8d`): phases 1–6 are
 implemented locally within recorded test limits, including phase-5 visual/portable
-layouts and phase-6 opt-in workspaces/startup controls. Phase 7 is planned.
+layouts and phase-6 opt-in workspaces/startup controls. Phase 7 was then planned;
+its later local implementation is recorded under Polished version below.
 The incremental descriptions below preserve milestone history; read the root
 roadmap and latest HANDOFF checkpoint for current status and exact next steps.
 
@@ -70,6 +71,12 @@ containing the hosted launchers. The original `six-slot-snap` repository
 is unchanged.
 
 ## Polished version
+
+Phase 7 local checkpoint: preview.7 adds keyboard visual dividers, accessible
+selection/value feedback, resizable/scrolled DPI-aware dialogs, system contrast
+colors and previewed aggregate diagnostic export. See [scope and manual
+verification limits](ACCESSIBILITY-AND-SUPPORT.md). Phase 8 is next; older next-
+phase paragraphs below preserve their dated milestone context.
 
 General settings interlude: preview.6.1 puts startup/tray, bar visibility/reset/
 lock, flyout-key access and local support in General. Startup remains explicit;

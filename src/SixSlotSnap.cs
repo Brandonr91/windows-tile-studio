@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.6.1";
+    public const string ProductVersion="0.3.0-preview.7";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -505,7 +505,7 @@ public class SixSlotSnap : ApplicationContext {
         workspace.Capture(); settingsMonitorId=workspace.Active.Display.Id; settingsOpened=settings.Clone();
         settingsOpened.Profiles=settings.Profiles.Select(p=>workspace.Resolve(settingsMonitorId,p.Id)).ToList();
         try {
-            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice,new StartupRegistration(startupLaunch,new UserStartupValue()),folder)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings;if(general&&recoveryNotice==null)form.SelectGeneral(); ShowManagedDialog(form); }
+            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice,new StartupRegistration(startupLaunch,new UserStartupValue()),folder,delegate{return DiagnosticReport.Create(settings,DisplayInventory.Connected(),workspace.Sessions.Values.Sum(s=>s.Windows.Count(w=>w!=IntPtr.Zero)),recoveryNotice!=null,string.IsNullOrEmpty(typeof(SixSlotSnap).Assembly.Location));})) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings;if(general&&recoveryNotice==null)form.SelectGeneral(); ShowManagedDialog(form); }
         } finally {settingsForm=null;settingsMonitorId=null;settingsOpened=null;}
     }
     void HandleCommand(int message,IntPtr a,IntPtr b) {

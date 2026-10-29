@@ -37,7 +37,7 @@ $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Fil
 if ($sourceFiles.Count -lt 5) { throw 'The source folder is incomplete. Download or extract the whole project.' }
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,System.Xml.Linq
 if (-not ('SixSlotSnap' -as [type])) {
-    Add-Type -LiteralPath $sourceFiles -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll
+    Add-Type -LiteralPath $sourceFiles -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll,Accessibility.dll
 }
 
 if ($Action -eq 'Validate') {

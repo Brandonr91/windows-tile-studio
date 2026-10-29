@@ -66,12 +66,12 @@ public partial class SnapSettingsForm : Form {
     public void ImportPortable(string path,bool replace,bool importHotkeys) {
         var candidate=PortableLayouts.Candidate(Draft,PortableLayouts.Load(path),replace,importHotkeys);StageImport(candidate);
     }
-    public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null) {
+    public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null,Func<string> diagnostics=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(900,625); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
         var tabs=new TabControl{Dock=DockStyle.Fill}; Controls.Add(tabs);
         var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); generalPage=new TabPage("General"); var appearancePage=new TabPage("Layouts bar"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,generalPage});
-        ConfigureGeneral(generalPage,appearancePage,login,dataDirectory);
+        ConfigureGeneral(generalPage,appearancePage,login,dataDirectory,diagnostics);
         TabPage recoveryPage=null;
         if(!string.IsNullOrEmpty(recoveryNotice)) {
             recoveryPage=new TabPage("Recovery"); tabs.TabPages.Add(recoveryPage);
@@ -82,7 +82,7 @@ public partial class SnapSettingsForm : Form {
         var footer=new Panel{Dock=DockStyle.Bottom,Height=57}; Controls.Add(footer); tabs.BringToFront();
         var save=new Button{Text="Save changes",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(742,12,140,32)}; footer.Controls.Add(save);
         var cancel=new Button{Text="Cancel",Anchor=AnchorStyles.Right|AnchorStyles.Top,Bounds=new Rectangle(636,12,96,32),DialogResult=DialogResult.Cancel}; footer.Controls.Add(cancel); CancelButton=cancel;
-        footer.Controls.Add(new Label{Text="Save applies draft edits. Startup buttons apply separately.",AutoSize=true,Location=new Point(15,20)});
+        footer.Controls.Add(new Label{Text="Save applies draft edits. Startup buttons apply separately.",Bounds=new Rectangle(15,8,590,41),Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right});
         layouts.Bounds=new Rectangle(12,16,216,393); layouts.AccessibleName="Saved layouts"; layoutPage.Controls.Add(layouts);
         var add=new Button{Text="Add layout",Bounds=new Rectangle(12,420,104,31)}; var remove=new Button{Text="Remove",Bounds=new Rectangle(124,420,104,31)}; layoutPage.Controls.Add(add); layoutPage.Controls.Add(remove);
         layoutPage.Controls.Add(new Label{Text="Layout name",Bounds=new Rectangle(250,18,125,22)}); name.Bounds=new Rectangle(380,15,450,26); name.AccessibleName="Layout name"; layoutPage.Controls.Add(name);
@@ -192,6 +192,7 @@ public partial class SnapSettingsForm : Form {
             if(!savedSuccessfully && dirty && !Confirm("Discard unsaved changes?","Discard the changes in this settings window? Choose No to keep editing.")) { e.Cancel=true; DialogResult=DialogResult.None; }
         };
         if(recoveryPage!=null) tabs.SelectedTab=recoveryPage;
+        UiLayout.Install(this);
     }
     void RefreshList(LayoutProfile select) { refreshing=true; layouts.DataSource=null; layouts.DataSource=Draft.Profiles; layouts.SelectedItem=select; selected=select; refreshing=false; FillEditor(); }
     void FillEditor() {

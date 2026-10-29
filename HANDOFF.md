@@ -1,6 +1,102 @@
 # Handoff
 
-## Current checkpoint: General settings interlude, 2026-10-28
+## Current checkpoint: phase 7, 2026-10-28
+
+Implemented/deployed locally as `0.3.0-preview.7`, following `cdac931` on
+feature/polish-launchers. Read docs/ACCESSIBILITY-AND-SUPPORT.md for exact scope.
+Visual drafts support Page Up/Down divider selection, 1% arrows/0.1% Shift,
+Ctrl+Z/Y, normal Tab exit, selected-divider status/focus and an accessible slider
+value. Existing adjacent-pair gesture math is reused; numeric editing remains.
+Dialogs are resizable/DPI-aware, clamp to work areas and scroll absolute content;
+workspace actions disable when selection prerequisites are absent. Custom panels
+use Windows high-contrast colors. General Support adds allowlisted aggregate
+report preview/atomic local save, with no log/workspace reads or identities.
+
+Fourteen src files now include UiSupport.cs and Diagnostics.cs. Source-hosted
+compilation and hosted UI test scripts explicitly reference the Windows/.NET
+Accessibility.dll assembly for the custom accessible object; no package download
+or external runtime dependency was added. Build.ps1 adds -AccessibilityUi.
+tests/PerformanceTests.ps1 measures an extracted source package with isolated
+settings, hidden bar and no geometry recovery. Do not run it with a daily controller.
+
+Verification:
+
+- Pre-change probe against installed preview.6.1 reproduced no Right-key canvas
+  geometry change and settings exceeding 800×600. This probe required corrected
+  assembly loading after an initial test-helper error; accepted before.txt has
+  the two observed results, not those failed helper attempts.
+- Final pure suite PASS: 198560. LauncherUi, EditorUi, WorkspaceUi/General and
+  AccessibilityUi PASS compiled and Windows PowerShell 5.1 STA. Tests include
+  actual canvas Right/Tab input with verified foreground/focus, deterministic
+  divider/undo/floor checks, accessible value, uneven flyout directions/wrap/
+  scroll, constrained 800×600 settings/workspace/editor, injected system contrast,
+  report sentinel privacy, preview, atomic save/failure cleanup and source isolation.
+- WorkspaceIntegration/native capture/restore and cold compiled dialogs PASS.
+  Compiled Integration PASS (integration-final.txt, compiled section). Final
+  HostedIntegration PASS separately in hosted-integration.txt after reference fix.
+  Source installer/host validation and cold hosted first-dialog checks PASS.
+  Full suites retain prior resizing/concurrent sample, hotkey cleanup/recovery,
+  minimum/frame/Chrome, display notification and close-to-tray coverage.
+- The final focused tests follow the later diagnostic field-label and minimum-
+  dialog-size adjustments; no resize math changed. Rendered normal/contrast
+  editor, small settings/workspace and flyout inspected. Visual review found an
+  occluded status label, fixed with explicit table rows before final checks.
+- One native Tab/Shift+Tab test initially failed; unchanged input flow passed on
+  retry. New actual-key test required a verified foreground helper; an uneven-
+  grid fixture incorrectly assumed two columns and was corrected. The missing
+  hosted Accessibility.dll reference was a real launch failure, now fixed/tested.
+  Do not treat failed intermediate reports or stale integration-error.txt as final.
+- Application events 1000/1001/1026 sampled since phase development: zero matching
+  app/test crashes, query succeeded. This is not continuous notification-area
+  monitoring. No real workspaces/apps were captured/restored/launched by tests.
+
+Packaged-source performance (3 process starts per mode, local machine only):
+compiled readiness 137/139/262 ms, median 139; working set 40.0–40.4 MB (~38 MiB),
+private ~26 MB. Source-hosted readiness 634/642/680 ms, median 642; working set
+~113.5 MB (~108 MiB), private ~89.2 MB. One-second idle CPU samples: compiled
+0/0/0 ms; hosted 15.625/0/0 ms. Finite resolution, warm caches and tiny sample
+count preclude universal latency/CPU promises. Existing compatibility sample:
+20 updates ~1506 ms including deliberate pumps/settling, no growing GDI count.
+
+Deployment: backed up/stopped exact repo compiled daily controller, ran isolated
+tests, rebuilt bin/ and restarted with repo data/. Runtime/process verifies
+preview.7, bar hidden/disabled and recoveryRequired=false. All previous settings
+values match by profile ID; startup serialization rotated the active monitor
+profile to the end, so bytes differ only in that list order. Do not overwrite
+preferences merely to restore XML ordering. Hosted delivery now has all fourteen
+matching sources AND updated Start-Hosted.ps1; separate data preserved, no second
+controller. Fallback binary/settings/hosted source: work/phase-seven-fallback;
+prior code/launcher also Git cdac931.
+
+Important fresh state: an owned Windows Tile Studio Startup shortcut now EXISTS.
+Its creation/last-write was 19:19:43 local, predating phase development at 19:23:51;
+it points at the repo compiled EXE/data and was preserved. Tests did not enable
+or modify this real entry. Earlier handoffs saying startup off are historical.
+No real login/logout test was performed; data/workspaces.xml remains absent.
+
+Accepted reports outside Git share outputs/windows-tile-studio-phase-seven-
+prefix: final-ui.txt, accessibility-final.txt, hosted-AccessibilityUi.txt,
+hosted-EditorUi.txt, hosted-WorkspaceUi.txt, hosted-LauncherUi.txt,
+integration-final.txt (compiled section only), hosted-integration.txt,
+hosted-visibility.txt, launchers.txt, performance.json/.txt, deployment.json and
+windows-errors.json. full-tests.txt includes initial UI/native PASS followed by
+the input failure; intermediate reports are retained transparently. Screenshots:
+bin/phase-seven/accessibility-ui-data/*.png. A source-only phase-seven-source.zip
+was extracted/built/launched for measurements; final docs/package are refreshed
+after verification with the same app sources. No public push/release occurred.
+
+Exact next steps: read all five context files, status/log/remotes, uncommitted
+diff and actual process/data state. Follow the user's latest request. Phase 8
+(production delivery) is next: audit installer/update/rollback/uninstall and CI,
+define reproducible artifact identity/manifest/checksums, then clean-account and
+external beta validation. Do not force-push divergent public history or touch the
+original six-slot repository. Preserve scoped regressions and the user's startup
+and hidden-bar choices. User-selectable themes/text sizes remain unimplemented;
+manual screen-reader announcements, actual OS contrast/text scaling, physical
+mixed-DPI/docking/sleep, real login and privileged/hung apps remain release gates.
+Phase-7 core implementation is not certification or a production-release claim.
+
+## Previous checkpoint: General settings interlude, 2026-10-28
 
 User requested General options before returning to polishing phases. Implemented
 and installed locally as `0.3.0-preview.6.1`, following `7465c8d`. Tray **General

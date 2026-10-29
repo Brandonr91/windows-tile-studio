@@ -7,7 +7,7 @@ $root=Split-Path -Parent $PSScriptRoot
 $sources=@(Get-ChildItem -LiteralPath (Join-Path $root 'src') -Filter '*.cs' | ForEach-Object {$_.FullName})
 $sources+=Join-Path $PSScriptRoot 'LauncherUiTests.cs'
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,System.Xml.Linq
-Add-Type -LiteralPath $sources -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll
+Add-Type -LiteralPath $sources -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll,Accessibility.dll
 $arguments=[string[]]@()
 if ($ImagePath) {$arguments=[string[]]@([IO.Path]::GetFullPath($ImagePath))}
 $result=[LauncherUiTests]::Main($arguments)

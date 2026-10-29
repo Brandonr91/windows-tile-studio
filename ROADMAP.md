@@ -1,7 +1,7 @@
 # Roadmap and next work
 
-Context established 2026-10-26 at `48b96b2`; updated 2026-10-27 for phase 6;
-reviewed against `7465c8d` on 2026-10-28 without application changes.
+Context established 2026-10-26 at `48b96b2`; updated 2026-10-28 for phase 7,
+following General settings commit `cdac931`.
 The existing [development roadmap](docs/ROADMAP.md) remains the authoritative
 milestone history. This root entry adds current priorities and acceptance criteria
 without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping point.
@@ -16,11 +16,15 @@ release gates outstanding. Phase 5's [visual/portable guide](docs/VISUAL-AND-POR
 records draft-only editing and validated import/export. Phase 6 adds explicit
 [workspace restore and optional login startup](docs/WORKSPACES-AND-STARTUP.md).
 Startup remains disabled unless chosen; restore/relaunch are never automatic.
-Phase 7 (accessibility, visual polish and support) is next.
+Phase 7 adds keyboard divider editing, accessible selection/value feedback,
+resizable/scrolled DPI-aware dialogs, system high-contrast colors and a local
+allowlisted diagnostic preview/export. See [phase-7 scope and verification
+limits](docs/ACCESSIBILITY-AND-SUPPORT.md). Phase 8 (production delivery) is next;
+manual assistive-technology, OS contrast/text-size and hardware gates remain.
 The user-requested General settings interlude adds startup/tray, bar lock and
 visibility/reset, shared flyout shortcut and local support access in preview.6.1.
 See [General settings](docs/GENERAL-SETTINGS.md). It does not advance the phase
-counter: phases 1–6 remain complete within recorded scope; phase 7 is next.
+counter by itself; the subsequent phase-7 implementation is recorded above.
 The older priority table below is
 retained as technical detail, not a competing phase order.
 
@@ -71,9 +75,9 @@ retained as technical detail, not a competing phase order.
 | --- | --- | --- |
 | 1 (core completed in phase 3) | Compatibility and resize verification | Minimum-size, 3/4-row, corners, minimize/restore, closure/recreation and isolated Chrome checks pass. Broader elevated/hung-app and native-timing coverage remains release validation; retain pair-only height and width-only-height regressions. |
 | 2 (completed in phase 2) | Startup hotkey-conflict recovery | Recovery settings opens without exiting or replacing the saved file. Conflict/corrupt-file startup cases and editor recovery behavior pass isolated tests. |
-| 3 | Keyboard/accessibility coverage | Test all four arrow directions, uneven row counts, layout cycling/wrap, constrained viewport scrolling, foreground-switch dismissal and cleanup. Current integration verifies Right/Enter and Tab/Shift+Tab, not every combination. Verify mouse fallback on conflicts remains usable. |
+| 3 (phase-7 core implemented) | Keyboard/accessibility coverage | Canvas keyboard editing/value/focus and constrained dialogs, plus flyout directions on uneven grids/wrapping/scrolling have focused checks. Native integration covers target/key cleanup/conflict fallback. Manual screen-reader announcements and actual OS contrast/text-size changes remain release gates. |
 | 4 (initial implementation completed in phase 3) | App sizing feedback/constraints | Reported minimums constrain boundaries and rejected actual fits are not assigned. Validate remaining maximum/aspect/custom-frame and privilege cases without repeatedly forcing impossible bounds. |
-| 5 (core completed in phase 5) | Visual proportion editor and portable layouts | Draft drag/undo/redo/Escape and accepted/canceled edits pass. Portable schema/privacy/conflict/failure tests pass. Keyboard divider movement and broader accessibility remain phase 7. |
+| 5 (core completed in phases 5 and 7) | Visual proportion editor and portable layouts | Draft mouse/keyboard nudges, undo/redo/Escape and accepted/canceled edits covered. Portable schema/privacy/conflict/failure tests pass. Broader assistive-technology/hardware validation remains. |
 | 6 (core implemented in phase 4) | Per-monitor state and display recovery | Independent sessions and optional XML records; pure topology and single-display native notifications tested. Physical mixed-DPI, work-area changes, docking/disconnect/reconnect and sleep/resume remain release validation. |
 | 7 (core completed in phase 6) | Optional workspace restoration | Capture/preview/matching/manual choices, explicit fallback, native restore and separate launch tested with disposable apps. App document/session recreation and broader real-app matching remain limits. |
 | 8 | Distribution/identity | Unify prototype naming carefully, add an application icon, reproducible versioned packaging and possibly signing. Preserve phase-6 explicit startup opt-in and owned removal. The generated tray icon already exists; a signed production distribution does not. |
@@ -106,13 +110,13 @@ override by explicitly using manual positioning.
 1. Read the five root context documents and inspect status/log/remotes/source.
    Verify a controller process before using runtime XML; the 2026-10-28 review
    found no matching compiled/source-hosted controller, despite retained XML.
-2. Follow the user's latest request. If phase 7 is requested, first audit keyboard
-   focus/order, all flyout directions and uneven grids, numeric/visual editing,
-   workspace choices, tray recovery, high contrast and small work areas. Record
-   reproduced defects separately from untested accessibility requirements.
-3. Fix reproduced issues with focused regressions. Design local diagnostics with
-   titles/content/raw monitor IDs/user paths excluded by default before adding
-   export. Do not capture a real workspace or enable login startup for testing.
+2. Follow the user's latest request. Phase 8 starts with distribution identity,
+   a reproducible package manifest/checksums and a Windows CI/build/test plan.
+   Audit existing installers/update/rollback/removal and preserve legacy recovery.
+   Prepare reviewable packages before any separately requested publication.
+3. Keep phase-7 keyboard/palette/viewport/report privacy checks and prior geometry,
+   hosting/recovery/opt-in tests. Separate manual beta/hardware/accessibility
+   gates from automated evidence; do not enable startup or capture real workspaces.
 4. Run relevant checks from AGENTS/Build.ps1 against changed source; native
    integration requires an isolated test interval without a daily controller.
    Explicitly rebuild compiled mode or restart source hosting.
@@ -120,6 +124,7 @@ override by explicitly using manual positioning.
    Hardware, real login, elevated/hung-app validation, clean-account upgrade/
    removal, packaging/signing and publication remain release gates.
 
-Phase 7 and sanitized support export remain planned. General's local folder/log
-access does not fulfill that export/accessibility scope. See the latest HANDOFF
-for the subsequent implementation/deployment checkpoint and accepted test reports.
+Diagnostic export is now implemented with an explicit aggregate allowlist and
+preview/local save, separate from raw local log access. User-selectable themes/
+text sizes remain unimplemented; standard controls and system high contrast are
+the current appearance support. See HANDOFF for accepted reports and measurements.

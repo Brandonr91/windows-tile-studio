@@ -8,7 +8,7 @@ public partial class SnapSettingsForm {
     TabPage generalPage;
     Label generalShortcut;
     public void SelectGeneral() {((TabControl)generalPage.Parent).SelectedTab=generalPage;}
-    void ConfigureGeneral(TabPage page,TabPage bar,StartupRegistration login,string dataDirectory) {
+    void ConfigureGeneral(TabPage page,TabPage bar,StartupRegistration login,string dataDirectory,Func<string> diagnostics) {
         var groups=new TabControl{Dock=DockStyle.Fill,AccessibleName="General settings categories"};
         var startup=new TabPage("Startup & tray");var keys=new TabPage("Flyout shortcut");var support=new TabPage("Support");
         groups.TabPages.AddRange(new[]{startup,bar,keys,support});page.Controls.Add(groups);
@@ -28,6 +28,10 @@ public partial class SnapSettingsForm {
         folderButton.Click+=delegate{try{if(!Directory.Exists(dataDirectory))throw new IOException("The data folder is unavailable.");Process.Start(new ProcessStartInfo{FileName=dataDirectory,UseShellExecute=true});}catch(Exception e){Error("Could not open data folder",e.GetBaseException().Message);}};
         logButton.Click+=delegate{try{string log=Path.Combine(dataDirectory,"status.log");if(!File.Exists(log))throw new IOException("No local status log exists yet.");Process.Start(new ProcessStartInfo{FileName=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","notepad.exe"),Arguments="\""+log+"\"",UseShellExecute=false});}catch(Exception e){Error("Could not open log",e.GetBaseException().Message);}};
         support.Controls.Add(new Label{Text="To share layouts, use Share layouts: its export excludes app/window and display identities.",Bounds=new Rectangle(24,305,790,65)});
+        var report=new Button{Text="Preview diagnostic report...",Bounds=new Rectangle(24,375,235,34),AccessibleName="Preview diagnostic report",Enabled=diagnostics!=null};support.Controls.Add(report);
+        report.Click+=delegate{try{DiagnosticReport.ShowPreview(this,diagnostics());}catch(Exception e){Error("Report unavailable",e.GetBaseException().Message);}};
+        support.Controls.Add(new Label{Text="Report contains version, environment, counts, grid shapes and process-memory/CPU samples.\nNo logs, titles, app paths, layout names, shortcuts, window IDs or monitor identities. Nothing is uploaded.",Bounds=new Rectangle(24,425,790,52)});
+        UiLayout.ScrollContent(startup.Controls[0] as ScrollableControl);
     }
 }
 

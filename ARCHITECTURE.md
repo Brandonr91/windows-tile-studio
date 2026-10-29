@@ -1,8 +1,8 @@
 # Architecture
 
 Context established 2026-10-26 from base application `48b96b2`; updated
-2026-10-28 for local General settings preview `0.3.0-preview.6.1`, following
-phase-6 commit `7465c8d`. Earlier milestones and
+2026-10-28 for local phase-7 preview `0.3.0-preview.7`, following General
+settings commit `cdac931`. Earlier milestones and
 decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
@@ -14,7 +14,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all twelve `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all fourteen `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 `Start.ps1` only builds if the EXE is missing: after source changes explicitly
@@ -42,6 +42,23 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/StartupRegistration.cs` | Owned per-user shortcut registration, mode/data-preserving command construction and isolated storage seam. |
 | `src/WorkspaceForm.cs` | Immediate capture/preview/restore and optional launch; independent of settings drafts. |
 | `src/GeneralSettings.cs` | Partial settings form for General categories and local support actions; reusable confirmed startup controls. |
+| `src/UiSupport.cs` | Shared normal/system-contrast palette, control naming/tab ordering, scrollable content and work-area fitting for resizable DPI-aware dialogs. |
+| `src/Diagnostics.cs` | Allowlisted live aggregate report, read-only preview and atomic local export; no log/workspace reads or network. |
+
+Phase 7 extends the draft canvas with enumerated divider selection, 1%/0.1%
+keyboard gestures and undo/redo using the same VisualLayoutSession. A custom
+accessible object supplies slider role/value, value events and visible status.
+UiLayout prepares control order/names and fits dialogs after first show; it does
+not change OS display settings. Custom palettes use system colors in high
+contrast and retain dark panels otherwise. Workspace action states reflect
+available preview selections without relaxing native revalidation.
+
+Support receives a live aggregate-report delegate from the controller; it uses
+current settings/display counts and process counters, not draft edits or raw
+runtime XML/logs. DiagnosticReport explicitly constructs its XML fields so
+identities cannot leak through DTO serialization. See the
+[phase-7 guide](docs/ACCESSIBILITY-AND-SUPPORT.md) for the field allowlist and
+manual verification gaps. No user-selectable theme/text-size settings exist yet.
 
 General interlude (`0.3.0-preview.6.1`, 2026-10-28): the third settings tab is
 General, with Startup & tray, Layouts bar, Flyout shortcut and Support categories.
@@ -53,7 +70,8 @@ separately confirmed/immediate, not rolled back on settings Cancel. No startup
 read/open registers anything. Bar preferences and the shared flyout key remain
 draft-only. New optional schema-1 LauncherPositionLocked is cloned/persisted and
 passed into LauncherTab; it blocks drag movement/writes, retaining ordinary clicks.
-Support opens local folder/log only; sanitized export/themes remain planned.
+At this interlude Support opened local folder/log only; phase 7 adds the separate
+sanitized exporter described above. Separate theme/text-size controls remain planned.
 See [General guide](docs/GENERAL-SETTINGS.md). Older phase descriptions below
 record history; General supersedes their Appearance/startup UI placement.
 
@@ -182,7 +200,7 @@ stored HWNDs are not treated as durable workspace identity.
 Phase-1 UI uses a third Appearance settings tab for launcher visibility and
 draft position reset. Cancel discards those changes. The tray also offers an
 immediate bar reset and About with `SixSlotSnap.ProductVersion` (currently
-`0.3.0-preview.6`). Visible UI names are Windows Tile Studio; compatibility
+`0.3.0-preview.7`). Visible UI names are Windows Tile Studio; compatibility
 identifiers remain unchanged. `LayoutProfile.GeometryMatches` compares segment
 counts/weights with tolerance `1e-8`; `ApplySettings` only reflows the same active
 profile when its geometry changed, preserving actual frames on appearance-only
@@ -265,7 +283,8 @@ assignment restore database. `status.log` is local; neither belongs in Git.
 
 Local workspace files intentionally contain executable paths and display
 identities, plus titles only when selected. Portable layout exports exclude
-those fields. There is no sanitized support-export feature yet. Runtime XML
+those fields. The separate DiagnosticReport exports allowlisted aggregates only.
+Runtime XML
 may outlive its controller; verify its PID and command line before treating
 assignments or version as live state.
 

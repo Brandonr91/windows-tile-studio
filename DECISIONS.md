@@ -136,6 +136,18 @@ cover settings and workspace UI in both modes.
 
 ## Current implementation versus proposals
 
+Phase 7 (`0.3.0-preview.7`) adds keyboard editing through the existing draft
+gesture/history model rather than a separate geometry engine. Page Up/Down
+selects dividers so Tab retains its normal focus-exit meaning. System high
+contrast reuses Windows colors; no OS setting is modified. Resizable dialogs
+retain readable control sizes through scrolling and fit to work areas.
+Diagnostics use explicit allowlisted fields, not redaction of arbitrary logs or
+serialized configuration. Reports are previewed and saved locally, with no
+sensitive-field inclusion switch. Source mode and numeric process counters are
+safe aggregates; .NET's reported OS version is labeled as reported, not a true
+Windows-build claim. Manual screen-reader/contrast/text-scaling and hardware
+verification remain release gates; no certification is implied.
+
 2026-10-28 General settings interlude supersedes the Appearance tab and phase-6
 placement of startup under Workspaces. Reuse the existing startup backend in
 General, keeping immediate OS registration separate from draft Save/Cancel and
@@ -158,7 +170,8 @@ to install services, enable startup, publish releases or change system settings.
 inspection, not a new desktop test run. A retained runtime snapshot is historical
 until its process is verified. Context maintenance alone does not authorize
 starting the controller, restoring windows or enabling login startup. Phase-7
-accessibility changes and sanitized diagnostic export remain proposals.
+accessibility changes and sanitized diagnostic export were proposals at that
+earlier inspection; the phase-7 decision above supersedes that status.
 
 When changing an established decision, append its replacement and rationale;
 retain the old decision's history rather than silently removing it.

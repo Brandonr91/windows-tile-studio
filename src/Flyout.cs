@@ -18,10 +18,17 @@ public class LayoutCard : UserControl {
     readonly LayoutProfile profile;
     readonly double scale;
     readonly List<Button> zones=new List<Button>();
+    UiPalette palette=UiPalette.Current;
+    int highlighted=-1;
+    public void ApplyPalette(UiPalette value){palette=value;BackColor=value.Background;ForeColor=value.Text;foreach(Control child in Controls)child.ForeColor=value.Text;Highlight(highlighted);}
+    protected override void OnSystemColorsChanged(EventArgs e){base.OnSystemColorsChanged(e);if(zones!=null)ApplyPalette(UiPalette.Current);}
     public void Highlight(int slot) {
+        highlighted=slot;
         for(int i=0;i<zones.Count;i++) {
-            zones[i].BackColor=i==slot?Color.FromArgb(28,112,183):Color.FromArgb(63,71,84);
-            zones[i].FlatAppearance.BorderColor=i==slot?Color.FromArgb(175,222,255):Color.FromArgb(91,107,129);
+            zones[i].BackColor=i==slot?palette.Selected:palette.Panel;
+            zones[i].ForeColor=i==slot?palette.SelectedText:palette.Text;
+            zones[i].AccessibleDescription=i==slot?"Selected zone":"Zone";
+            zones[i].FlatAppearance.BorderColor=i==slot?palette.Text:palette.Border;
             zones[i].FlatAppearance.BorderSize=i==slot?2:1;
         }
     }
@@ -41,6 +48,7 @@ public class LayoutCard : UserControl {
             Controls.Add(button);
             zones.Add(button);
         }
+        ApplyPalette(UiPalette.Current);
     }
     int S(int n) { return (int)Math.Round(n*scale); }
 }
@@ -55,7 +63,9 @@ public class SnapFlyout : NonactivatingForm {
     readonly Label keyboardHint;
     int selectedCard,selectedSlot;
     public void KeyboardAvailable(bool available) { keyboardHint.Text=available?"Arrows: zone · Tab: layout · Enter: place":"Keyboard navigation unavailable · use mouse"; }
-    void Highlight() { for(int i=0;i<layoutCards.Count;i++) layoutCards[i].Highlight(i==selectedCard?selectedSlot:-1); cardPanel.ScrollControlIntoView(layoutCards[selectedCard]); }
+    void Highlight() { for(int i=0;i<layoutCards.Count;i++) layoutCards[i].Highlight(i==selectedCard?selectedSlot:-1); cardPanel.ScrollControlIntoView(layoutCards[selectedCard]);AccessibleDescription="Selected "+profiles[selectedCard].Name+", zone "+(selectedSlot+1)+". Arrows select a zone; Tab changes layout; Enter places; Escape closes.";if(IsHandleCreated)AccessibilityNotifyClients(AccessibleEvents.DescriptionChange,-1); }
+    public void ApplyPalette(UiPalette value){UiPalette.Apply(this,value);}
+    protected override void OnSystemColorsChanged(EventArgs e){base.OnSystemColorsChanged(e);if(layoutCards!=null)ApplyPalette(UiPalette.Current);}
     public void Navigate(Keys key,bool reverse) {
         if(key==Keys.Tab) { selectedCard=(selectedCard+(reverse?profiles.Count-1:1))%profiles.Count; selectedSlot=0; }
         else if(key==Keys.Enter) { if(ZoneSelected!=null) ZoneSelected(profiles[selectedCard].Id,selectedSlot); return; }
@@ -100,10 +110,12 @@ public class SnapFlyout : NonactivatingForm {
         var manage=new Button{Text="Manage layouts & hotkeys",UseMnemonic=false,AccessibleName="Manage layouts and hotkeys",FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(43,52,66),Bounds=new Rectangle(s(17),Height-s(40),s(214),s(28)),TabStop=false};
         manage.FlatAppearance.BorderColor=Color.FromArgb(80,96,119); manage.Click+=delegate { if(ManageRequested!=null) ManageRequested(); }; Controls.Add(manage);
         Controls.Add(new Label{Text="Esc or click outside to close",ForeColor=Color.FromArgb(160,174,194),TextAlign=ContentAlignment.MiddleRight,Bounds=new Rectangle(s(240),Height-s(39),Width-s(257),s(26))});
+        ApplyPalette(UiPalette.Current);
     }
 }
 
 public class LauncherTab : NonactivatingForm {
+    protected override void OnSystemColorsChanged(EventArgs e){base.OnSystemColorsChanged(e);UiPalette.Apply(this,UiPalette.Current);}
     public Action HideRequested;
     Button closeButton;
     void HideToTray() { Hide();if(HideRequested!=null)HideRequested(); }
@@ -176,5 +188,6 @@ public class LauncherTab : NonactivatingForm {
         Controls.Add(label);
         closeButton=new Button{Text="×",Dock=DockStyle.Right,Width=Height,FlatStyle=FlatStyle.Flat,TabStop=false,Cursor=Cursors.Hand,ForeColor=ForeColor,BackColor=BackColor,AccessibleName="Hide Layouts bar to tray"};
         closeButton.FlatAppearance.BorderSize=0;closeButton.Click+=delegate{HideToTray();};Controls.Add(closeButton);label.BringToFront();
+        UiPalette.Apply(this,UiPalette.Current);
     }
 }

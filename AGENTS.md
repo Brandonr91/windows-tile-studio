@@ -133,6 +133,17 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 
 ## Verification
 
+Phase 7: preserve visual-editor Page Up/Down selection, arrow/Shift nudges,
+Ctrl+Z/Y, Tab escape, accessible value and pair-only draft geometry. Run
+`-AccessibilityUi` and Windows PowerShell 5.1 STA tests/AccessibilityUiTests.ps1
+for accessibility/palette/viewport/report changes. Do not change actual Windows
+contrast/scaling or claim screen-reader verification from accessible properties.
+DiagnosticReport must remain an allowlist of aggregate numeric/boolean/version
+data; never copy logs, titles, paths, profile/monitor IDs, keys, HWNDs or PIDs into
+it. Preview before local save; no upload/automatic report. PerformanceTests.ps1
+requires an extracted source package and no daily controller. Document sample
+limits. See docs/ACCESSIBILITY-AND-SUPPORT.md.
+
 Add geometry regression coverage for meaningful layout changes. Geometry tests
 do not prove native dragging works: report which desktop interactions were
 actually checked. Use disposable windows for interactive tests. Do not rearrange

@@ -46,6 +46,9 @@ upload nothing. Logs/configuration/workspaces may expose paths/display identitie
 and optional titles: review before sharing. Share layouts exports the separate
 portable catalog without app/window/display identity.
 
-Privacy-filtered diagnostic export, theme/text-size controls, broader accessibility
-and performance work remain phase 7. General is an interlude after phase 6,
-not completion of phase 7. No startup option is enabled by installing this update.
+Phase 7 adds **Preview diagnostic report...** under Support: inspect allowlisted
+aggregate XML, then optionally save locally. It excludes logs, titles, paths,
+layout/monitor identities, keys and window identifiers and uploads nothing.
+See [accessibility and support](ACCESSIBILITY-AND-SUPPORT.md) for fields, keyboard
+editing, contrast/scaling support and remaining manual checks. User-selectable
+theme/text-size controls remain unimplemented. Startup is never enabled by an update.

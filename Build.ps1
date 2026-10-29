@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[string]$HostedSourceRoot,[string]$OutputDirectory)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -41,6 +41,13 @@ if ($WorkspaceUi) {
     if ($LASTEXITCODE -ne 0) { throw 'Workspace UI test compilation failed.' }
     & $workspaceTest (Join-Path $output 'workspace-ui-data')
     if ($LASTEXITCODE -ne 0) { throw 'Workspace UI tests failed.' }
+}
+if ($AccessibilityUi) {
+    $accessibilityTest = Join-Path $output 'AccessibilityUiTests.exe'
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$accessibilityTest" (Join-Path $PSScriptRoot 'tests\AccessibilityUiTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Accessibility UI test compilation failed.' }
+    & $accessibilityTest (Join-Path $output 'accessibility-ui-data')
+    if ($LASTEXITCODE -ne 0) { throw 'Accessibility UI tests failed.' }
 }
 if ($WorkspaceIntegration) {
     $nativeTest = Join-Path $output 'WorkspaceNativeTests.exe'

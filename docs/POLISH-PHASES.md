@@ -19,7 +19,7 @@ gaps remain explicit; this does not implement phase 5.
 | 4. Displays and per-monitor profiles | Independent monitor layouts, mixed DPI/negative origins, docking/disconnects, work-area/taskbar changes, sleep/resume and launcher recovery. | Define monitor identity/schema migration and verify reconnects without disturbing unrelated windows. | Core implemented locally as `0.3.0-preview.4`; simulated topology and single-display notifications verified. Physical multi-monitor/docking/sleep release gates remain. |
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Implemented locally as `0.3.0-preview.5`; pure, real-loop compiled/source-hosted editor and controller regressions pass within documented scope. |
 | 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Implemented locally as `0.3.0-preview.6`; pure/UI/native restore, temporary startup shortcut and cold-start checks pass. No real startup was enabled; actual login and broader hardware/app cases remain release gates. |
-| 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Planned. |
+| 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Local preview.7 core implemented within documented tests: divider keyboard editing/value/focus, scrolled DPI-aware dialogs, system contrast and aggregate report export. Manual screen readers, OS text-size/contrast and physical hardware gates remain; separate theme/text-size controls are not implemented. |
 | 8. Production delivery | Consistent executable/package identity; install/update/rollback/uninstall and legacy recovery; Windows CI, reproducible builds, versioned signing/checksums/release notes, clean-account/external beta testing. | Exact packages pass install/use/update/remove/rollback; documentation matches release; original repository is preserved. | Planned. |
 
 ## Phase 1 result
@@ -147,7 +147,20 @@ draft-only. Support opens local folder/log; diagnostic export/themes remain
 phase 7. See [General settings](GENERAL-SETTINGS.md). This user-requested
 interlude does not mark phase 7 complete; phases 1–6 remain the last completed set.
 
-## Exact next work: phase 7
+## Phase 7 result
+
+Keyboard divider selection/nudges/undo/redo reuse the draft history and preserve
+adjacent pairs. Focus/selection/status and accessible value feedback are explicit.
+Resizable DPI-aware dialogs fit work areas; settings/workspace inputs scroll.
+Custom panels use system colors for high contrast. Workspace actions reflect
+available selections. General Support previews/saves a local aggregate report
+without reading logs/workspaces or exposing identities/content. Focused checks
+cover real canvas Right/Tab plus deterministic keys, constrained 800×600 forms,
+injected contrast, flyout uneven directions/wrap/scroll and report privacy/save.
+See [phase-7 guide](ACCESSIBILITY-AND-SUPPORT.md) and HANDOFF for verification,
+measurements and the remaining manual assistive-technology/OS/hardware gates.
+
+The original phase-7 validation brief is retained below as context:
 
 Start with a keyboard/screen-reader/high-contrast and small-display audit of
 settings, visual editor, workspace selection and tray controls. Make focus,
@@ -158,6 +171,15 @@ that omits titles, app/session content, raw monitor IDs and user paths by defaul
 make inclusion explicit. Measure packaged startup/idle/resize costs before claims.
 Retain cold hidden-dialog, font lifetime, pair-only height, draft/import and
 workspace/startup opt-in regressions. Hardware/login/elevated-app beta gates remain.
+
+## Exact next work: phase 8
+
+Audit install/update/rollback/removal, artifact identity and existing CI. Establish
+a reproducible source/binary manifest and checksums, then validate clean-account
+flows, legacy restoration and versioned release notes. Preserve separate original
+repository/history. Prepare the actual tested package before publication; do not
+enable startup, sign/upload or push a release without the user's instruction.
+Carry manual accessibility/hardware/login gates into the beta checklist.
 
 ## Before pushing a production release
 
