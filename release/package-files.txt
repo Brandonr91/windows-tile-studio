@@ -1,0 +1,27 @@
+# Explicit release inputs. Runtime/user/build folders are never included.
+AGENTS.md
+ARCHITECTURE.md
+DECISIONS.md
+HANDOFF.md
+ROADMAP.md
+README.md
+LICENSE
+CHANGELOG.md
+Build.ps1
+Build-Release.ps1
+Get-FromGitHub.ps1
+InstallationSupport.ps1
+Manage-Installation.ps1
+Start.ps1
+Start.cmd
+Start-Hosted.ps1
+Start-Hosted.cmd
+Set-LegacySupersession.ps1
+src/*.cs
+docs/**
+examples/**
+tools/**
+tests/**
+release/version.json
+release/package-files.txt
+.github/workflows/windows.yml

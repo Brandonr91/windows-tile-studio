@@ -4,9 +4,11 @@ param(
     [ValidateSet('Hosted','Compiled','Auto')][string]$Mode = 'Hosted',
     [string]$Ref = 'main',
     [switch]$NoLaunch,
-    [string]$ArchivePath
+    [string]$ArchivePath,
+    [ValidatePattern('^[0-9a-fA-F]{64}$')][string]$ExpectedSha256
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'InstallationSupport.ps1')
 $repository = 'Brandonr91/windows-tile-studio'
 $utf8 = [Text.UTF8Encoding]::new($false)
 
@@ -42,6 +44,7 @@ function Get-ArchiveCommit([string]$Path) {
 }
 
 $InstallRoot = [IO.Path]::GetFullPath($InstallRoot).TrimEnd('\','/')
+Assert-WtsNoLinks $InstallRoot
 if ($InstallRoot -eq [IO.Path]::GetPathRoot($InstallRoot).TrimEnd('\','/')) { throw 'Choose a dedicated application folder, not a drive or share root.' }
 $marker = Join-Path $InstallRoot '.windows-tile-studio.json'
 if (Test-Path -LiteralPath $InstallRoot) {
@@ -77,6 +80,7 @@ try {
     }
     if ((Get-Item -LiteralPath $zip).Length -gt 25MB) { throw 'The source archive is unexpectedly large.' }
     $archiveHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+    if($ExpectedSha256 -and $archiveHash -ne $ExpectedSha256.ToLowerInvariant()){throw 'Archive SHA-256 does not match the expected value. No version was activated.'}
     if ($sourceKind -eq 'GitHub') {
         $commit = Get-ArchiveCommit $zip
         if ($Ref -match '^[0-9a-fA-F]{40}$') {
@@ -107,6 +111,7 @@ try {
     } finally { $archive.Dispose() }
     [IO.Compression.ZipFile]::ExtractToDirectory($zip,$extracted)
     $project = Assert-ChildPath $extracted (Join-Path $extracted $topFolder)
+    $packageManifest=Test-WtsPackage $project
     foreach ($required in @('README.md','Build.ps1','Start.ps1','src\SixSlotSnap.cs')) {
         if (-not (Test-Path -LiteralPath (Join-Path $project $required) -PathType Leaf)) { throw "Source package is missing $required." }
     }
@@ -119,11 +124,47 @@ try {
     $versions = Join-Path $InstallRoot 'versions'
     New-Item -ItemType Directory -Force -Path $versions | Out-Null
     $versionPath = Assert-ChildPath $InstallRoot (Join-Path $versions $version)
+    Assert-WtsNoLinks $versionPath
+    $windowsHost=Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    # Validate before changing current.json; use staging data, never user data.
+    if($selectedMode -eq 'Hosted'){
+        Invoke-WtsValidation $windowsHost ('-NoProfile -STA -ExecutionPolicy Bypass -File "'+(Join-Path $project 'Start-Hosted.ps1')+'" -RunInProcess -Action Validate -DataDirectory "'+(Join-Path $staging 'validation')+'"') $staging
+    }else{
+        if($packageManifest -and $packageManifest.kind -eq 'PortableCompiled'){
+            Invoke-WtsValidation $windowsHost ('-NoProfile -ExecutionPolicy Bypass -File "'+(Join-Path $project 'Build.ps1')+'" -OutputDirectory "'+(Join-Path $staging 'compiled-validation')+'"') $staging
+            $identity=[Diagnostics.FileVersionInfo]::GetVersionInfo((Join-Path $project 'bin\SixSlotSnap.exe'))
+            if($identity.ProductName -ne 'Windows Tile Studio' -or $identity.ProductVersion -ne $packageManifest.version){throw 'Compiled product identity does not match the package.'}
+        }else{Invoke-WtsValidation $windowsHost ('-NoProfile -ExecutionPolicy Bypass -File "'+(Join-Path $project 'Build.ps1')+'"') $staging}
+    }
+    if(!$packageManifest){
+        $legacyFiles=@(foreach($file in Get-WtsTreeFiles $project){$relative=$file.FullName.Substring($project.Length+1).Replace('\','/');if(!$relative.StartsWith('bin/')){[ordered]@{path=$relative;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName).Hash.ToLowerInvariant()}}})
+        $legacyManifest=[ordered]@{schema=1;repository=$repository;product='Windows Tile Studio';version='legacy-source';kind='Source';signing='unsigned';origin='InstallerGenerated';archiveSha256=$archiveHash;files=$legacyFiles}
+        [IO.File]::WriteAllText((Join-Path $project 'package-manifest.json'),($legacyManifest | ConvertTo-Json -Depth 12),$utf8)
+    }
+    if(Test-Path -LiteralPath $versionPath){
+        [void](Test-WtsPackage $versionPath -AllowBuildOutput)
+        $expected=New-Object 'Collections.Generic.HashSet[string]' ([StringComparer]::OrdinalIgnoreCase)
+        foreach($file in Get-ChildItem -LiteralPath $project -Recurse -Force -File){$relative=$file.FullName.Substring($project.Length+1);if($relative.StartsWith('bin\')){continue};$cached=Assert-WtsChild $versionPath (Join-Path $versionPath $relative);if(!(Test-Path -LiteralPath $cached -PathType Leaf) -or (Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath $cached).Hash){throw 'Cached source was modified; no files or pointer were overwritten.'}}
+        foreach($file in Get-ChildItem -LiteralPath $project -Recurse -Force -File){[void]$expected.Add($file.FullName.Substring($project.Length+1))}
+        foreach($file in Get-WtsTreeFiles $versionPath){$relative=$file.FullName.Substring($versionPath.Length+1);if(!$relative.StartsWith('bin\') -and !$expected.Contains($relative)){throw 'Cached source has unlisted files; it was preserved without activation.'}}
+    }
     if (-not (Test-Path -LiteralPath $versionPath)) {
         # Both source and destination are verified before this directory move.
         [void](Assert-ChildPath $staging $project)
         [void](Assert-ChildPath $InstallRoot $versionPath)
         Move-Item -LiteralPath $project -Destination $versionPath
+    }
+    $compiledHash=$null
+    if($selectedMode -eq 'Compiled'){
+        $installedExe=Assert-WtsChild $versionPath (Join-Path $versionPath 'bin\SixSlotSnap.exe')
+        if(!(Test-Path -LiteralPath $installedExe)){
+            [void](Assert-WtsChild $versionPath (Join-Path $versionPath 'bin'));Copy-Item -LiteralPath (Join-Path $project 'bin') -Destination $versionPath -Recurse
+        }elseif(!$packageManifest -or $packageManifest.kind -ne 'PortableCompiled'){
+            # Fresh versions contain the just-validated build; cached builds need
+            # a previously recorded artifact hash before they can be reused.
+            if(Test-Path -LiteralPath $project){$known=@(foreach($name in @('current.json','previous.json')){$p=Join-Path $InstallRoot $name;if(Test-Path -LiteralPath $p){$v=Read-WtsPointer $p;if($v.version -eq $version -and $v.compiledSha256){$v.compiledSha256}}});if((Get-FileHash -LiteralPath $installedExe).Hash.ToLowerInvariant() -notin $known){throw 'Cached compiled artifact cannot be verified; it was preserved without activation.'}}
+        }
+        $compiledHash=(Get-FileHash -LiteralPath $installedExe).Hash.ToLowerInvariant()
     }
     $dataPath = Assert-ChildPath $InstallRoot (Join-Path $InstallRoot 'data')
     New-Item -ItemType Directory -Force -Path $dataPath | Out-Null
@@ -132,25 +173,32 @@ try {
     # stored inside a version folder and is not overwritten on update.
     $launchScript = @'
 [CmdletBinding()]
-param([ValidateSet('Hosted','Compiled','Auto')][string]$Mode)
+param([ValidateSet('Hosted','Compiled','Auto')][string]$Mode,[string]$StartupOwner,[switch]$NoRecover)
 $ErrorActionPreference='Stop'
-$current=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'current.json') | ConvertFrom-Json
+. (Join-Path $PSScriptRoot 'InstallationSupport.ps1')
+$current=Read-WtsPointer (Join-Path $PSScriptRoot 'current.json')
 if ($current.version -notmatch '^(?:[0-9a-f]{40}|(?:local|archive)-[0-9a-f]{24})$') { throw 'Invalid installed version pointer.' }
 $project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot ('versions\'+$current.version)))
 $data=Join-Path $PSScriptRoot 'data'
 if (-not $Mode -or $Mode -eq 'Auto') { $Mode=$current.mode }
+if($Mode -eq $current.mode){Test-WtsInstalledPointer $PSScriptRoot $current}else{throw 'Install the desired mode explicitly before using it; the active artifact must be verified.'}
 if ($Mode -eq 'Hosted') {
-    & (Join-Path $project 'Start-Hosted.ps1') -DataDirectory $data
+    & (Join-Path $project 'Start-Hosted.ps1') -DataDirectory $data -NoRecover:$NoRecover
 } else {
     $application=Join-Path $project 'bin\SixSlotSnap.exe'
     if (-not (Test-Path -LiteralPath $application)) { & (Join-Path $project 'Build.ps1') }
-    Start-Process -FilePath $application -ArgumentList @('--data-dir',('"'+$data.TrimEnd('\')+'"')) -WindowStyle Hidden
+    $arguments=@('--data-dir',('"'+$data.TrimEnd('\')+'"'));if($NoRecover){$arguments+='--no-recover'}
+    Start-Process -FilePath $application -ArgumentList $arguments -WindowStyle Hidden
 }
 '@
     Write-AtomicText (Join-Path $InstallRoot 'Launch-Installed.ps1') $launchScript
     Write-AtomicText (Join-Path $InstallRoot 'Start.cmd') "@echo off`r`n`"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`" -NoProfile -STA -ExecutionPolicy Bypass -File `"%~dp0Launch-Installed.ps1`"`r`nif errorlevel 1 pause`r`n"
-    $current = [ordered]@{schema=1;repository=$repository;version=$version;commit=$commit;archiveSha256=$archiveHash;sourceKind=$sourceKind;mode=$selectedMode;installedAtUtc=[DateTime]::UtcNow.ToString('o')}
-    Write-AtomicText (Join-Path $InstallRoot 'current.json') ($current | ConvertTo-Json)
+    foreach($helper in @('Manage-Installation.ps1','InstallationSupport.ps1')){Write-AtomicText (Join-Path $InstallRoot $helper) ([IO.File]::ReadAllText((Join-Path $PSScriptRoot $helper)))}
+    foreach($operation in @('Rollback','Uninstall')){Write-AtomicText (Join-Path $InstallRoot ($operation+'.cmd')) ("@echo off`r`n`"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`" -NoProfile -ExecutionPolicy Bypass -File `"%~dp0Manage-Installation.ps1`" -InstallRoot `"%~dp0.`" -Action "+$operation+" -Confirm`r`npause`r`n")}
+    $current = [ordered]@{schema=1;repository=$repository;version=$version;commit=$commit;archiveSha256=$archiveHash;sourceKind=$sourceKind;mode=$selectedMode;compiledSha256=$compiledHash;installedAtUtc=[DateTime]::UtcNow.ToString('o')}
+    $pointer=Join-Path $InstallRoot 'current.json'
+    $prior=if(Test-Path -LiteralPath $pointer){Read-WtsPointer $pointer}else{$null}
+    Set-WtsCurrent $InstallRoot $current
     $result = [PSCustomObject]@{Repository=$repository;Commit=$commit;SourceKind=$sourceKind;Mode=$selectedMode;InstallRoot=$InstallRoot;VersionDirectory=$versionPath;DataDirectory=$dataPath;Launcher=(Join-Path $InstallRoot 'Start.cmd');Launched=(-not $NoLaunch)}
     if (-not $NoLaunch) { & (Join-Path $InstallRoot 'Launch-Installed.ps1') | Out-Null }
     $result

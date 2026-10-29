@@ -20,7 +20,7 @@ gaps remain explicit; this does not implement phase 5.
 | 5. Visual builder and portable layouts | Draggable dividers, live preview, undo/save/cancel, layout/hotkey export/import with validation/conflict handling. | Numeric editor remains usable; invalid imports cannot overwrite settings; adjacency rules hold. | Implemented locally as `0.3.0-preview.5`; pure, real-loop compiled/source-hosted editor and controller regressions pass within documented scope. |
 | 6. Workspaces and optional startup | Saved assignments, opt-in restore/relaunch, durable app identity; opt-in launch at login with status/disable/removal. | No stale HWND identity, unrequested app launch or automatic startup registration. | Implemented locally as `0.3.0-preview.6`; pure/UI/native restore, temporary startup shortcut and cold-start checks pass. No real startup was enabled; actual login and broader hardware/app cases remain release gates. |
 | 7. Accessibility, visuals and support | Keyboard/screen readers/high contrast/scaling, focus/hover, typography/spacing/themes, target feedback, local privacy-conscious diagnostics, measured startup/idle performance. | Keyboard-only tasks and small displays work; reports exclude window contents/private titles by default; measurements support performance claims. | Local preview.7 core implemented within documented tests: divider keyboard editing/value/focus, scrolled DPI-aware dialogs, system contrast and aggregate report export. Manual screen readers, OS text-size/contrast and physical hardware gates remain; separate theme/text-size controls are not implemented. |
-| 8. Production delivery | Consistent executable/package identity; install/update/rollback/uninstall and legacy recovery; Windows CI, reproducible builds, versioned signing/checksums/release notes, clean-account/external beta testing. | Exact packages pass install/use/update/remove/rollback; documentation matches release; original repository is preserved. | Planned. |
+| 8. Production delivery | Consistent executable/package identity; install/update/rollback/uninstall and legacy recovery; Windows CI, reproducible builds, versioned signing/checksums/release notes, clean-account/external beta testing. | Exact packages pass install/use/update/remove/rollback; documentation matches release; original repository is preserved. | Local preview.8 tooling implemented: manifests/checksums, source repeatability, product/icon, validated install, rollback/uninstall and stable startup. CI is configured, not yet run remotely; signing, actual clean-account/hardware/login/accessibility/external-beta gates remain. |
 
 ## Phase 1 result
 
@@ -173,6 +173,11 @@ Retain cold hidden-dialog, font lifetime, pair-only height, draft/import and
 workspace/startup opt-in regressions. Hardware/login/elevated-app beta gates remain.
 
 ## Exact next work: phase 8
+
+This phase's local tooling is now implemented. See
+[release/recovery](RELEASE-AND-RECOVERY.md), [gate checklist](RELEASE-CHECKLIST.md)
+and the latest HANDOFF for verification and artifacts. The brief below is retained
+as scope/history. Next work is beta/release validation, not an invented phase 9.
 
 Audit install/update/rollback/removal, artifact identity and existing CI. Establish
 a reproducible source/binary manifest and checksums, then validate clean-account

@@ -11,7 +11,15 @@ $output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $PSScr
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 $executable = Join-Path $output 'SixSlotSnap.exe'
 $sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | ForEach-Object { $_.FullName })
-& $compiler /nologo /target:winexe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/out:$executable" $sources
+$version=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'release\version.json') | ConvertFrom-Json
+if($version.version -notmatch '^\d+\.\d+\.\d+(?:-(?:preview|beta|rc)\.\d+)?$' -or $version.channel -notin @('preview','beta','rc','stable') -or $version.assemblyVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or $version.fileVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or $version.product -ne 'Windows Tile Studio'){throw 'Invalid release version metadata.'}
+if(!([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'src\SixSlotSnap.cs')).Contains('ProductVersion="'+$version.version+'"'))){throw 'Application and release version metadata disagree.'}
+$metadata=Join-Path $output 'AssemblyInfo.generated.cs'
+$attributes='using System.Reflection;[assembly:AssemblyTitle("Windows Tile Studio")][assembly:AssemblyProduct("Windows Tile Studio")][assembly:AssemblyDescription("Local window layouts and linked resizing")][assembly:AssemblyVersion("'+$version.assemblyVersion+'")][assembly:AssemblyFileVersion("'+$version.fileVersion+'")][assembly:AssemblyInformationalVersion("'+$version.version+'")][assembly:AssemblyCompany("Windows Tile Studio contributors")]'
+[IO.File]::WriteAllText($metadata,$attributes,[Text.UTF8Encoding]::new($false))
+$icon=Join-Path $output 'WindowsTileStudio.ico'
+& (Join-Path $PSScriptRoot 'tools\New-AppIcon.ps1') -OutputPath $icon
+& $compiler /nologo /target:winexe /reference:Accessibility.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/win32icon:$icon" "/out:$executable" $sources $metadata
 if ($LASTEXITCODE -ne 0) { throw 'Build failed. If the executable is running, exit it from the tray menu first.' }
 Write-Host "Built $executable"
 if ($Test) {

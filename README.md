@@ -47,6 +47,12 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
+Local preview.8 adds versioned Source/PortableCompiled packages, manifests and
+checksums, validated installation, rollback and data-preserving uninstall. See
+[release and recovery](docs/RELEASE-AND-RECOVERY.md). Packages are unsigned
+previews; the [production checklist](docs/RELEASE-CHECKLIST.md) retains manual
+account/hardware/accessibility/beta gates. No release is published automatically.
+
 The first polish milestone adds **Start-Hosted.cmd**, which runs the
 controller inside Windows PowerShell without generating a standalone app EXE,
 and **Get-FromGitHub.ps1**, which installs source into versioned local folders.

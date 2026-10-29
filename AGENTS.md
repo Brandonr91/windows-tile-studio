@@ -167,6 +167,19 @@ Performance samples are local observations, not universal latency/CPU promises.
 
 ## Repository hygiene
 
+Phase 8 release work: build via Build-Release.ps1 and release/package-files.txt;
+keep release/version.json, source ProductVersion and compiled metadata aligned.
+Use tests/ReleaseTests.ps1 for isolated install/update/rollback/uninstall and
+tests/InstalledLaunchTests.ps1 only with the daily controller stopped. Never test
+uninstall/purge on the real installation or account Startup folder. New installed
+startup opt-ins follow the stable verified launcher; do not migrate an existing
+startup shortcut silently. Preserve path/link bounds, candidate validation before
+pointer activation, previous-pointer rollback on write failure, cache/compiled
+hash checks and default data retention. Source ZIP repeatability is scoped to
+identical bytes/provenance; legacy compiled binaries are not deterministic or
+signed. Keep docs/RELEASE-CHECKLIST.md gates open until actually verified. The
+workflow is configured locally; do not claim a GitHub CI pass before it runs.
+
 Do not commit `bin/`, runtime logs, layout preferences, account details, or
 machine-specific helper scripts. Document user-visible changes and limits.
 Do not publish, upload a release, or enable automatic startup unless requested.

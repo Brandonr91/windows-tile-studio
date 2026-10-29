@@ -72,6 +72,13 @@ is unchanged.
 
 ## Polished version
 
+Phase 8 local checkpoint: preview.8 adds release identity/icon, versioned source/
+compiled packages with file/archive hashes, staged validation, rollback/uninstall,
+stable installed startup and read-only Windows CI configuration. See
+[release/recovery](RELEASE-AND-RECOVERY.md) and the explicit
+[production gates](RELEASE-CHECKLIST.md). There is no automatic public release;
+the remaining manual/beta/signing/remote-CI checks are not claimed passed.
+
 Phase 7 local checkpoint: preview.7 adds keyboard visual dividers, accessible
 selection/value feedback, resizable/scrolled DPI-aware dialogs, system contrast
 colors and previewed aggregate diagnostic export. See [scope and manual

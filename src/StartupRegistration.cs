@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 public interface IStartupValue {
     string Read();
@@ -32,18 +33,29 @@ public class UserStartupValue : IStartupValue {
     public void Remove(){if(File.Exists(ShortcutPath))File.Delete(ShortcutPath);}
 }
 public class StartupLaunchSpec {
-    public string Executable,SourceScript,DataDirectory;
+    public string Executable,SourceScript,InstalledScript,DataDirectory;
     public string UnavailableReason;
     static string Quote(string value){if(string.IsNullOrWhiteSpace(value)||value.IndexOfAny(new[]{'"','\r','\n','\0'})>=0||!Path.IsPathRooted(value))throw new ArgumentException("Startup needs valid absolute installation/data paths.");string trimmed=value.TrimEnd('\\');return "\""+trimmed+new string('\\',(value.Length-trimmed.Length)*2)+"\"";}
     public string Command {
         get {
             if(UnavailableReason!=null)throw new InvalidOperationException(UnavailableReason);
             string executable=Quote(Executable),data=Quote(DataDirectory);
+            if(InstalledScript!=null)return executable+" -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File "+Quote(InstalledScript)+" -StartupOwner WindowsTileStudio";
             if(SourceScript!=null)return executable+" -NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File "+Quote(SourceScript)+" -RunInProcess -DataDirectory "+data+" -StartupOwner WindowsTileStudio";
             return executable+" --data-dir "+data+" --startup-owner WindowsTileStudio";
         }
     }
-    public void ValidateFiles(){var command=Command;if(!string.Equals(Path.GetExtension(Executable),".exe",StringComparison.OrdinalIgnoreCase)||!File.Exists(Executable)||SourceScript!=null&&(!string.Equals(Path.GetExtension(SourceScript),".ps1",StringComparison.OrdinalIgnoreCase)||!File.Exists(SourceScript))||!Directory.Exists(DataDirectory))throw new InvalidOperationException("This installation or data folder is missing. Restore its files before enabling login startup.");}
+    public void ValidateFiles(){var command=Command;if(!string.Equals(Path.GetExtension(Executable),".exe",StringComparison.OrdinalIgnoreCase)||!File.Exists(Executable)||SourceScript!=null&&(!string.Equals(Path.GetExtension(SourceScript),".ps1",StringComparison.OrdinalIgnoreCase)||!File.Exists(SourceScript))||InstalledScript!=null&&(!string.Equals(Path.GetExtension(InstalledScript),".ps1",StringComparison.OrdinalIgnoreCase)||!File.Exists(InstalledScript))||!Directory.Exists(DataDirectory))throw new InvalidOperationException("This installation or data folder is missing. Restore its files before enabling login startup.");}
+    public static string InstalledLauncher(string sourceRoot,string dataDirectory) {
+        try {
+            if(sourceRoot==null)return null;var version=new DirectoryInfo(Path.GetFullPath(sourceRoot));
+            if(version.Parent==null||version.Parent.Name!="versions"||version.Parent.Parent==null||!Regex.IsMatch(version.Name,@"^(?:[0-9a-f]{40}|(?:local|archive)-[0-9a-f]{24})$"))return null;
+            string root=version.Parent.Parent.FullName,marker=Path.Combine(root,".windows-tile-studio.json"),script=Path.Combine(root,"Launch-Installed.ps1");
+            if(!string.Equals(Path.GetFullPath(dataDirectory).TrimEnd('\\'),Path.Combine(root,"data"),StringComparison.OrdinalIgnoreCase)||!File.Exists(marker)||new FileInfo(marker).Length>4096||!File.Exists(script)||!File.Exists(Path.Combine(root,"current.json")))return null;
+            string identity=File.ReadAllText(marker);if(!Regex.IsMatch(identity,"\"schema\"\\s*:\\s*1(?:\\s*[,}])")||!Regex.IsMatch(identity,"\"repository\"\\s*:\\s*\"Brandonr91/windows-tile-studio\""))return null;
+            return script;
+        }catch(IOException){return null;}catch(UnauthorizedAccessException){return null;}catch(ArgumentException){return null;}
+    }
 }
 public class StartupRegistration {
     readonly IStartupValue store;

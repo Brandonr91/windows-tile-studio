@@ -48,8 +48,9 @@ background launcher starts a fresh process automatically.
 extracts a versioned copy, writes local launchers, and starts the selected mode.
 It needs no Git installation, GitHub token, installer service, or downloaded EXE.
 
-After a revision containing these launchers has been published, download and
-inspect its `Get-FromGitHub.ps1`, then run:
+After the intended revision has been published, extract/inspect the full source
+bundle, keeping `Get-FromGitHub.ps1`, `InstallationSupport.ps1` and
+`Manage-Installation.ps1` together, then run:
 
 ```powershell
 .\Get-FromGitHub.ps1 -Mode Hosted
@@ -75,7 +76,9 @@ The installed folder contains:
 WindowsTileStudio/
   Start.cmd                 restart the selected mode
   Launch-Installed.ps1       read the active version and launch it
-  current.json              selected code version and mode
+  current.json              selected code version/mode/artifact hash
+  previous.json             prior version for checked rollback
+  Manage-Installation.ps1    status/validate/rollback/uninstall
   versions/<revision>/      downloaded source
   data/                     persistent settings and runtime logs
 ```
@@ -86,6 +89,12 @@ use the installed `Start.cmd` when you are ready to run the new version.
 The installer does not register automatic startup or silently stop a running
 controller. Keep a copy of `data/` if you want to preserve preferences when
 removing the entire installation folder.
+
+Phase 8 adds candidate validation before activation, expected archive hashes,
+manifests, stable installed startup and guarded rollback/uninstall. `-NoLaunch`
+still validates/builds the candidate; it suppresses controller startup. Prefer
+the management tool for uninstall with data preserved. See
+[release and recovery](RELEASE-AND-RECOVERY.md) for exact behavior and limitations.
 
 `-Mode Hosted` is the default and fails clearly if the downloaded revision
 does not contain the hosted script. `-Mode Compiled` explicitly builds the

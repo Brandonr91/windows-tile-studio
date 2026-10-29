@@ -136,6 +136,23 @@ cover settings and workspace UI in both modes.
 
 ## Current implementation versus proposals
 
+Phase 8 (`0.3.0-preview.8`) retains executable/mutex compatibility identifiers
+while adding product metadata/icon and versioned Source/PortableCompiled packages.
+Use explicit input lists and allowlisted manifests/checksums; do not label a
+legacy csc build deterministic or a checksum a signature. A clean Git state is
+the packaging default; local dirty previews must opt in and record provenance.
+
+Validate candidates before activating pointers, keep prior pointers and recover
+them if commit fails. Cached source/compiled artifacts must verify; user data
+stays separate. Confirmed rollback/uninstall refuses running owned installs and
+linked paths, preserves data/unrelated files by default, and removes only startup
+targeting that installation. Retain an ownership marker for data-preserving
+reinstall. New installed startup opt-ins target a stable verified launcher so
+updates/rollback follow the pointer; migrate existing entries only explicitly.
+The installer now ships with companion support/management scripts, not alone.
+CI is a read-only check/artifact workflow, not a publication job. Signing, real
+account/login, hardware and external beta verification remain production gates.
+
 Phase 7 (`0.3.0-preview.7`) adds keyboard editing through the existing draft
 gesture/history model rather than a separate geometry engine. Page Up/Down
 selects dividers so Tab retains its normal focus-exit meaning. System high

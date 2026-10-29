@@ -1,7 +1,7 @@
 # Roadmap and next work
 
 Context established 2026-10-26 at `48b96b2`; updated 2026-10-28 for phase 7,
-following General settings commit `cdac931`.
+through phase-8 delivery preparation following `508783a`.
 The existing [development roadmap](docs/ROADMAP.md) remains the authoritative
 milestone history. This root entry adds current priorities and acceptance criteria
 without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping point.
@@ -21,6 +21,11 @@ resizable/scrolled DPI-aware dialogs, system high-contrast colors and a local
 allowlisted diagnostic preview/export. See [phase-7 scope and verification
 limits](docs/ACCESSIBILITY-AND-SUPPORT.md). Phase 8 (production delivery) is next;
 manual assistive-technology, OS contrast/text-size and hardware gates remain.
+Phase 8 now adds local delivery tooling: versioned manifests/checksums, compiled
+identity/icon, validated candidate activation, rollback/uninstall/data retention,
+stable installed startup and a Windows CI definition. See
+[release/recovery](docs/RELEASE-AND-RECOVERY.md). Local automation does not close
+the [manual production gates](docs/RELEASE-CHECKLIST.md) or imply publication.
 The user-requested General settings interlude adds startup/tray, bar lock and
 visibility/reset, shared flyout shortcut and local support access in preview.6.1.
 See [General settings](docs/GENERAL-SETTINGS.md). It does not advance the phase
@@ -110,10 +115,11 @@ override by explicitly using manual positioning.
 1. Read the five root context documents and inspect status/log/remotes/source.
    Verify a controller process before using runtime XML; the 2026-10-28 review
    found no matching compiled/source-hosted controller, despite retained XML.
-2. Follow the user's latest request. Phase 8 starts with distribution identity,
-   a reproducible package manifest/checksums and a Windows CI/build/test plan.
-   Audit existing installers/update/rollback/removal and preserve legacy recovery.
-   Prepare reviewable packages before any separately requested publication.
+2. Follow the user's latest request. The eight-phase implementation sequence now
+   has local core implementations. Next is beta/release validation: fresh-account
+   install/update/rollback/remove, actual login, hardware/assistive-technology and
+   external feedback. Run the configured CI only after an authorized push; make
+   a signing/publisher decision and review actual artifacts before publication.
 3. Keep phase-7 keyboard/palette/viewport/report privacy checks and prior geometry,
    hosting/recovery/opt-in tests. Separate manual beta/hardware/accessibility
    gates from automated evidence; do not enable startup or capture real workspaces.

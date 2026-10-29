@@ -1,6 +1,108 @@
 # Handoff
 
-## Current checkpoint: phase 7, 2026-10-28
+## Current checkpoint: phase 8 delivery preparation, 2026-10-28
+
+Implemented and deployed locally as `0.3.0-preview.8`, following `508783a` on
+feature/polish-launchers. The eight-phase sequence now has local core tooling;
+this is an unsigned preview, not a production release/certification. Read
+docs/RELEASE-AND-RECOVERY.md and docs/RELEASE-CHECKLIST.md before distribution.
+
+New delivery files: Build-Release.ps1, InstallationSupport.ps1,
+Manage-Installation.ps1, release/version.json, release/package-files.txt,
+tools/New-AppIcon.ps1, CHANGELOG.md and read-only .github/workflows/windows.yml.
+The fourteen application sources remain dynamically compiled in both modes.
+Build.ps1 checks source/release versions, generates assembly metadata and embeds
+the owned six-tile icon. Product/file identity is Windows Tile Studio; compatible
+SixSlotSnap.exe/receiver/mutex names remain. File version is 0.3.0.8.
+
+Build-Release emits Source and PortableCompiled ZIPs, per-file manifest,
+SHA256SUMS.txt and release-info.json. Reviewed input patterns exclude user data,
+logs/runtime/backups. Source ZIPs repeat for identical bytes/provenance via fixed
+entry order/timestamps/no compression; legacy csc compiled PE metadata is not
+deterministic. Dirty previews require an explicit flag and record it. Signing
+was not performed; the generated EXE reports NotSigned. Official action v7 refs
+were read and pinned to their full SHAs; no workflow was pushed/run on GitHub.
+
+Installer changes: companion scripts are required, optional expected archive
+hash, bounded path/link checks, manifest/cache/source/compiled integrity checks,
+staged candidate compile/host validation with isolated data and 60-second parent
+deadline, activation only on success, previous pointer and write-failure rollback.
+Legacy raw source receives a local integrity manifest. Launch-Installed verifies
+current code/artifact; mode changes require installation, not an unchecked
+override. No install/update automatically enables startup or kills a running app.
+
+Management supports read-only status/validate, confirmed rollback and uninstall.
+Running owned installs and linked paths are refused. Default uninstall retains
+data/unrelated root files and a marker for reinstall; RemoveData is separate and
+destructive. Only an owned startup command targeting that installation is removed.
+New startup opt-ins from owned versions/<id> + matching data use the stable
+Launch-Installed.ps1 across updates/rollback. Existing direct/version-specific
+entries are not silently migrated. Ordinary checkout/hosted startup stays direct.
+
+Verification completed before final artifact packaging:
+
+- Build -Test PASS: 198560. Compiled LauncherUi/EditorUi/WorkspaceUi/AccessibilityUi,
+  native WorkspaceIntegration and full HostedIntegration PASS, retaining prior
+  geometry/concurrent-source, hotkeys/recovery, frame/minimum/Chrome, display,
+  fonts/close-to-tray and accessibility/report privacy cases. Hosted General and
+  accessibility checks plus source installer/serialization suite PASS separately.
+- ReleaseTests PASS under Windows PowerShell 5.1: repeatable source ZIP, manifests/
+  metadata/icon/checksums, fresh/repeat/update and rollback toggle, locked pointer
+  rollback preservation, bad hash/noncompiling update/package/cache/binary tamper,
+  Source-compiled cache, WhatIf, data-retaining uninstall/reinstall, synthetic
+  explicit purge, owned/unrelated startup and junction rejection. All destructive
+  operations/shortcut writes were confined to fresh temp fixtures. These are
+  isolated-directory tests, not a fresh Windows account.
+- InstalledLaunchTests PASS: actual stable installed Hosted launch, Compiled
+  update/launch, rollback to Hosted and launch, runtime version/mode/path/receiver
+  ownership, hidden bar/no recovery, running-install removal refusal and normal
+  exit. No real windows adopted; no real startup entry enabled/changed.
+- SupersessionTests PASS: exact selected fake legacy close/redirect, original
+  hash preservation, enable/disable/re-enable and standalone restoration without
+  manager source. Actual predecessor repositories/legacy settings untouched.
+- PowerShell source syntax and diff/link checks are part of final review. Final
+  committed artifacts are rechecked with ReleaseTests -PackageDirectory and the
+  installed-launch suite; inspect final report files below for that later result.
+
+Development findings resolved: PowerShell 5.1 required explicit Compression
+assembly loading; an icon/build fixture nested too deeply hit the legacy compiler
+path limit, so release fixtures use short Temp roots and validation retains error
+output. Validation caches the child handle before waiting to retain exit status.
+The first installed smoke reused a stale runtime snapshot between starts; it now
+clears only its disposable snapshot and cleans up only its owned test process.
+This was a test harness race, not data migration or a manager crash. Invalid code
+and locked-pointer cases are deliberate failures, not unresolved product defects.
+
+Daily deployment currently verifies repo bin/SixSlotSnap.exe with repo data/,
+preview.8, hidden/disabled bar and recoveryRequired=false. Existing settings and
+the already-enabled account Startup shortcut are byte-preserved against phase-8
+snapshots. That shortcut still targets the same repo binary/data; no migration
+was requested or performed. data/workspaces.xml remains absent. Hosted delivery
+has all fourteen matching source files and current Start-Hosted.ps1, separate data
+preserved, no second controller. Fallback binary/settings/hosted sources/launcher:
+work/phase-eight-fallback; prior code also Git 508783a. PIDs are transient.
+
+Accepted reports outside Git share outputs/windows-tile-studio-phase-eight-
+prefix: full-tests.txt, hosted-Launcher.txt, hosted-WorkspaceUi.txt,
+hosted-AccessibilityUi.txt, release-accepted.txt, installed-accepted.txt and
+legacy.txt. Final artifacts/checks are bin/releases/, release-artifacts-final.txt,
+installed-artifacts-final.txt, deployment.json and windows-errors.json. Early
+build/release/installed-launch reports may retain failed development attempts;
+use accepted/final reports and exact artifact revisions, not stale PASS/error files.
+Release fixture outputs use Temp/WtsReleaseTests/<guid> and
+Temp/WtsInstalledTests/<guid>; no user data was copied into shipped archives.
+
+Exact next steps: read the five context files and actual status/log/remotes and
+runtime/process/data state. Continue the user's latest request. There is no
+planned phase 9: next is the release-checklist/beta campaign (fresh account/VM,
+actual public-version upgrades, login, physical displays/docking/sleep,
+screen-reader/OS contrast/text sizes, elevated/hung apps, competing tilers and
+external daily use), then signing/publisher and explicit artifact/push/release
+approval. User-selectable themes/text sizes remain unimplemented. Remote CI,
+real login and clean-account validation are not claimed. Do not force-push the
+divergent public/local histories or touch the original six-slot repository.
+
+## Previous checkpoint: phase 7, 2026-10-28
 
 Implemented/deployed locally as `0.3.0-preview.7`, following `cdac931` on
 feature/polish-launchers. Read docs/ACCESSIBILITY-AND-SUPPORT.md for exact scope.

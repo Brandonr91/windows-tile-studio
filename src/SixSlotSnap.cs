@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.7";
+    public const string ProductVersion="0.3.0-preview.8";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -580,6 +580,8 @@ public class SixSlotSnap : ApplicationContext {
         string assembly=typeof(SixSlotSnap).Assembly.Location;
         startupLaunch=new StartupLaunchSpec{Executable=assembly,DataDirectory=folder};
         if(string.IsNullOrEmpty(assembly)){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");if(sourceDirectory==null)startupLaunch.UnavailableReason="Hosted source location is unknown. Start with Start-Hosted.cmd before enabling login startup.";else startupLaunch.SourceScript=Path.Combine(sourceDirectory,"Start-Hosted.ps1");}
+        string installed=StartupLaunchSpec.InstalledLauncher(sourceDirectory??(string.IsNullOrEmpty(assembly)?null:Path.GetDirectoryName(Path.GetDirectoryName(assembly))),folder);
+        if(installed!=null){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");startupLaunch.SourceScript=null;startupLaunch.InstalledScript=installed;startupLaunch.UnavailableReason=null;}
         NativeMethods.SetThreadDpiAwarenessContext(new IntPtr(-4)); string warning; settings=SettingsStore.Load(settingsPath,out warning); preserveInvalidSettings=warning!=null;
         if(!File.Exists(settingsPath)) SettingsStore.MigrateLegacy(Path.Combine(folder,"layout.txt"),settings);
         settings.Validate(); workspace=new MonitorWorkspace(settings); workspace.UpdateDisplays(DisplayInventory.Connected()); workspace.Activate(DisplayInventory.ForWindow(NativeMethods.GetForegroundWindow())); BindActive();
