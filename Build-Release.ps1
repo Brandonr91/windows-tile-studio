@@ -1,6 +1,15 @@
 [CmdletBinding()]
 param([ValidateSet('All','Source','PortableCompiled')][string]$Kind='All',[string]$OutputDirectory=(Join-Path $PSScriptRoot 'bin\releases'),[switch]$AllowDirty)
 $ErrorActionPreference='Stop'
+if($PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSEdition -ne 'Desktop'){
+    $windowsHost=Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    if(!(Test-Path -LiteralPath $windowsHost)){throw 'Release packaging requires Windows PowerShell 5.1 for canonical ZIP/JSON serialization.'}
+    $parameters=@('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'Build-Release.ps1'),'-Kind',$Kind,'-OutputDirectory',[IO.Path]::GetFullPath($OutputDirectory));if($AllowDirty){$parameters+='-AllowDirty'}
+    $output=& $windowsHost @parameters 2>&1
+    if($LASTEXITCODE -ne 0){throw ('Release build failed: '+(($output | Select-Object -Last 8) -join ' '))}
+    Get-Content -Raw -LiteralPath (Join-Path ([IO.Path]::GetFullPath($OutputDirectory)) 'release-info.json') | ConvertFrom-Json
+    return
+}
 . (Join-Path $PSScriptRoot 'InstallationSupport.ps1')
 Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
 $version=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'release\version.json') | ConvertFrom-Json

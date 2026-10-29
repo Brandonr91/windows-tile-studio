@@ -28,7 +28,9 @@ and `release-info.json` identify archives. Inputs are reviewed in
 release/package-files.txt; user settings, logs, runtime XML, workspaces, backups
 and machine helper folders are excluded. ZIP entry order/timestamps/compression
 are canonical: the source ZIP repeats byte-for-byte for identical input bytes
-and provenance. The legacy compiler emits changing PE metadata/MVIDs; compiled
+and provenance using Windows PowerShell 5.1. Calls from PowerShell 7 delegate
+packaging to 5.1 so JSON/ZIP runtime differences do not change the result.
+The legacy compiler emits changing PE metadata/MVIDs; compiled
 ZIPs are checksummed per build, not claimed byte-reproducible.
 
 Packages are **unsigned previews**. Hashes detect mismatched bytes relative to

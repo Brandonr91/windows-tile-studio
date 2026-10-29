@@ -68,6 +68,9 @@ Development findings resolved: PowerShell 5.1 required explicit Compression
 assembly loading; an icon/build fixture nested too deeply hit the legacy compiler
 path limit, so release fixtures use short Temp roots and validation retains error
 output. Validation caches the child handle before waiting to retain exit status.
+Final cross-shell verification also exposed ZIP/JSON differences between .NET
+Framework/PowerShell 5.1 and PowerShell 7. Build-Release now delegates other shells
+to 5.1, making canonical serialization consistent across entry points.
 The first installed smoke reused a stale runtime snapshot between starts; it now
 clears only its disposable snapshot and cleans up only its owned test process.
 This was a test harness race, not data migration or a manager crash. Invalid code
