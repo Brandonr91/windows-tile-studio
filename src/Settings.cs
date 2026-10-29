@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using System.Xml;
 
 [Flags] public enum ShortcutModifiers { None=0,Alt=1,Control=2,Shift=4,Windows=8 }
 public class Shortcut {
@@ -36,9 +37,13 @@ public class AppSettings {
     public int Version=1;
     public string ActiveProfileId="six-grid";
     public bool ShowLauncherTab=true;
+    public bool LauncherPositionSet;
+    public bool LauncherPositionLocked;
+    public int LauncherX,LauncherY;
     public Shortcut FlyoutShortcut=new Shortcut{Modifiers=ShortcutModifiers.Control|ShortcutModifiers.Alt|ShortcutModifiers.Windows,Key=Keys.Space};
     public List<Shortcut> SlotShortcuts=new List<Shortcut>();
     public List<LayoutProfile> Profiles=new List<LayoutProfile>();
+    public List<MonitorConfiguration> Monitors=new List<MonitorConfiguration>();
     public static AppSettings Defaults() {
         var s=new AppSettings();
         s.Profiles.Add(LayoutProfile.Create("six-grid","Six windows",3,2));
@@ -51,7 +56,7 @@ public class AppSettings {
         for(int i=0;i<16;i++) s.SlotShortcuts.Add(i<9?new Shortcut{Modifiers=ShortcutModifiers.Control|ShortcutModifiers.Alt,Key=(Keys)((int)Keys.D1+i)}:new Shortcut());
         return s;
     }
-    public AppSettings Clone() { return new AppSettings{Version=Version,ActiveProfileId=ActiveProfileId,ShowLauncherTab=ShowLauncherTab,FlyoutShortcut=FlyoutShortcut.Clone(),SlotShortcuts=SlotShortcuts.Select(s=>s.Clone()).ToList(),Profiles=Profiles.Select(p=>p.Clone()).ToList()}; }
+    public AppSettings Clone() { return new AppSettings{Version=Version,ActiveProfileId=ActiveProfileId,ShowLauncherTab=ShowLauncherTab,LauncherPositionSet=LauncherPositionSet,LauncherPositionLocked=LauncherPositionLocked,LauncherX=LauncherX,LauncherY=LauncherY,FlyoutShortcut=FlyoutShortcut.Clone(),SlotShortcuts=SlotShortcuts.Select(s=>s.Clone()).ToList(),Profiles=Profiles.Select(p=>p.Clone()).ToList(),Monitors=Monitors.Select(m=>m.Clone()).ToList()}; }
     public void Validate() {
         if(Version!=1) throw new ArgumentException("This settings version is not supported.");
         if(Profiles==null || Profiles.Count<1 || Profiles.Count>12 || Profiles.Any(p=>p==null)) throw new ArgumentException("Keep between 1 and 12 layouts.");
@@ -59,6 +64,14 @@ public class AppSettings {
         if(Profiles.Select(p=>p.Id).Distinct().Count()!=Profiles.Count || Profiles.Select(p=>p.Name.Trim().ToLowerInvariant()).Distinct().Count()!=Profiles.Count)
             throw new ArgumentException("Layout names and IDs must be unique.");
         if(!Profiles.Any(p=>p.Id==ActiveProfileId)) ActiveProfileId=Profiles[0].Id;
+        if(Monitors==null) Monitors=new List<MonitorConfiguration>();
+        if(Monitors.Count>32 || Monitors.Any(m=>m==null || string.IsNullOrWhiteSpace(m.Id) || m.Id.Length>1024) || Monitors.Select(m=>m.Id).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=Monitors.Count) throw new ArgumentException("Monitor records need unique IDs and at most 32 saved displays.");
+        foreach(var monitor in Monitors) {
+            if(monitor.Profiles==null || monitor.Profiles.Count>12 || monitor.Profiles.Any(p=>p==null) || monitor.Profiles.Select(p=>p.Id).Distinct().Count()!=monitor.Profiles.Count) throw new ArgumentException("Monitor layout records are invalid.");
+            monitor.Profiles.RemoveAll(p=>!Profiles.Any(template=>template.Id==p.Id));
+            foreach(var profile in monitor.Profiles) {profile.Validate();if(profile.Shortcut==null)profile.Shortcut=new Shortcut();}
+            if(!Profiles.Any(p=>p.Id==monitor.ActiveProfileId)) monitor.ActiveProfileId=ActiveProfileId;
+        }
         if(FlyoutShortcut==null || !FlyoutShortcut.Enabled) throw new ArgumentException("Assign a shortcut to open the flyout.");
         if(SlotShortcuts==null || SlotShortcuts.Count!=16 || SlotShortcuts.Any(s=>s==null)) throw new ArgumentException("Expected 16 zone shortcut entries.");
         var keys=new HashSet<string>();
@@ -72,10 +85,16 @@ public class AppSettings {
 
 public static class SettingsStore {
     static readonly XmlSerializer Serializer=new XmlSerializer(typeof(AppSettings));
+    static SettingsStore(){Serializer.UnknownElement+=delegate{throw new ArgumentException("Unsupported settings fields were preserved. Use the version that created this file or review a backup.");};Serializer.UnknownAttribute+=delegate{throw new ArgumentException("Unsupported settings attributes were preserved. Use the version that created this file or review a backup.");};}
     public static AppSettings Load(string path,out string warning) {
         warning=null;
         if(!File.Exists(path)) return AppSettings.Defaults();
-        try { using(var stream=File.OpenRead(path)) { var s=(AppSettings)Serializer.Deserialize(stream); s.Validate(); return s; } }
+        try { using(var stream=File.OpenRead(path)) {
+            if(stream.Length>1048576)throw new ArgumentException("Settings exceed the 1 MB limit.");
+            var options=new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=1048576};
+            using(var reader=XmlReader.Create(stream,options))while(reader.Read())if(reader.Depth>32)throw new ArgumentException("Settings are nested too deeply.");stream.Position=0;
+            using(var reader=XmlReader.Create(stream,options)){var s=(AppSettings)Serializer.Deserialize(reader);s.Validate();return s;}
+        } }
         catch(Exception e) { warning="Settings could not be loaded. Defaults are running; the original file has been preserved. "+e.GetBaseException().Message; return AppSettings.Defaults(); }
     }
     public static void Save(string path,AppSettings settings) {

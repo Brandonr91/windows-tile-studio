@@ -1,5 +1,11 @@
 # Project notes
 
+These notes preserve the project's origin and early lessons. Current component
+behavior is documented in [ARCHITECTURE](../ARCHITECTURE.md), priorities and
+known gaps in [ROADMAP](../ROADMAP.md), and the latest verification/delivery
+checkpoint in [HANDOFF](../HANDOFF.md). Updated 2026-10-26 for the first polish
+milestone; historical lessons below remain applicable.
+
 ## Origin and behavior
 
 Six Slot Snap was made for a 5K2K ultrawide Windows desktop where six windows
@@ -18,7 +24,7 @@ The controller is split across `src/`:
 | Component | Responsibility |
 | --- | --- |
 | `LayoutModel` / `LayoutProfile` | Convert saved column and row weights into zone rectangles and adjust shared boundaries. |
-| `Snap` / `PlaceWindow` | Track the selected window and position its visible frame. |
+| `SnapTo` / `PlaceWindow` | Track the selected window and position its visible frame. |
 | `SnapFlyout` / `LayoutCard` / `LauncherTab` | Show persistent layout previews and select a zone without taking foreground focus. |
 | `SnapSettingsForm` / `ShortcutDialog` | Edit layouts, proportions, and shortcut assignments. |
 | `CommandWindow` / `HotkeyRegistry` | Receive global shortcuts and replace registrations with conflict rollback. |
@@ -34,9 +40,12 @@ physical display was 5120 × 2160 at 125% scaling.
 
 Native move/size start and end events identify the window being manipulated.
 A timer samples its visible rectangle during the drag. Other assigned windows
-follow the updated grid; the controller avoids repeatedly positioning the
-window currently under the mouse. After release, it aligns the managed windows
-and performs a short settling pass to handle delayed native adjustments.
+follow only the affected axes of the updated grid; other axes retain their
+actual starting bounds. The controller avoids repeatedly positioning the
+window currently under the mouse. After release, it aligns the affected edges
+and performs a short settling pass using the same scopes. Height adjustments
+are limited to an adjacent pair; flanking height changes caused by native
+grouping are corrected instead of propagated.
 
 ## Lessons from the first version
 
@@ -72,11 +81,16 @@ window-management feature.
 - Broader cross-process, interactive regression coverage.
 - Better minimum-size negotiation before resizing neighbors.
 - Per-monitor state and display-change handling.
-- A more visual layout editor and keyboard navigation within the flyout.
+- A more visual layout editor and broader keyboard/accessibility coverage.
+  Arrow navigation, Tab/Shift+Tab and Enter selection are now implemented;
+  temporary registrations are released on dismissal or rolled back on conflict.
 - Explicit assignment persistence that survives app restarts.
 - Optional startup registration with an equally simple removal path.
 - Code-signing and a reproducible release pipeline if binary downloads are added.
 
-No telemetry or network client is implemented. Logs and ratios stay beside
-the built executable and are excluded from version control. Review logs before
+The controller has no telemetry or network client. The optional source downloader
+does fetch GitHub archives; see [launch modes](LAUNCHING.md). Launch scripts now
+store settings and logs under `data/` by default, separately from versioned source
+in installed mode; a directly launched EXE still defaults to its base directory.
+User settings and logs are excluded from version control. Review logs before
 sharing them in an issue.

@@ -4,7 +4,8 @@ param(
     [ValidateSet('Run','Show','Settings','Quit','Preview','Validate')]
     [string]$Action = 'Run',
     [switch]$NoRecover,
-    [switch]$RunInProcess
+    [switch]$RunInProcess,
+    [string]$StartupOwner
 )
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DataDirectory)) { $DataDirectory = Join-Path $PSScriptRoot 'data' }
@@ -36,7 +37,7 @@ $sourceFiles = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Fil
 if ($sourceFiles.Count -lt 5) { throw 'The source folder is incomplete. Download or extract the whole project.' }
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,System.Xml.Linq
 if (-not ('SixSlotSnap' -as [type])) {
-    Add-Type -LiteralPath $sourceFiles -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll
+    Add-Type -LiteralPath $sourceFiles -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll,Accessibility.dll
 }
 
 if ($Action -eq 'Validate') {
@@ -73,6 +74,8 @@ if ($Action -eq 'Run') {
 $applicationArguments = [Collections.Generic.List[string]]::new()
 $applicationArguments.Add('--data-dir')
 $applicationArguments.Add($DataDirectory)
+$applicationArguments.Add('--source-root')
+$applicationArguments.Add($PSScriptRoot)
 switch ($Action) {
     'Show' { $applicationArguments.Add('--show') }
     'Settings' { $applicationArguments.Add('--settings') }

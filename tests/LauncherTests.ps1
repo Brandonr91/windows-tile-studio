@@ -24,6 +24,7 @@ try {
     New-Item -ItemType Directory -Path $fixture | Out-Null
     Copy-Item -LiteralPath (Join-Path $projectRoot 'src') -Destination $fixture -Recurse
     foreach($file in @('README.md','Build.ps1','Start.ps1','Start-Hosted.ps1','Start-Hosted.cmd')) { Copy-Item -LiteralPath (Join-Path $projectRoot $file) -Destination $fixture }
+    foreach($folder in @('release','tools')){Copy-Item -LiteralPath (Join-Path $projectRoot $folder) -Destination $fixture -Recurse}
     $checkData = Join-Path $run 'host-validation'
     $json = & $windowsPowerShell -NoProfile -STA -ExecutionPolicy Bypass -File (Join-Path $fixture 'Start-Hosted.ps1') -RunInProcess -Action Validate -DataDirectory $checkData
     Assert ($LASTEXITCODE -eq 0) 'Hosted compilation or settings validation failed.'
@@ -105,7 +106,7 @@ try {
         $remote = & $installer -InstallRoot (Join-Path $run 'github-download') -Mode Compiled -NoLaunch
         Assert ($remote.SourceKind -eq 'GitHub' -and $remote.Commit -match '^[0-9a-f]{40}$') 'GitHub revision pinning failed.'
         Assert (Test-Path -LiteralPath (Join-Path $remote.VersionDirectory 'src\SixSlotSnap.cs')) 'GitHub source was not installed.'
-        Assert (No-Exe $remote.InstallRoot) 'A no-launch GitHub download unexpectedly compiled an EXE.'
+        Assert (Test-Path -LiteralPath (Join-Path $remote.VersionDirectory 'bin\SixSlotSnap.exe')) 'Compiled candidate was not validated before activation.'
         $results.Add('Actual GitHub source download records the archive commit without a REST API lookup or launch.')
     }
     $report = @('PASS') + @($results)

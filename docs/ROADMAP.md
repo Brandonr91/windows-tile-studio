@@ -1,5 +1,30 @@
 # Development roadmap
 
+For current priorities, acceptance criteria and known defects/limits, read the
+root [ROADMAP](../ROADMAP.md). This file retains the existing milestone history;
+keep both views synchronized when a meaningful milestone or priority changes.
+
+Current-status clarification (2026-10-28 review of `7465c8d`): phases 1–6 are
+implemented locally within recorded test limits, including phase-5 visual/portable
+layouts and phase-6 opt-in workspaces/startup controls. Phase 7 was then planned;
+its later local implementation is recorded under Polished version below.
+The incremental descriptions below preserve milestone history; read the root
+roadmap and latest HANDOFF checkpoint for current status and exact next steps.
+
+Current phased execution: [Polishing phases](POLISH-PHASES.md). Phase 1 adds
+Appearance controls, launcher reset and version/branding consistency. All
+previously optional capabilities are in the planned phases, not claimed complete.
+Phase 2 now adds draft-close safeguards, confirmed/undoable grid changes,
+failed-save retention, startup Recovery settings and standalone legacy restore.
+Phase 3 is compatibility/responsiveness; broader production gates remain open.
+Phase 3 now has a tested core: size constraints, verified fits, pinned height
+gestures, asynchronous DPI-aware probes and lifecycle cleanup. See the
+[compatibility checkpoint](COMPATIBILITY.md) for exact coverage and open limits.
+Per-monitor state and display recovery have a local phase-4 implementation, with
+physical multi-monitor validation still outstanding. The launcher font-lifetime
+follow-up now adds actual paint/DPI lifecycle tests in both launch modes; see
+the [audit follow-up](PHASE-AUDIT.md).
+
 ## Basic preview version — implemented
 
 - Persistent custom-layout flyout, opened by a configurable hotkey.
@@ -21,7 +46,8 @@ particular release date.
 - Collect concrete failures from normal app use before broadening the feature set.
 - Exercise mixed app frames, minimum sizes, minimize/restore, and app restarts.
 - Check display changes, sleep/resume, and competing window-management utilities.
-- Improve startup recovery when a configured shortcut becomes unavailable.
+- Broaden startup recovery coverage beyond the configured-shortcut conflict and
+  corrupt-settings cases completed in phase 2.
 - Broaden keyboard navigation checks across mixed layouts and competing apps.
 
 ## First polish milestone — implemented
@@ -35,12 +61,53 @@ particular release date.
   Enter to place, with temporary registration cleanup and conflict rollback.
 - Pair-only height changes, preserving actual flanking heights during width
   resizing and correcting unwanted native group changes.
+- Persistent Layouts bar near the taskbar clock; drag it to move, click to open,
+  with saved position and work-area clamping.
+- Distinct Windows Tile Studio tray name/icon and reversible, opt-in legacy
+  launch redirection for explicitly selected older controller folders.
 
 See [launch modes](LAUNCHING.md). Hosted installations require a revision
 containing the hosted launchers. The original `six-slot-snap` repository
 is unchanged.
 
 ## Polished version
+
+Phase 8 local checkpoint: preview.8 adds release identity/icon, versioned source/
+compiled packages with file/archive hashes, staged validation, rollback/uninstall,
+stable installed startup and read-only Windows CI configuration. See
+[release/recovery](RELEASE-AND-RECOVERY.md) and the explicit
+[production gates](RELEASE-CHECKLIST.md). There is no automatic public release;
+the remaining manual/beta/signing/remote-CI checks are not claimed passed.
+
+Phase 7 local checkpoint: preview.7 adds keyboard visual dividers, accessible
+selection/value feedback, resizable/scrolled DPI-aware dialogs, system contrast
+colors and previewed aggregate diagnostic export. See [scope and manual
+verification limits](ACCESSIBILITY-AND-SUPPORT.md). Phase 8 is next; older next-
+phase paragraphs below preserve their dated milestone context.
+
+General settings interlude: preview.6.1 puts startup/tray, bar visibility/reset/
+lock, flyout-key access and local support in General. Startup remains explicit;
+other preferences stay draft-only. See [guide](GENERAL-SETTINGS.md). Phase 7 is
+still next; this is not completion of accessibility/visual/support scope.
+
+Phase 6 local checkpoint: `0.3.0-preview.6` adds opt-in workspace capture/preview/
+restore, a separate missing-app launch action and explicit startup shortcut
+controls. See [workspace/startup guide](WORKSPACES-AND-STARTUP.md). No real login
+startup was enabled; phase 7 accessibility/visuals/support is next. Earlier
+checkpoint paragraphs below retain milestone history, not a competing next phase.
+
+Phase 5 local checkpoint: `0.3.0-preview.5` adds the draft visual divider editor
+and validated portable layout/hotkey transfer. See [guide](VISUAL-AND-PORTABLE.md).
+The next planned phase is optional workspaces/startup, with no relaunch or login
+registration enabled by this phase.
+
+Local phased progress (2026-10-27): phases 1–4 implement controls/identity,
+editing/startup recovery, representative app-size compatibility, and independent
+monitor state/display notifications. See [phase plan](POLISH-PHASES.md) and
+[display coverage](DISPLAYS.md); physical multi-monitor/docking/sleep tests remain.
+Phase 5 starts the visual builder and portable layout import/export. The list
+below retains the broader original polished scope, not an assertion all items
+are complete or published.
 
 - More visual proportion editing and better settings presentation.
 - Per-monitor state and display-change recovery.

@@ -7,11 +7,19 @@ layout is three columns by two rows, with independent row dividers.
 **Polish preview.** Keyboard selection, pair-only height resizing, and source
 launchers are available. See [the roadmap](docs/ROADMAP.md) for further work.
 
+Phase-7 preview adds keyboard divider editing (Page Up/Down selects, arrows
+adjust, Shift for finer steps, Ctrl+Z/Y undo/redo), resizable/scrolled dialogs,
+Windows high-contrast colors and **General → Support → Preview diagnostic
+report...**. Reports contain aggregate environment/layout/process values,
+exclude window titles/paths/identifiers and stay local. See
+[accessibility and support](docs/ACCESSIBILITY-AND-SUPPORT.md) for verification
+limits and remaining manual screen-reader/hardware checks.
+
 This is the configurable-layout successor to
 [Six Slot Snap](https://github.com/Brandonr91/six-slot-snap), published in a
 separate repository so the original six-slot utility remains available.
-The current executable and some window titles still use the prototype name
-`SixSlotSnap`; the repository is Windows Tile Studio.
+The executable and internal compatibility identifiers retain the prototype name
+`SixSlotSnap`; visible windows and the tray use Windows Tile Studio.
 
 Built with C#, Windows Forms, and Windows APIs. No external packages or
 replacement taskbar. The current version is an early desktop utility tested
@@ -39,7 +47,17 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
-The launch-mode polish branch adds **Start-Hosted.cmd**, which runs the
+Local beta.2 adds settings accessibility names to beta.1's settings-preserving
+downgrade guards and a
+[beta test guide](docs/BETA-TESTING.md) to the phase-8 versioned
+Source/PortableCompiled packages, manifests/checksums, validated installation,
+rollback and data-preserving uninstall. See
+[release and recovery](docs/RELEASE-AND-RECOVERY.md). Packages are unsigned
+previews; the [production checklist](docs/RELEASE-CHECKLIST.md) retains manual
+hardware/accessibility/beta checks. Validation uses the existing installation;
+fresh-account testing was waived by the user. No release is published automatically.
+
+The first polish milestone adds **Start-Hosted.cmd**, which runs the
 controller inside Windows PowerShell without generating a standalone app EXE,
 and **Get-FromGitHub.ps1**, which installs source into versioned local folders.
 See [launch modes](docs/LAUNCHING.md) for instructions, publication requirements,
@@ -68,6 +86,44 @@ running, exit it from its tray icon before starting this copy.
 the launcher; it does not change the machine's saved execution policy.
 Managed machines may still restrict scripts or compilation.
 
+## Tray entry and legacy preference
+
+The tray entry is named **Windows Tile Studio — layouts and hotkeys** and uses
+a blue six-tile icon. Double-click it for settings, or right-click for layout,
+settings, reset and Exit commands. Windows may place it in the tray overflow.
+
+### Prefer the full manager over an old Six Slot Snap installation
+
+Only enable this for an explicitly selected legacy folder, separate from the
+full manager. From this repository:
+
+```powershell
+.\Set-LegacySupersession.ps1 -LegacyDirectory 'C:\path\to\old\SixSlotSnap' -ManagerSourceDirectory 'C:\path\to\windows-tile-studio'
+```
+
+This closes a running `SixSlotSnap.exe` at that exact legacy path, saves its
+original bytes as `SixSlotSnap.legacy-original.exe`, and puts a small redirect
+EXE at the old launch path. Existing shortcuts then launch the preferred hosted
+manager, or do nothing if it is already running. `-ManagerDataDirectory` can
+select its existing settings directory. This optional compatibility EXE is
+separate from the full manager's source-only hosted runtime.
+
+Disable the preference and restore the original executable with:
+
+```powershell
+.\Set-LegacySupersession.ps1 -LegacyDirectory 'C:\path\to\old\SixSlotSnap' -Disable
+```
+
+Exit the full manager before running the restored controller. The shared
+single-instance mutex prevents simultaneous controllers. The option affects
+only selected legacy folders, not every copied EXE on the computer; source
+repositories and startup settings are not edited. If the preferred source
+folder is moved or removed, re-enable with its new path or disable the option.
+Newly enabled folders also contain **Restore-SixSlotSnap.cmd**. Close any missing
+manager message and run this helper to restore the original with hash checks,
+even if the full manager's source folder is unavailable. Exit the full manager
+before starting the restored controller; the original backup is retained.
+
 ## Snap a window
 
 Select a window and press **Ctrl+Alt+Win+Space** to open the layout flyout.
@@ -75,7 +131,9 @@ Click a zone in any layout to place that window there. The panel stays open
 until you select a zone, click outside, press **Esc**, or repeat the shortcut.
 The target window remains the one selected when you opened the flyout.
 
-The small **Layouts** button at the top center opens the same panel. It can
+The small **Layouts** bar near the taskbar clock opens the same panel. Hold
+the left mouse button anywhere on the bar and drag to move it; its position
+is remembered across restarts. It sits above the taskbar by default. It can
 be hidden in settings. You can also use **Ctrl+Alt+1** through **Ctrl+Alt+9**
 to place the active window in a numbered zone of the current layout.
 The default six-window layout is numbered as follows:
@@ -101,6 +159,10 @@ available and the panel reports that keyboard navigation is unavailable.
 
 - Drag a shared **left/right edge** to resize neighboring columns in both rows.
 - Drag a shared **top/bottom edge** to resize that column's two windows.
+- Reported app minimum sizes constrain shared dividers. If a window cannot fit
+  its requested zone, placement is rejected with feedback instead of recording
+  a false snap. Choose another zone or enlarge the layout; unusual app sizing
+  rules may still prevent an exact fit.
 - Each column keeps its own row divider. A horizontal boundary does not move
   the row dividers in other columns.
 - Height dragging affects only the two windows sharing that boundary, from
@@ -120,6 +182,30 @@ The tray menu opens the layout manager, resets proportions in the current
 layout, or exits the controller. Exit and delete the project folder to remove it.
 
 ## Edit layouts and shortcuts
+
+Changed drafts ask before closing without saving. Replacing a grid or removing
+a layout asks for confirmation; **Undo grid change** restores the previous draft
+grid before saving. Save errors leave your edits open. Resetting live layout
+proportions from the tray also asks before resizing assigned windows.
+
+If startup shortcuts conflict or settings cannot be read, the app opens a
+**Recovery** tab instead of exiting. Review layouts/hotkeys and explicitly save
+to resolve it; Cancel preserves the original file. The tray remains available
+when global shortcuts cannot be registered. Successful replacement keeps the
+previous settings in `.bak`.
+
+Open tray **General settings** for **Startup & tray**, **Layouts bar**,
+**Flyout shortcut**, and **Support**. Show/hide, lock the bar's position or reset
+it near the clock, then choose **Save changes**; **Cancel** discards those draft
+edits. The flyout shortcut shares the same value as Hotkeys. Startup enable/remove
+buttons are separately confirmed and apply immediately; Cancel does not undo
+them. Startup stays off until explicitly enabled and never restores workspaces
+or launches saved apps. Support opens the local data folder/log and shows version
+and tray guidance. See [General settings](docs/GENERAL-SETTINGS.md).
+The tray's **Reset Layouts bar position** applies
+immediately and does not reset window proportions. **About Windows Tile Studio**
+shows the preview version. See [polishing phases](docs/POLISH-PHASES.md) for the
+current implementation milestone and remaining production scope.
 
 Open **Manage layouts & hotkeys** from the flyout or tray menu.
 
@@ -148,16 +234,36 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
-- One monitor is managed at a time; snapping on another monitor switches the
-  active layout and clears the previous monitor's window assignments.
+Phase 6 adds tray **Workspaces**: capture assigned windows,
+preview matches, choose ambiguous windows and explicitly restore selected rows.
+Missing-app launch is a separate confirmed action. General settings has explicit
+enable/status/remove controls and remains off until you choose it. See
+[workspace and startup guide](docs/WORKSPACES-AND-STARTUP.md).
+
+Phase-5 preview adds **Layouts → Edit visually...** and a **Share layouts** tab.
+Drag dividers, Undo/Redo or cancel the preview, then use **Save changes** in
+settings to apply. Share layouts exports portable XML and imports copies or a
+replacement catalog; importing shortcuts is optional. Invalid imports keep the
+draft intact. See [visual editing and portable layouts](docs/VISUAL-AND-PORTABLE.md).
+
+The Layouts bar has an **×** button. Closing or minimizing it hides it to the
+tray and remembers that choice; snapping and hotkeys keep running. Right-click
+the Windows Tile Studio tray icon and choose **Show Layouts bar** to restore it.
+Use **Exit** in the tray menu to stop the controller.
+
+- Displays retain independent selected layouts, proportions and live assignments.
+  Names, grids and shortcuts are shared. See [display support and hardware
+  verification limits](docs/DISPLAYS.md); real multi-monitor/docking tests remain.
 - Only the most recently snapped window in each slot participates in resizing.
-- App minimum sizes may prevent an exact fit. Minimized and maximized neighbors
+- Advertised minimum sizes are checked, and actual placement is verified, but
+  arbitrary app restrictions may still prevent an exact fit. Minimized and maximized neighbors
   are excluded from linked resizing.
 - Elevated apps may require running the controller with matching privileges.
 - The selector is a separate panel. This does not add a Windows Snap flyout
   layout or provide drag-to-zone snapping.
-- App identities are not saved across app restarts. Recovery uses visible
-  geometry, so overlapping duplicate windows may need manual reassignment.
+- Automatic recovery uses visible geometry and can be ambiguous. Opt-in saved
+  workspaces match executable/class and optionally exact titles; they require a
+  preview and manual choices for ambiguous windows. Documents/sessions are not recreated.
 - Full-screen apps, unusual window frames, and additional display configurations
   need broader testing.
 - Keyboard navigation needs its temporary keys to be available; a conflict
@@ -165,6 +271,14 @@ you want to retain it as a fallback; only one controller can run at a time.
 - This version uses rectangular column stacks, not arbitrary overlapping zones.
 
 ## Development and verification
+
+With the daily controller stopped, `Build.ps1 -Compatibility` runs the focused
+phase-3 window tests. They include 3/4-row stacks, delayed size replies, reported
+minimums, limit drags, lifecycle cases and an isolated Chrome profile when Chrome
+is available. Existing browser windows are not used. The full hosted suite also
+includes these compiled-controller compatibility subcases. See the
+[compatibility checkpoint](docs/COMPATIBILITY.md) for exact results and limits;
+elevated and completely hung apps have not been manually validated.
 
 The controller is split across `src/`: native window management, layout geometry,
 settings persistence, flyout controls, and the settings GUI. Run `Build.ps1 -Test`
@@ -192,9 +306,15 @@ examples, a validation workflow, and ideas for similar native desktop tools.
 The repository also includes [AGENTS.md](AGENTS.md), which records the resizing
 rules and build command for future coding sessions.
 
-Next steps include per-monitor layouts, minimum-size negotiation, saved app
-assignments, and an optional login launcher. These are development ideas rather
-than features already implemented; see [the roadmap](docs/ROADMAP.md).
+For persistent project context, read [architecture](ARCHITECTURE.md),
+[decisions](DECISIONS.md), the current [roadmap](ROADMAP.md), and
+[handoff](HANDOFF.md). Consult them together with the actual checkout before
+continuing development after a new session or context compaction.
+
+Per-monitor layouts, minimum-size negotiation, visual/portable layouts and
+opt-in workspace/startup controls are implemented in the local preview within
+their documented test scope. Next is accessibility, visuals and support;
+see [the roadmap](docs/ROADMAP.md) for remaining verification/release gates.
 
 ## License and project notes
 
