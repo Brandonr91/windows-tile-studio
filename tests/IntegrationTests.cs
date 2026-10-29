@@ -87,6 +87,7 @@ class IntegrationTests {
         using(var cancelled=new SnapSettingsForm(original)) {
             cancelled.StartPosition=FormStartPosition.Manual; cancelled.Location=new Point(-30000,-30000); cancelled.ShowInTaskbar=false; cancelled.Show();
             ((TabControl)Find(cancelled,c=>c is TabControl)).SelectedIndex=2; Pump(30);
+            ((TabControl)Find(cancelled,c=>c is TabControl&&c.AccessibleName=="General settings categories")).SelectedIndex=1;Pump(30);
             ((Button)Find(cancelled,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
             Check(!cancelled.Draft.LauncherPositionSet && original.LauncherPositionSet && original.LauncherX==456,"Resetting the draft changed live settings before save");
         }
@@ -112,6 +113,7 @@ class IntegrationTests {
             editor.ConfirmAction=delegate { return true; };
             ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
             var tabs=(TabControl)Find(editor,c=>c is TabControl); tabs.SelectedIndex=2; Pump(30);
+            var general=(TabControl)Find(editor,c=>c is TabControl&&c.AccessibleName=="General settings categories");general.SelectedTab=general.TabPages.Cast<TabPage>().Single(p=>p.Text=="Layouts bar");Pump(30);
             ((Button)Find(editor,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
             ((CheckBox)Find(editor,c=>c is CheckBox && c.AccessibleName=="Show floating Layouts bar")).Checked=false;
             Check(!editor.Draft.LauncherPositionSet && original.LauncherPositionSet,"Appearance reset was not isolated to the draft");
@@ -392,10 +394,10 @@ class IntegrationTests {
         passed.Add("Actual arrow/Enter and Tab/Shift+Tab input selects the original target; navigation keys release on close and roll back on conflicts.");
         string workspacePath=Path.Combine(data,"workspaces.xml");string workspaceBefore=File.Exists(workspacePath)?File.ReadAllText(workspacePath):null;
         Command(SixSlotSnap.WorkspacesCommand,0,IntPtr.Zero);IntPtr workspaceDialog=IntPtr.Zero;
-        Wait(()=>{workspaceDialog=NativeMethods.FindWindow(null,"Windows Tile Studio — workspaces & startup");return workspaceDialog!=IntPtr.Zero;},"Workspace dialog did not open from the running controller");
+        Wait(()=>{workspaceDialog=NativeMethods.FindWindow(null,"Windows Tile Studio — workspaces");return workspaceDialog!=IntPtr.Zero;},"Workspace dialog did not open from the running controller");
         NativeMethods.PostMessage(workspaceDialog,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(workspaceDialog),"Workspace dialog did not close");
         Check(!controller.HasExited&&(File.Exists(workspacePath)?File.ReadAllText(workspacePath):null)==workspaceBefore,"Opening/closing workspace controls changed saved workspaces or stopped the controller");
-        passed.Add("The running controller opens/closes workspace/startup controls without capturing/restoring apps or changing workspace files.");
+        passed.Add("The running controller opens/closes workspace controls without capturing/restoring apps or changing workspace files.");
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Controller did not exit cleanly");
         var duplicate=new Form(); IntPtr handle=duplicate.Handle;
         var shortcut=AppSettings.Defaults().FlyoutShortcut; Check(NativeMethods.RegisterHotKey(handle,900,0x4000|(uint)shortcut.Modifiers,(uint)shortcut.Key),"Flyout hotkey was not released on exit"); NativeMethods.UnregisterHotKey(handle,900); duplicate.Dispose();

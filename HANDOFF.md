@@ -1,6 +1,133 @@
 # Handoff
 
-## Current checkpoint: phase 6
+## Current checkpoint: General settings interlude, 2026-10-28
+
+User requested General options before returning to polishing phases. Implemented
+and installed locally as `0.3.0-preview.6.1`, following `7465c8d`. Tray **General
+settings** (also tray double-click) opens the General tab. Four categories:
+Startup & tray, Layouts bar, Flyout shortcut and Support. Startup moved out of
+Workspaces; its existing owned-shortcut backend is unchanged. Confirmed startup
+enable/remove acts immediately, even if other draft edits are canceled. Bar
+visibility/reset/new position lock and shared flyout key remain Save/Cancel drafts.
+Support opens local data folder/log with missing-file feedback. No theme controls
+or sanitized diagnostic export yet. See docs/GENERAL-SETTINGS.md.
+
+New src/GeneralSettings.cs is a partial SnapSettingsForm plus StartupControls;
+all twelve source files compile dynamically in both modes. Optional schema-1
+LauncherPositionLocked defaults false for old files, clones/roundtrips and blocks
+drag movement/position writes without blocking clicks or explicit reset. No
+resize math changed. General and Hotkeys share the flyout shortcut draft, also
+refreshed by imports. Recovery still takes precedence when opening settings.
+
+Verification against this change:
+
+- Pure suite PASS: 198560 checks, including default/clone/XML bar lock.
+- WorkspaceUi (now also General) PASS compiled and Windows PowerShell 5.1 STA:
+  no registration on open, canceled/confirmed enable/removal in memory, immediate
+  startup surviving settings Cancel, lock/reset/save/discard draft isolation,
+  hidden-bar preservation, shared shortcut modal/display and missing-log feedback.
+  Native shortcut roundtrips/removal still use a temporary folder only.
+- LauncherUi PASS in both modes: actual painting through 70 DPI transitions,
+  close/minimize-to-tray, bounded GDI, locked drag/no position callback and click.
+- EditorUi PASS; full compiled and source-hosted Integration PASS including
+  prior pair-only resizing/concurrent-source sample, flyout/hotkey/recovery,
+  display notification and compatibility regressions. WorkspaceIntegration and
+  cold compiled/hosted first-dialog checks PASS with updated workspace title.
+- Final pure/General/launcher/hosted-source installer/cold hosted checks followed
+  the last tray double-click wiring and Support copy change. Full integrations
+  preceded those final UI-only adjustments; no geometry changes followed them.
+- Rendered four General pages inspected. Real account startup was not enabled,
+  no real workspace captured/restored and no real missing app launched. Opening
+  local folder/existing log was not manually exercised; missing-log branch was.
+- Application events 1000/1001/1026 sampled since development started: zero
+  matching app/test crash events, query succeeded. No continuous tray monitoring.
+  Isolated Chrome emitted its known profile/newtab stderr; compatibility passed.
+
+The first integration attempt failed because an old test clicked the reset
+button on a now-hidden tab. Test now selects General/Layouts bar; full suites
+passed. An initial test-only variable naming compile error was corrected too.
+Neither failure is an unresolved application defect.
+
+Deployment: found the repo compiled controller running again, backed up and
+stopped only that exact process for isolated integration. Rebuilt repo bin/ and
+restarted with repo data/. Runtime/process verified preview.6.1, hidden bar,
+recoveryRequired=false. Existing settings compare equal after excluding the new
+default-false lock field. Real owned Startup shortcut and data/workspaces.xml
+remain absent. Hosted delivery has all twelve matching sources and preserved
+separate data; no second controller. Fallback binary/settings/hosted source and
+before.json: work/general-settings-fallback. Existing ZIPs predate this update;
+they were not refreshed. No publication or remote-state verification occurred.
+
+Reports outside Git share outputs/windows-tile-studio-general- prefix:
+final-ui.txt, workspace-ui.txt, integration-final.txt, hosted-ui.txt,
+hosted-launcher-ui.txt, hosted-visibility.txt, launchers.txt, deployment.json and
+windows-errors.json. Initial ui-tests.txt/integration.txt retain failed attempts;
+use accepted later reports above. Rendered pages are under
+bin/general-settings/workspace-ui-data/general-*.png. Fresh clones lack these.
+
+Exact next steps: inspect status/log/remotes and read all five context documents
+plus actual source before continuing. Follow the latest user request. **Phases
+1–6 are complete within recorded scope; phase 7 (accessibility, visuals and
+support) is next, not completed by this interlude.** Begin its keyboard/focus/
+screen-reader/high-contrast/small-display audit as described in ROADMAP and
+docs/POLISH-PHASES.md when requested. Preserve new General draft/immediate-action
+tests plus prior resize/font/hidden-dialog regressions. Rediscover processes/data
+before native tests; never trust an old runtime PID or run competing controllers.
+Physical mixed-DPI/docking/sleep, real login, privileged/hung apps and production
+install/update/rollback/removal/signing remain explicit release gates.
+
+## Previous checkpoint: context review, 2026-10-28
+
+Documentation-only review against local commit `7465c8d` on
+`feature/polish-launchers`. Worktree was clean before this review. Origin is
+`https://github.com/Brandonr91/windows-tile-studio.git`; no fetch/push or
+publication was performed. Public revision is not freshly verified. Preserve
+the independent original six-slot repository; reconcile histories before publishing.
+
+Inspected current source, Build.ps1, Start-Hosted.ps1, root context, linked
+milestone/phase notes and saved phase-6 evidence. All eleven src/*.cs files are
+present; ProductVersion is `0.3.0-preview.6`. Phases 1–6 are implemented within
+the evidence below. Phase 7 is planned. No application functionality changed;
+no new build, desktop suite or hardware test was run during this review.
+
+Fresh read-only operational check: repo runtime XML retains preview.6,
+six-grid and hidden-bar/recovery-clear values, but its recorded PID had no live
+process. Process inventory found no SixSlotSnap.exe or PowerShell command line
+containing Start-Hosted.ps1. Treat assignments as stale, not verified live windows.
+No controller was started/stopped. The actual Windows Tile Studio Startup
+shortcut and repo data/workspaces.xml were absent. Other installations and
+Windows startup mechanisms were not exhaustively audited.
+
+Saved evidence re-read (previous runs, not rerun today): pure-final.txt reports
+198558 PASS; visibility-tests.txt reports UI/native restore and cold compiled
+dialog visibility PASS; hosted-visibility.txt reports cold hosted dialogs PASS.
+The Application event report was checked on 2026-10-27 and reports zero matching
+crashes; this is neither a fresh event query nor continuous tray-area monitoring.
+All share the outputs/windows-tile-studio-phase-six- prefix outside Git and may
+be absent in another clone. See phase 6 below for exact verification boundaries.
+
+Resume steps:
+
+1. Read AGENTS, ARCHITECTURE, ROADMAP, DECISIONS and this current checkpoint;
+   inspect git status/log/remotes plus relevant source and uncommitted work.
+2. Continue the latest user request. Context work is complete; do not begin
+   phase 7 merely because it is next. If requested, follow root ROADMAP's exact
+   steps and docs/POLISH-PHASES.md accessibility/visual/support criteria.
+3. Before native tests/deployment, rediscover processes and the intended data
+   directory. Last deployed mode was repo bin/SixSlotSnap.exe with repo data/;
+   hosted delivery is a separate copy/data directory. Preserve hidden-bar
+   preference, saved data and fallbacks. Never run competing controllers.
+4. For later code changes, use focused test switches in AGENTS and Build.ps1.
+   Do not claim old reports test new source. Keep real login, physical mixed-DPI/
+   docking/sleep, elevated/hung apps and clean-account release gates open.
+5. Synchronize these records with meaningful changes. Build/deploy/publish are
+   separate operations, not consequences of updating documentation.
+
+Everything below is dated history. Earlier headings and next-step instructions
+describe their checkpoint only; they do not override this section or the current
+roadmap. Older hosted/live-assignment claims are not current state.
+
+## Previous checkpoint: phase 6
 
 2026-10-27, following `3f6eee1`. Local `0.3.0-preview.6` implements explicit
 workspace capture/preview/restore, a separate missing-app launch action, and
@@ -75,7 +202,7 @@ Rendered workspace/startup PNGs are under bin/phase-six/workspace-ui-data and
 copied to outputs for review. Source packages refreshed after the local commit.
 Next planned phase is 7 (accessibility/visuals/support); follow latest user intent.
 
-## Current checkpoint: phase 5
+## Previous checkpoint: phase 5
 
 2026-10-27, following `4ca3c9b`. User requested phase 5 and attention to Windows
 errors near the clock. Local `0.3.0-preview.5` is implemented and deployed.
@@ -267,7 +394,7 @@ refreshed after the audit commit. No public push or new phase implemented.
 Resume the user's latest request after reading actual Git/runtime state; phase 5
 remains the next planned development phase, not part of this audit.
 
-## Current checkpoint: phase 4
+## Previous checkpoint: phase 4
 
 2026-10-27, following `9785a92`. Phase 4 core is implemented locally as
 `0.3.0-preview.4`. Read [display support/verification](docs/DISPLAYS.md) and
@@ -379,7 +506,7 @@ Reports are `outputs/windows-tile-studio-phase-three-test-results.txt` and
 `outputs/windows-tile-studio-phase-three-compatibility-results.txt` outside Git.
 Changes remain local until separately published; original repository untouched.
 
-## Current checkpoint: phase 2
+## Previous checkpoint: phase 2
 
 2026-10-26 following `c56b6a7`. Phase 2 is implemented locally as
 `0.3.0-preview.2`: discard/keep-editing close protection; grid replacement/removal
@@ -410,7 +537,7 @@ are under `work/phase-two-fallback`. Changes remain local until publication.
 Next: phase 3 compatibility and responsiveness, using disposable minimum-size
 and 3-row cases before changing resize behavior; see the phase plan.
 
-## Current phase checkpoint
+## Previous checkpoint: phase 1
 
 2026-10-26, following `d3a430f`. User requested phased polishing, including
 all optional features from the production scope. See [phase plan](docs/POLISH-PHASES.md).

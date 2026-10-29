@@ -1,6 +1,7 @@
 # Roadmap and next work
 
-Context established 2026-10-26 at `48b96b2`; updated 2026-10-27 for phase 6.
+Context established 2026-10-26 at `48b96b2`; updated 2026-10-27 for phase 6;
+reviewed against `7465c8d` on 2026-10-28 without application changes.
 The existing [development roadmap](docs/ROADMAP.md) remains the authoritative
 milestone history. This root entry adds current priorities and acceptance criteria
 without replacing that history. [HANDOFF](HANDOFF.md) records the last stopping point.
@@ -16,6 +17,10 @@ records draft-only editing and validated import/export. Phase 6 adds explicit
 [workspace restore and optional login startup](docs/WORKSPACES-AND-STARTUP.md).
 Startup remains disabled unless chosen; restore/relaunch are never automatic.
 Phase 7 (accessibility, visual polish and support) is next.
+The user-requested General settings interlude adds startup/tray, bar lock and
+visibility/reset, shared flyout shortcut and local support access in preview.6.1.
+See [General settings](docs/GENERAL-SETTINGS.md). It does not advance the phase
+counter: phases 1–6 remain complete within recorded scope; phase 7 is next.
 The older priority table below is
 retained as technical detail, not a competing phase order.
 
@@ -50,8 +55,8 @@ retained as technical detail, not a competing phase order.
   GitHub downloader, persistent data and offline archive support.
 - Launcher placement update: clock-area default, drag-to-move with click/drag
   distinction, saved coordinates and work-area clamping. Geometry/settings
-  checks and disposable-bar mouse input verified; broader display-change handling
-  remains planned.
+  checks and disposable-bar mouse input verified; phase 4 adds display-change
+  handling, with physical multi-monitor validation still outstanding.
 - Tray identity: Windows Tile Studio tooltip and generated six-tile icon.
   Optional per-folder legacy supersession closes the selected old controller,
   redirects its normal launch path, and restores original bytes when disabled.
@@ -71,7 +76,7 @@ retained as technical detail, not a competing phase order.
 | 5 (core completed in phase 5) | Visual proportion editor and portable layouts | Draft drag/undo/redo/Escape and accepted/canceled edits pass. Portable schema/privacy/conflict/failure tests pass. Keyboard divider movement and broader accessibility remain phase 7. |
 | 6 (core implemented in phase 4) | Per-monitor state and display recovery | Independent sessions and optional XML records; pure topology and single-display native notifications tested. Physical mixed-DPI, work-area changes, docking/disconnect/reconnect and sleep/resume remain release validation. |
 | 7 (core completed in phase 6) | Optional workspace restoration | Capture/preview/matching/manual choices, explicit fallback, native restore and separate launch tested with disposable apps. App document/session recreation and broader real-app matching remain limits. |
-| 8 | Distribution/identity | Unify prototype naming carefully, add an application icon, reproducible versioned packaging and possibly signing. If startup is added, make it explicit opt-in with an equally usable removal path. |
+| 8 | Distribution/identity | Unify prototype naming carefully, add an application icon, reproducible versioned packaging and possibly signing. Preserve phase-6 explicit startup opt-in and owned removal. The generated tray icon already exists; a signed production distribution does not. |
 
 No deadline, background automation or finished polished release is implied.
 Follow the user's current priority before this suggested ordering.
@@ -95,3 +100,26 @@ Follow the user's current priority before this suggested ordering.
 The earlier documentation-only task did not reproduce a new application defect.
 The launcher update subsequently corrected Windows' default initial-position
 override by explicitly using manual positioning.
+
+## Exact next steps when development resumes
+
+1. Read the five root context documents and inspect status/log/remotes/source.
+   Verify a controller process before using runtime XML; the 2026-10-28 review
+   found no matching compiled/source-hosted controller, despite retained XML.
+2. Follow the user's latest request. If phase 7 is requested, first audit keyboard
+   focus/order, all flyout directions and uneven grids, numeric/visual editing,
+   workspace choices, tray recovery, high contrast and small work areas. Record
+   reproduced defects separately from untested accessibility requirements.
+3. Fix reproduced issues with focused regressions. Design local diagnostics with
+   titles/content/raw monitor IDs/user paths excluded by default before adding
+   export. Do not capture a real workspace or enable login startup for testing.
+4. Run relevant checks from AGENTS/Build.ps1 against changed source; native
+   integration requires an isolated test interval without a daily controller.
+   Explicitly rebuild compiled mode or restart source hosting.
+5. Update context/evidence and preserve data during any authorized deployment.
+   Hardware, real login, elevated/hung-app validation, clean-account upgrade/
+   removal, packaging/signing and publication remain release gates.
+
+Phase 7 and sanitized support export remain planned. General's local folder/log
+access does not fulfill that export/accessibility scope. See the latest HANDOFF
+for the subsequent implementation/deployment checkpoint and accepted test reports.

@@ -13,7 +13,6 @@ public class WorkspaceDialog : Form {
     readonly Func<SavedWorkspace,bool,WorkspaceRestorePlan> preview;
     readonly Func<WorkspaceRestorePlan,string> restore;
     readonly Action<SavedPlacement> launch;
-    readonly StartupRegistration startup;
     WorkspaceLibrary library;
     WorkspaceRestorePlan plan;
     readonly ComboBox saved=new ComboBox{DropDownStyle=ComboBoxStyle.DropDownList};
@@ -26,11 +25,11 @@ public class WorkspaceDialog : Form {
     class Choice {public string Label{get;set;}public long Value{get;set;}}
     bool Confirm(string title,string text){return ConfirmAction!=null?ConfirmAction(title,text):MessageBox.Show(this,text,title,MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)==DialogResult.Yes;}
     void Error(string text){status.Text=text;if(ReportError!=null)ReportError("Workspace action failed",text);else MessageBox.Show(this,text,"Workspace action failed",MessageBoxButtons.OK,MessageBoxIcon.Warning);}
-    public WorkspaceDialog(string file,Func<string,bool,SavedWorkspace> captureWorkspace,Func<SavedWorkspace,bool,WorkspaceRestorePlan> previewWorkspace,Func<WorkspaceRestorePlan,string> restoreWorkspace,Action<SavedPlacement> launchApp,StartupRegistration login) {
-        path=file;capture=captureWorkspace;preview=previewWorkspace;restore=restoreWorkspace;launch=launchApp;startup=login;
-        Text="Windows Tile Studio — workspaces & startup";AccessibleName=Text;ClientSize=new Size(980,670);MinimumSize=new Size(900,650);StartPosition=FormStartPosition.CenterScreen;AutoScaleMode=AutoScaleMode.None;
-        var tabs=new TabControl{Dock=DockStyle.Fill};var page=new TabPage("Workspaces");var loginPage=new TabPage("Login startup");tabs.TabPages.AddRange(new[]{page,loginPage});Controls.Add(tabs);
-        page.Controls.Add(new Label{Text="Capture only assigned windows. Workspace files stay local and contain app paths and display identities.\nTitles are saved only if selected. Capture, deletion, restore and startup actions apply immediately, outside layout drafts.",Bounds=new Rectangle(18,16,930,45)});
+    public WorkspaceDialog(string file,Func<string,bool,SavedWorkspace> captureWorkspace,Func<SavedWorkspace,bool,WorkspaceRestorePlan> previewWorkspace,Func<WorkspaceRestorePlan,string> restoreWorkspace,Action<SavedPlacement> launchApp) {
+        path=file;capture=captureWorkspace;preview=previewWorkspace;restore=restoreWorkspace;launch=launchApp;
+        Text="Windows Tile Studio — workspaces";AccessibleName=Text;ClientSize=new Size(980,670);MinimumSize=new Size(900,650);StartPosition=FormStartPosition.CenterScreen;AutoScaleMode=AutoScaleMode.None;
+        var tabs=new TabControl{Dock=DockStyle.Fill};var page=new TabPage("Workspaces");tabs.TabPages.Add(page);Controls.Add(tabs);
+        page.Controls.Add(new Label{Text="Capture only assigned windows. Workspace files stay local and contain app paths and display identities.\nTitles are saved only if selected. Capture, deletion and restore apply immediately, outside layout drafts.",Bounds=new Rectangle(18,16,930,45)});
         page.Controls.Add(new Label{Text="Name",Bounds=new Rectangle(18,80,50,22)});name.Bounds=new Rectangle(75,76,178,27);name.Text="My workspace";name.AccessibleName="Workspace name";page.Controls.Add(name);titles.Location=new Point(270,80);page.Controls.Add(titles);
         var captureButton=new Button{Text="Capture assigned windows",Bounds=new Rectangle(18,118,220,32),AccessibleName="Capture workspace"};page.Controls.Add(captureButton);
         saved.Bounds=new Rectangle(18,174,300,29);saved.AccessibleName="Saved workspace";page.Controls.Add(saved);
@@ -77,7 +76,7 @@ public class WorkspaceDialog : Form {
                 launch(row.Saved);status.Text="Launch requested. Wait for the app, then preview again. No window was moved.";
             }catch(Exception e){Error(e.GetBaseException().Message);}
         };
-        AddStartup(loginPage);
+
     }
     void Refill(string id){loading=true;saved.DataSource=null;saved.DataSource=library.Workspaces;if(id!=null)saved.SelectedItem=library.Workspaces.First(w=>w.Id==id);loading=false;plan=null;grid.Rows.Clear();}
     void RefreshPreview() {
@@ -90,15 +89,5 @@ public class WorkspaceDialog : Form {
             }
             status.Text="Review matches and target displays. Ambiguous windows require a choice; duplicates and stale windows are rejected.";
         }catch(Exception e){plan=null;grid.Rows.Clear();Error(e.GetBaseException().Message);}finally{loading=false;}
-    }
-    void AddStartup(TabPage page) {
-        page.Controls.Add(new Label{Text="Optional launch at login",Bounds=new Rectangle(24,25,500,30)});
-        page.Controls.Add(new Label{Text="This registers only this Tile Studio installation for your Windows account. It does not restore workspaces\nor launch saved apps. Your hidden launcher preference is retained. Nothing is enabled automatically.",Bounds=new Rectangle(24,70,900,60)});
-        var label=new Label{Bounds=new Rectangle(24,150,900,60),AccessibleName="Login startup status"};page.Controls.Add(label);
-        var command=new TextBox{Multiline=true,ReadOnly=true,Bounds=new Rectangle(24,230,900,105),AccessibleName="Login startup command"};page.Controls.Add(command);
-        var enable=new Button{Text="Enable for this installation...",Bounds=new Rectangle(24,365,245,35),AccessibleName="Enable login startup"};var disable=new Button{Text="Disable / remove startup...",Bounds=new Rectangle(287,365,235,35),AccessibleName="Disable login startup"};var refresh=new Button{Text="Refresh status",Bounds=new Rectangle(540,365,150,35)};page.Controls.AddRange(new Control[]{enable,disable,refresh});
-        Action update=delegate{try{label.Text=startup.Status;command.Text=startup.Launch.Command;}catch(Exception e){label.Text="Startup status unavailable: "+e.GetBaseException().Message;}};update();refresh.Click+=delegate{update();};
-        enable.Click+=delegate{try{if(!Confirm("Enable login startup?","Register the displayed command for this Windows account? An older Tile Studio entry may be replaced. Workspace restore and app relaunch remain manual."))return;startup.Enable(true);update();}catch(Exception e){Error(e.GetBaseException().Message);update();}};
-        disable.Click+=delegate{try{if(!Confirm("Remove login startup?","Remove this app's login startup entry? Tile Studio will keep running now; future login launch will stop. Unrelated entries are preserved."))return;startup.Disable();update();}catch(Exception e){Error(e.GetBaseException().Message);update();}};
     }
 }

@@ -4,6 +4,12 @@ For current priorities, acceptance criteria and known defects/limits, read the
 root [ROADMAP](../ROADMAP.md). This file retains the existing milestone history;
 keep both views synchronized when a meaningful milestone or priority changes.
 
+Current-status clarification (2026-10-28 review of `7465c8d`): phases 1–6 are
+implemented locally within recorded test limits, including phase-5 visual/portable
+layouts and phase-6 opt-in workspaces/startup controls. Phase 7 is planned.
+The incremental descriptions below preserve milestone history; read the root
+roadmap and latest HANDOFF checkpoint for current status and exact next steps.
+
 Current phased execution: [Polishing phases](POLISH-PHASES.md). Phase 1 adds
 Appearance controls, launcher reset and version/branding consistency. All
 previously optional capabilities are in the planned phases, not claimed complete.
@@ -64,6 +70,11 @@ containing the hosted launchers. The original `six-slot-snap` repository
 is unchanged.
 
 ## Polished version
+
+General settings interlude: preview.6.1 puts startup/tray, bar visibility/reset/
+lock, flyout-key access and local support in General. Startup remains explicit;
+other preferences stay draft-only. See [guide](GENERAL-SETTINGS.md). Phase 7 is
+still next; this is not completion of accessibility/visual/support scope.
 
 Phase 6 local checkpoint: `0.3.0-preview.6` adds opt-in workspace capture/preview/
 restore, a separate missing-app launch action and explicit startup shortcut

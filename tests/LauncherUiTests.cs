@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Windows.Forms;
 
 class ProbeLauncher : LauncherTab {
@@ -53,6 +54,20 @@ public class LauncherUiTests {
                 launcher.Shown+=delegate{timer.Start();};Application.Run(launcher);
             }
             if(failure!=null) throw failure;
+            var cursor=Cursor.Position;
+            try {
+                using(var locked=new LauncherTab("Ctrl+Alt+Win+Space",1.25,true)) {
+                    locked.Location=new Point(600,400);locked.ShowUnfocused();Application.DoEvents();int moves=0,opens=0;locked.PositionChanged=delegate{moves++;};locked.OpenRequested=delegate{opens++;};
+                    var label=locked.Controls[0];var start=locked.Location;Cursor.Position=new Point(620,410);
+                    typeof(Control).GetMethod("OnMouseDown",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(label,new object[]{new MouseEventArgs(MouseButtons.Left,1,20,10,0)});
+                    Cursor.Position=new Point(750,490);typeof(Control).GetMethod("OnMouseMove",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(label,new object[]{new MouseEventArgs(MouseButtons.Left,0,150,90,0)});
+                    typeof(Control).GetMethod("OnMouseUp",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(label,new object[]{new MouseEventArgs(MouseButtons.Left,1,150,90,0)});
+                    if(locked.Location!=start||moves!=0||opens!=0)throw new Exception("Locked drag moved/saved the bar or opened the flyout.");
+                    typeof(Control).GetMethod("OnMouseDown",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(label,new object[]{new MouseEventArgs(MouseButtons.Left,1,20,10,0)});
+                    typeof(Control).GetMethod("OnMouseUp",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(label,new object[]{new MouseEventArgs(MouseButtons.Left,1,20,10,0)});
+                    if(opens!=1)throw new Exception("Position lock blocked ordinary bar clicks.");
+                }
+            }finally{Cursor.Position=cursor;}
             Console.WriteLine("PASS: launcher paint through 70 DPI transitions, correct fonts/bounded GDI, close button/WM_CLOSE/minimize hide without disposal, restore and final disposal.");
             return 0;
         } catch(Exception e) {Console.Error.WriteLine(e);return 1;}

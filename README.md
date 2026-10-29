@@ -176,9 +176,15 @@ to resolve it; Cancel preserves the original file. The tray remains available
 when global shortcuts cannot be registered. Successful replacement keeps the
 previous settings in `.bak`.
 
-The **Appearance** tab controls the floating Layouts bar. Show/hide or reset
-its saved position, then choose **Save changes** to apply; **Cancel** leaves
-the running bar unchanged. The tray's **Reset Layouts bar position** applies
+Open tray **General settings** for **Startup & tray**, **Layouts bar**,
+**Flyout shortcut**, and **Support**. Show/hide, lock the bar's position or reset
+it near the clock, then choose **Save changes**; **Cancel** discards those draft
+edits. The flyout shortcut shares the same value as Hotkeys. Startup enable/remove
+buttons are separately confirmed and apply immediately; Cancel does not undo
+them. Startup stays off until explicitly enabled and never restores workspaces
+or launches saved apps. Support opens the local data folder/log and shows version
+and tray guidance. See [General settings](docs/GENERAL-SETTINGS.md).
+The tray's **Reset Layouts bar position** applies
 immediately and does not reset window proportions. **About Windows Tile Studio**
 shows the preview version. See [polishing phases](docs/POLISH-PHASES.md) for the
 current implementation milestone and remaining production scope.
@@ -210,9 +216,9 @@ you want to retain it as a fallback; only one controller can run at a time.
 
 ## Current limits
 
-Phase 6 adds tray **Workspaces & login startup**: capture assigned windows,
+Phase 6 adds tray **Workspaces**: capture assigned windows,
 preview matches, choose ambiguous windows and explicitly restore selected rows.
-Missing-app launch is a separate confirmed action. Login startup has explicit
+Missing-app launch is a separate confirmed action. General settings has explicit
 enable/status/remove controls and remains off until you choose it. See
 [workspace and startup guide](docs/WORKSPACES-AND-STARTUP.md).
 

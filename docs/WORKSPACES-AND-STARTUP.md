@@ -1,8 +1,9 @@
 # Workspaces and optional login startup
 
-Local phase-6 preview `0.3.0-preview.6`, 2026-10-27. Open **Workspaces & login
-startup** from the Windows Tile Studio tray menu. These actions are immediate,
-separate from the layout editor's Save/Cancel draft.
+Phase 6 introduced these features; preview `0.3.0-preview.6.1` moves startup to
+**General settings → Startup & tray**. Open **Workspaces** from the tray for
+capture/restore. Workspace and confirmed startup actions are immediate, separate
+from layout/bar/hotkey Save/Cancel drafts. See [General settings](GENERAL-SETTINGS.md).
 
 ## Capture and restore
 
@@ -62,7 +63,7 @@ The store supports 16 named workspaces, 16 saved displays each and 16 placements
 per display. XML is bounded to 1 MB and depth 32, prohibits DTD/external entities,
 and validates profiles, paths, slots and duplicate identities. Atomic replacement
 keeps `workspaces.xml.bak`. A corrupt file is preserved and capture/restore
-controls are disabled with recovery guidance; startup controls remain available.
+controls are disabled with recovery guidance; General startup controls are independent.
 Deleting a capture asks first and changes only the saved library, not apps.
 
 Limitations: executable paths/classes can change with app updates, requiring a
@@ -73,7 +74,7 @@ need broader testing. Per-monitor identity still has phase-4 port/driver limits.
 
 ## Login startup
 
-The **Login startup** tab shows registration status and the exact launch command.
+**General → Startup & tray** shows registration status and the exact launch command.
 **Enable for this installation...** asks before creating/updating the current
 user's `Windows Tile Studio.lnk` in their Startup folder. It preserves compiled
 or PowerShell-hosted mode, source location and the active data directory. Missing

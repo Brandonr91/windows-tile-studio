@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-preview.6";
+    public const string ProductVersion="0.3.0-preview.6.1";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -432,7 +432,7 @@ public class SixSlotSnap : ApplicationContext {
         if(launcher!=null) { launcher.Dispose(); launcher=null; } if(!settings.ShowLauncherTab) return;
         IntPtr taskbar=NativeMethods.FindWindow("Shell_TrayWnd",null);
         IntPtr anchor=taskbar==IntPtr.Zero?NativeMethods.GetForegroundWindow():taskbar;
-        var m=NativeMethods.Monitor(anchor); double scale=DpiScale(anchor); launcher=new LauncherTab(settings.FlyoutShortcut.ToString(),scale);
+        var m=NativeMethods.Monitor(anchor); double scale=DpiScale(anchor); launcher=new LauncherTab(settings.FlyoutShortcut.ToString(),scale,settings.LauncherPositionLocked);
         launcher.OpenRequested=delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); };
         launcher.HideRequested=delegate { SetLauncherVisible(false); };
         launcher.PositionChanged=delegate(Point location) { settings.LauncherPositionSet=true; settings.LauncherX=location.X; settings.LauncherY=location.Y; SaveSettings(); };
@@ -499,13 +499,13 @@ public class SixSlotSnap : ApplicationContext {
         tray.ContextMenuStrip.Items[0].Text="Choose layout  "+settings.FlyoutShortcut;
         RefreshLauncher(); WriteState(); return null;
     }
-    public void OpenSettings() {
+    public void OpenSettings(bool general=false) {
         if(workspaceForm!=null&&!workspaceForm.IsDisposed){workspaceForm.Activate();return;}
-        HideFlyout(); if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
+        HideFlyout(); if(settingsForm!=null && !settingsForm.IsDisposed) { if(general)settingsForm.SelectGeneral();settingsForm.Activate(); return; }
         workspace.Capture(); settingsMonitorId=workspace.Active.Display.Id; settingsOpened=settings.Clone();
         settingsOpened.Profiles=settings.Profiles.Select(p=>workspace.Resolve(settingsMonitorId,p.Id)).ToList();
         try {
-            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings; ShowManagedDialog(form); }
+            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice,new StartupRegistration(startupLaunch,new UserStartupValue()),folder)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings;if(general&&recoveryNotice==null)form.SelectGeneral(); ShowManagedDialog(form); }
         } finally {settingsForm=null;settingsMonitorId=null;settingsOpened=null;}
     }
     void HandleCommand(int message,IntPtr a,IntPtr b) {
@@ -566,7 +566,7 @@ public class SixSlotSnap : ApplicationContext {
     }
     public void OpenWorkspaces() {
         HideFlyout();if(settingsForm!=null&&!settingsForm.IsDisposed){settingsForm.Activate();return;}if(workspaceForm!=null&&!workspaceForm.IsDisposed){workspaceForm.Activate();return;}
-        try {using(var form=new WorkspaceDialog(Path.Combine(folder,"workspaces.xml"),CaptureWorkspace,PreviewWorkspace,RestoreWorkspace,WorkspaceApps.Launch,new StartupRegistration(startupLaunch,new UserStartupValue()))){workspaceForm=form;ShowManagedDialog(form);}}
+        try {using(var form=new WorkspaceDialog(Path.Combine(folder,"workspaces.xml"),CaptureWorkspace,PreviewWorkspace,RestoreWorkspace,WorkspaceApps.Launch)){workspaceForm=form;ShowManagedDialog(form);}}
         finally {workspaceForm=null;}
     }
     static void ShowManagedDialog(Form form) {
@@ -589,14 +589,15 @@ public class SixSlotSnap : ApplicationContext {
         var menu=new ContextMenuStrip();
         menu.Items.Add("Choose layout  "+settings.FlyoutShortcut,null,delegate { OpenFlyout(NativeMethods.GetForegroundWindow(),null); });
         menu.Items.Add("Manage layouts & hotkeys",null,delegate { OpenSettings(); });
-        menu.Items.Add("Workspaces & login startup",null,delegate {OpenWorkspaces();});
+        menu.Items.Add("General settings",null,delegate {OpenSettings(true);});
+        menu.Items.Add("Workspaces",null,delegate {OpenWorkspaces();});
         launcherMenu=(ToolStripMenuItem)menu.Items.Add("Show Layouts bar",null,delegate {SetLauncherVisible(!settings.ShowLauncherTab);});
         menu.Items.Add("Reset Layouts bar position",null,delegate { ResetLauncherPosition(); });
         menu.Items.Add("Reset active layout proportions",null,delegate { if(MessageBox.Show("Reset this layout to equal columns and rows? Its assigned windows will be resized. Choose No to keep the current proportions.","Reset layout proportions?",MessageBoxButtons.YesNo,MessageBoxIcon.Question,MessageBoxDefaultButton.Button2)!=DialogResult.Yes) return; CancelResizeSession(); foreach(var c in grid.Profile.Columns) { c.Width=1.0/grid.Profile.Columns.Count; for(int r=0;r<c.Rows.Count;r++) c.Rows[r]=1.0/c.Rows.Count; } ApplyLayout(); SaveSettings(); WriteState(); });
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("About Windows Tile Studio",null,delegate { MessageBox.Show("Windows Tile Studio "+ProductVersion+"\n\nCustom layouts, keyboard placement, and linked resizing.\n\nRuns locally. No AI service or account is required to use the controller.","About Windows Tile Studio",MessageBoxButtons.OK,MessageBoxIcon.Information); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
-        tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(); }; receiver.Received=HandleCommand;
+        tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(true); }; receiver.Received=HandleCommand;
         resizeTimer.Interval=30; resizeTimer.Tick+=delegate { try { UpdateDrag(); CompleteResize(); } catch(Exception e) { Log("Resize tick: "+e.Message); } };
         settleTimer.Interval=100; settleTimer.Tick+=delegate { try { if(dragging==IntPtr.Zero) ApplyResizeFrames(true); } catch(Exception e) { Log("Settle: "+e.Message); } if(++settlePasses>=3) settleTimer.Stop(); };
         flyoutTimer.Interval=20; flyoutTimer.Tick+=delegate { PollFlyout(); };

@@ -15,7 +15,7 @@ are explicitly labeled. Consult actual source before relying on them.
 | D07 | Implemented | Register navigation keys only while the nonactivating flyout is open; roll back the entire navigation set if any key conflicts. | Mouse selection remains available. No low-level keyboard hook. Escape has its own registration/polling fallback. Keep cleanup on every exit path. |
 | D08 | Implemented | Offer PowerShell 5.1 STA in-memory hosting alongside optional compiled mode. | No standalone app EXE required in hosted mode; PowerShell remains running and startup compilation still occurs. Restart the host after source edits. |
 | D09 | Implemented | Install versioned source separately from persistent user data. | Downloader writes `versions/`, `current.json`, launcher and `data/`; validates archives and confines staging cleanup. No silent compiled fallback for explicit Hosted mode. |
-| D10 | Implemented limitation | Recover assignments from current visible geometry, keep only one active work area. | No saved app identities, no workspace restore, no per-monitor layout database. Those require future design/migration work. |
+| D10 | Historical limitation; superseded by phases 4 and 6 below | Originally recover assignments from current visible geometry and keep only one active work area. | Phase 4 adds per-monitor state; phase 6 adds separate explicit workspace capture/restore. Normal recovery remains geometry-only and does not relaunch apps. |
 | D11 | Established requirement | No AI service at runtime; changes and startup behavior remain local and explicit. | No telemetry or automatic startup. Network use belongs to the opt-in source downloader. No scheduled development was created. |
 | D12 | Process requirement | Verify the source and desktop behavior separately; preserve authoritative context across sessions. | Read AGENTS and context records after compaction; update docs with meaningful changes. Distinguish test evidence from planned or unverified behavior. |
 | D13 | User requirement, implemented 2026-10-26 | Move the persistent Layouts bar from top center to near the taskbar clock and make it draggable. | Default above the primary taskbar's right end, outside the clock's controls. A normal click opens the selector; a drag moves only the bar and saves coordinates. Manual initial positioning and screen clamping prevent default-position overrides/offscreen restoration. This supersedes the original top-center launcher placement. |
@@ -134,7 +134,18 @@ registration. First managed dialogs explicitly show after Load because hidden
 process startup was reproduced hiding the first workspace form; cold-start tests
 cover settings and workspace UI in both modes.
 
-## Proposed, not yet implemented
+## Current implementation versus proposals
+
+2026-10-28 General settings interlude supersedes the Appearance tab and phase-6
+placement of startup under Workspaces. Reuse the existing startup backend in
+General, keeping immediate OS registration separate from draft Save/Cancel and
+making that distinction visible. Keep close-to-tray behavior fixed, rather than
+add an exit-on-close choice that conflicts with the user's requirement. Quiet
+startup follows saved bar visibility instead of an independent competing flag.
+Bar position lock is a backward-compatible optional schema-1 preference; ordinary
+clicks and explicit reset remain usable. General and Hotkeys share one flyout
+shortcut draft. Local support opens existing files only; sanitized diagnostic
+export/theme/accessibility remain phase 7. See docs/GENERAL-SETTINGS.md.
 
 App-specific minimum-size negotiation, per-monitor persistence, a graphical
 divider editor, portable transfer, opt-in workspace restore/launch and optional
@@ -142,6 +153,12 @@ startup registration are implemented in phases 3–6 within documented limits.
 Broader accessibility, release packaging/signing and external beta coverage remain
 roadmap work. Do not treat them as user approval
 to install services, enable startup, publish releases or change system settings.
+
+2026-10-28 review at `7465c8d`: these mechanisms were confirmed by source
+inspection, not a new desktop test run. A retained runtime snapshot is historical
+until its process is verified. Context maintenance alone does not authorize
+starting the controller, restoring windows or enabling login startup. Phase-7
+accessibility changes and sanitized diagnostic export remain proposals.
 
 When changing an established decision, append its replacement and rationale;
 retain the old decision's history rather than silently removing it.

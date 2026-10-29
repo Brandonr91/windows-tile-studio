@@ -26,6 +26,15 @@ the stopping point and executable next steps; record consequential tradeoffs in
 DECISIONS. Preserve existing authoritative documents and link rather than
 silently replace them. Never claim publication from a local commit alone.
 
+Document ownership: AGENTS records working rules; ARCHITECTURE describes
+implemented mechanisms; DECISIONS preserves choices and their replacements;
+root ROADMAP owns current priorities/defects and links milestone history;
+HANDOFF starts with the latest dated checkpoint and exact resumption steps.
+Older handoff sections are historical evidence, not current instructions or
+proof of a running controller. Distinguish fresh checks from saved test results.
+Documentation-only work must not change app behavior, user data, startup
+registration or deployment merely to refresh context.
+
 ## Build and test
 
 Run `./Build.ps1 -Test` on Windows. It compiles all `src/*.cs` files with the local
@@ -68,6 +77,12 @@ Validate launcher changes with `tests/LauncherTests.ps1` in Windows PowerShell
 - User close/minimize of the Layouts bar hides it to tray and persists visibility
   off; never resurrect it on flyout dismissal, display refresh or restart. Keep
   tray Show Layouts bar available; only explicit tray Exit/quit stops the manager.
+- General settings owns startup/tray, bar controls, flyout-key access and support.
+  Keep startup enable/remove immediate and separately confirmed, clearly distinct
+  from draft Save/Cancel. Bar lock defaults off for older files; it prevents
+  drag/position writes without blocking normal clicks or explicit position reset.
+  Keep General and Hotkeys synchronized through the same shortcut draft value.
+  See docs/GENERAL-SETTINGS.md; WorkspaceUi tests now cover General in both modes.
 - Keep cached DPI fonts alive until launcher child controls are disposed. A
   replaced font may still be retained by label/native paint callbacks; disposing
   it immediately caused Label.OnPaint "Parameter is not valid". Run

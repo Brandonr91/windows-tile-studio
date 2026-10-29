@@ -138,6 +138,15 @@ Full compiled/hosted regressions pass within their recorded scope; targeted
 tests cover the later layout/visibility and compatible-slot fixes. See
 [guide](WORKSPACES-AND-STARTUP.md). Startup is still off in the daily installation.
 
+## General settings interlude after phase 6
+
+Preview.6.1 adds tray General settings with Startup & tray, Layouts bar, Flyout
+shortcut and Support. Startup moved out of Workspaces and remains separately
+confirmed/immediate. Bar visibility/reset/lock and the shared flyout key stay
+draft-only. Support opens local folder/log; diagnostic export/themes remain
+phase 7. See [General settings](GENERAL-SETTINGS.md). This user-requested
+interlude does not mark phase 7 complete; phases 1–6 remain the last completed set.
+
 ## Exact next work: phase 7
 
 Start with a keyboard/screen-reader/high-contrast and small-display audit of

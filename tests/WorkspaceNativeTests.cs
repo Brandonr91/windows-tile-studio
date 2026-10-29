@@ -23,7 +23,7 @@ class WorkspaceNativeTests {
                 IntPtr receiver=IntPtr.Zero;
                 try {
                     string runtime=Path.Combine(root,"runtime-state.xml");Wait(()=>File.Exists(runtime),"Hidden controller did not start",20);using(var stream=File.Open(runtime,FileMode.Open,FileAccess.Read,FileShare.ReadWrite|FileShare.Delete))receiver=new IntPtr((long)XElement.Load(stream).Attribute("controller"));
-                    NativeMethods.PostMessage(receiver,workspaces?SixSlotSnap.WorkspacesCommand:SixSlotSnap.SettingsCommand,IntPtr.Zero,IntPtr.Zero);IntPtr dialog=IntPtr.Zero;string title=workspaces?"Windows Tile Studio — workspaces & startup":"Windows Tile Studio — settings";
+                    NativeMethods.PostMessage(receiver,workspaces?SixSlotSnap.WorkspacesCommand:SixSlotSnap.SettingsCommand,IntPtr.Zero,IntPtr.Zero);IntPtr dialog=IntPtr.Zero;string title=workspaces?"Windows Tile Studio — workspaces":"Windows Tile Studio — settings";
                     Wait(()=>{dialog=NativeMethods.FindWindow(null,title);return dialog!=IntPtr.Zero&&NativeMethods.IsWindowVisible(dialog);},"First dialog stayed hidden after a background launch");NativeMethods.PostMessage(dialog,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(dialog),"First dialog did not close");
                 }finally{if(!process.HasExited){NativeMethods.PostMessage(receiver,SixSlotSnap.QuitCommand,IntPtr.Zero,IntPtr.Zero);if(!process.WaitForExit(3000))process.Kill();}}
             }

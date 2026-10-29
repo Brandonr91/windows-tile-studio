@@ -69,6 +69,9 @@ class GridTests {
         Check(warning==null && loaded.Profiles.Count==6,"Settings round trip failed");
         Check(loaded.FlyoutShortcut.ToString()=="Ctrl+Alt+Win+Space","Flyout default changed");
         Check(!loaded.LauncherPositionSet,"Old/default settings must use the clock-area launcher position");
+        Check(!loaded.LauncherPositionLocked,"Old/default settings must leave the bar draggable");
+        s.LauncherPositionLocked=true;SettingsStore.Save(path,s.Clone());loaded=SettingsStore.Load(path,out warning);
+        Check(warning==null&&loaded.LauncherPositionLocked,"Bar position lock did not survive clone/XML roundtrip");
         s.LauncherPositionSet=true; s.LauncherX=-1200; s.LauncherY=800;
         var positionCopy=s.Clone(); SettingsStore.Save(path,positionCopy); loaded=SettingsStore.Load(path,out warning);
         Check(warning==null && loaded.LauncherPositionSet && loaded.LauncherX==-1200 && loaded.LauncherY==800,"Dragged launcher position did not survive clone/save/load");

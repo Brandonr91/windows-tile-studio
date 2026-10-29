@@ -1,7 +1,8 @@
 # Architecture
 
 Context established 2026-10-26 from base application `48b96b2`; updated
-2026-10-27 for local phase-6 preview `0.3.0-preview.6`. Earlier milestones and
+2026-10-28 for local General settings preview `0.3.0-preview.6.1`, following
+phase-6 commit `7465c8d`. Earlier milestones and
 decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
@@ -13,7 +14,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all eleven `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all twelve `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 `Start.ps1` only builds if the EXE is missing: after source changes explicitly
@@ -39,7 +40,22 @@ execute. Loaded types require a fresh host to pick up edited source.
 | `src/PortableLayouts.cs` | Separate bounded XML transfer schema, atomic export, copy/replace candidate construction and shortcut validation. |
 | `src/Workspaces.cs` | Local capture DTO/store, live app identity and pure matching/restore planning. |
 | `src/StartupRegistration.cs` | Owned per-user shortcut registration, mode/data-preserving command construction and isolated storage seam. |
-| `src/WorkspaceForm.cs` | Immediate capture/preview/restore, optional launch and startup controls; independent of settings drafts. |
+| `src/WorkspaceForm.cs` | Immediate capture/preview/restore and optional launch; independent of settings drafts. |
+| `src/GeneralSettings.cs` | Partial settings form for General categories and local support actions; reusable confirmed startup controls. |
+
+General interlude (`0.3.0-preview.6.1`, 2026-10-28): the third settings tab is
+General, with Startup & tray, Layouts bar, Flyout shortcut and Support categories.
+Startup controls moved out of WorkspaceDialog into General; workspace capture/
+restore remains immediate and separate. The controller injects the same startup
+registration and active data directory into settings. Tray General settings opens
+that tab directly, without displacing a Recovery page. Startup changes remain
+separately confirmed/immediate, not rolled back on settings Cancel. No startup
+read/open registers anything. Bar preferences and the shared flyout key remain
+draft-only. New optional schema-1 LauncherPositionLocked is cloned/persisted and
+passed into LauncherTab; it blocks drag movement/writes, retaining ordinary clicks.
+Support opens local folder/log only; sanitized export/themes remain planned.
+See [General guide](docs/GENERAL-SETTINGS.md). Older phase descriptions below
+record history; General supersedes their Appearance/startup UI placement.
 
 Phase 6 stores captures in separate bounded/backed-up workspaces.xml. Durable
 matching uses executable path/class and optional exact title; live HWND/PID/start
@@ -213,9 +229,11 @@ permanent bindings attempts to restore prior registrations and reports failure.
 Defaults: Ctrl+Alt+Win+Space opens; Ctrl+Alt+1 through 9 select numbered zones.
 
 Single instance: mutex `Local\SixSlotSnapController`. Hidden native receiver:
-`SixSlotSnap.Controller.v2`. Messages `0x8001`–`0x8005` select Show, Settings,
-Quit, Snap, Profile. CLI supports `--show`, `--settings`, `--quit`, `--snap N`,
-`--layout N`, `--data-dir PATH`, `--no-recover`, `--preview`. IPC profile indices
+`SixSlotSnap.Controller.v2`. Messages `0x8001`–`0x8006` select Show, Settings,
+Quit, Snap, Profile, Workspaces. CLI supports `--show`, `--settings`,
+`--workspaces`, `--quit`, `--snap N`, `--layout N`, `--data-dir PATH`,
+`--no-recover`, `--preview`. Hosted startup also supplies `--source-root PATH`;
+startup commands carry an ownership marker. IPC profile indices
 are zero-based; snap zone numbers are one-based. Command messages control the
 existing session controller, regardless of the sender's data directory.
 
@@ -244,6 +262,12 @@ a temporary file then replaces the original with `.bak`. Invalid configuration
 is preserved while defaults run; ordinary autosave is suppressed until an
 explicit successful settings save. `runtime-state.xml` is diagnostics, not an
 assignment restore database. `status.log` is local; neither belongs in Git.
+
+Local workspace files intentionally contain executable paths and display
+identities, plus titles only when selected. Portable layout exports exclude
+those fields. There is no sanitized support-export feature yet. Runtime XML
+may outlive its controller; verify its PID and command line before treating
+assignments or version as live state.
 
 `Get-FromGitHub.ps1` fetches the fixed successor repository's codeload ZIP or
 accepts an offline archive. It checks archive paths/size, a single top folder,
