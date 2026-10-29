@@ -62,3 +62,18 @@ function Invoke-WtsValidation([string]$Executable,[string]$Arguments,[string]$Fo
     [void]$child.Handle
     try{if(!$child.WaitForExit(60000)){$child.Kill();throw 'Candidate validation exceeded 60 seconds; the active version was preserved.'};$child.WaitForExit();if($child.ExitCode -ne 0){$lines=@(Get-Content -LiteralPath $out -ErrorAction SilentlyContinue)+@(Get-Content -LiteralPath $err -ErrorAction SilentlyContinue);throw ('Candidate validation failed; previous active version and data were preserved. '+(($lines | Select-Object -Last 12) -join ' '))}}finally{$child.Dispose()}
 }
+function Assert-WtsConfiguration([string]$Root,[string]$VersionDirectory) {
+    $settings=Assert-WtsChild $Root (Join-Path $Root 'data\settings.xml')
+    if(!(Test-Path -LiteralPath $settings)){return}
+    $capabilities=Join-Path $VersionDirectory 'release\capabilities.json'
+    if(Test-Path -LiteralPath $capabilities){$policy=Get-Content -Raw -LiteralPath $capabilities | ConvertFrom-Json;if($policy.schema -eq 1 -and $policy.unknownSettings -eq 'preserve-and-recover'){return}}
+    $probeScript=Join-Path $PSScriptRoot 'Test-ConfigurationCompatibility.ps1'
+    if(!(Test-Path -LiteralPath $probeScript)){throw 'Configuration compatibility tools are missing. Update the complete installer bundle before rollback or launch.'}
+    $temporary=Assert-WtsChild $Root (Join-Path $Root ('.compatibility-'+[Guid]::NewGuid().ToString('N')))
+    New-Item -ItemType Directory -Path $temporary | Out-Null
+    try{
+        $snapshot=Join-Path $temporary 'settings.xml';Copy-Item -LiteralPath $settings -Destination $snapshot
+        $hostExe=Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        try{Invoke-WtsValidation $hostExe ('-NoProfile -STA -ExecutionPolicy Bypass -File "'+$probeScript+'" -SourceRoot "'+$VersionDirectory+'" -SettingsFile "'+$snapshot+'"') $temporary}catch{throw 'The selected version cannot safely read the saved settings. The active version and settings were preserved. Back up data and restore settings written by that version before retrying.'}
+    }finally{[void](Assert-WtsChild $Root $temporary);if((Split-Path -Leaf $temporary) -notmatch '^\.compatibility-[0-9a-f]{32}$'){throw 'Unexpected compatibility cleanup path.'};Remove-Item -LiteralPath $temporary -Recurse -Force}
+}

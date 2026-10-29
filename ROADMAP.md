@@ -1,5 +1,22 @@
 # Roadmap and next work
 
+## Current: beta/release validation, 2026-10-28
+
+Local `0.3.0-beta.1` fixes reproduced lossy legacy settings downgrade through
+strict Recovery and installed selection guards. Geometry/settings (198564),
+compiled UI/native, full hosted integration, hosted General/accessibility,
+installer lifecycle, actual public-source upgrade/guarded rollback and 30-cycle
+compiled/hosted resize/dialog/resource samples pass within isolated test scope.
+See HANDOFF for evidence/artifact provenance and docs/BETA-TESTING.md for the
+campaign. A local kit tool collects only verified packages and test/recovery docs.
+
+Next: fresh account/VM install/update/rollback/remove; representative personal
+configurations and backups; actual login; physical mixed-DPI/docking/sleep;
+screen reader and OS contrast/text-size; elevated/hung/unusual apps and competing
+tilers; several days of daily use and external feedback. Signing/publisher,
+remote CI and approved publication follow. No production push occurred and the
+original repository stays untouched. The sections below retain milestone history.
+
 Context established 2026-10-26 at `48b96b2`; updated 2026-10-28 for phase 7,
 through phase-8 delivery preparation following `508783a`.
 The existing [development roadmap](docs/ROADMAP.md) remains the authoritative

@@ -12,6 +12,7 @@ Build-Release.ps1
 Get-FromGitHub.ps1
 InstallationSupport.ps1
 Manage-Installation.ps1
+Test-ConfigurationCompatibility.ps1
 Start.ps1
 Start.cmd
 Start-Hosted.ps1
@@ -23,5 +24,6 @@ examples/**
 tools/**
 tests/**
 release/version.json
+release/capabilities.json
 release/package-files.txt
 .github/workflows/windows.yml

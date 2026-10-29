@@ -126,6 +126,7 @@ try {
     $versionPath = Assert-ChildPath $InstallRoot (Join-Path $versions $version)
     Assert-WtsNoLinks $versionPath
     $windowsHost=Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe'
+    Assert-WtsConfiguration $InstallRoot $project
     # Validate before changing current.json; use staging data, never user data.
     if($selectedMode -eq 'Hosted'){
         Invoke-WtsValidation $windowsHost ('-NoProfile -STA -ExecutionPolicy Bypass -File "'+(Join-Path $project 'Start-Hosted.ps1')+'" -RunInProcess -Action Validate -DataDirectory "'+(Join-Path $staging 'validation')+'"') $staging
@@ -182,6 +183,7 @@ $project=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot ('versions\'+$current.v
 $data=Join-Path $PSScriptRoot 'data'
 if (-not $Mode -or $Mode -eq 'Auto') { $Mode=$current.mode }
 if($Mode -eq $current.mode){Test-WtsInstalledPointer $PSScriptRoot $current}else{throw 'Install the desired mode explicitly before using it; the active artifact must be verified.'}
+Assert-WtsConfiguration $PSScriptRoot $project
 if ($Mode -eq 'Hosted') {
     & (Join-Path $project 'Start-Hosted.ps1') -DataDirectory $data -NoRecover:$NoRecover
 } else {
@@ -193,7 +195,7 @@ if ($Mode -eq 'Hosted') {
 '@
     Write-AtomicText (Join-Path $InstallRoot 'Launch-Installed.ps1') $launchScript
     Write-AtomicText (Join-Path $InstallRoot 'Start.cmd') "@echo off`r`n`"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`" -NoProfile -STA -ExecutionPolicy Bypass -File `"%~dp0Launch-Installed.ps1`"`r`nif errorlevel 1 pause`r`n"
-    foreach($helper in @('Manage-Installation.ps1','InstallationSupport.ps1')){Write-AtomicText (Join-Path $InstallRoot $helper) ([IO.File]::ReadAllText((Join-Path $PSScriptRoot $helper)))}
+    foreach($helper in @('Manage-Installation.ps1','InstallationSupport.ps1','Test-ConfigurationCompatibility.ps1')){Write-AtomicText (Join-Path $InstallRoot $helper) ([IO.File]::ReadAllText((Join-Path $PSScriptRoot $helper)))}
     foreach($operation in @('Rollback','Uninstall')){Write-AtomicText (Join-Path $InstallRoot ($operation+'.cmd')) ("@echo off`r`n`"%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe`" -NoProfile -ExecutionPolicy Bypass -File `"%~dp0Manage-Installation.ps1`" -InstallRoot `"%~dp0.`" -Action "+$operation+" -Confirm`r`npause`r`n")}
     $current = [ordered]@{schema=1;repository=$repository;version=$version;commit=$commit;archiveSha256=$archiveHash;sourceKind=$sourceKind;mode=$selectedMode;compiledSha256=$compiledHash;installedAtUtc=[DateTime]::UtcNow.ToString('o')}
     $pointer=Join-Path $InstallRoot 'current.json'

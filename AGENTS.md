@@ -167,6 +167,18 @@ Performance samples are local observations, not universal latency/CPU promises.
 
 ## Repository hygiene
 
+Beta validation: settings with unknown fields/attributes must enter Recovery and
+preserve original bytes. Keep the bounded XML reader and autosave suppression.
+Before selecting legacy installed code, probe a settings snapshot using its own
+types; reject incompatible install/rollback/launch before pointer/data changes.
+Do not auto-restore an older settings backup. The preserve-and-recover capability
+in release/capabilities.json avoids running a redundant legacy probe for current
+code. Test with PublicUpgradeTests against reviewed immutable public source;
+direct old-EXE launches bypass this protection. Build -BetaSoak 30 exercises both
+modes with disposable windows and requires the daily controller stopped. Its
+bounded resource sample is not multi-day or physical-input/hardware coverage.
+Use docs/BETA-TESTING.md and retain unverified manual gates.
+
 Phase 8 release work: build via Build-Release.ps1 and release/package-files.txt;
 keep release/version.json, source ProductVersion and compiled metadata aligned.
 Use tests/ReleaseTests.ps1 for isolated install/update/rollback/uninstall and

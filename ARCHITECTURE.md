@@ -7,6 +7,19 @@ decisions remain recorded in the handoff and decision log.
 This document describes implemented behavior. Future work is in [ROADMAP](ROADMAP.md).
 Existing [project notes](docs/PROJECT-NOTES.md) retain the origin and lessons learned.
 
+Beta validation update, 2026-10-28 (`0.3.0-beta.1`): SettingsStore now rejects
+unknown elements/attributes into existing Recovery with original-byte/autosave
+protection. XML load bounds are 1 MiB, 32 levels and no DTD/resolver. Schema
+version remains 1; this adds preservation, not automatic schema conversion.
+InstallationSupport checks selected-version capabilities after package integrity
+validation. Versions without preserve-and-recover are compiled with a small
+strict serializer probe in a bounded child host against a temporary settings
+snapshot. Install, rollback and installed launch refuse incompatible legacy code;
+no pointer or settings backup is silently substituted. Capable current code can
+open corrupt/future files through Recovery. Direct standalone old executables
+are outside this launcher guard. The fourth installer companion is
+Test-ConfigurationCompatibility.ps1. See docs/BETA-TESTING.md for actual scope.
+
 ## Scope and execution
 
 Windows Tile Studio is a local C#/Windows Forms controller using Win32 window

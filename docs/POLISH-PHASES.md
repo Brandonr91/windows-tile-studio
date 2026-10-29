@@ -178,6 +178,8 @@ This phase's local tooling is now implemented. See
 [release/recovery](RELEASE-AND-RECOVERY.md), [gate checklist](RELEASE-CHECKLIST.md)
 and the latest HANDOFF for verification and artifacts. The brief below is retained
 as scope/history. Next work is beta/release validation, not an invented phase 9.
+The beta.1 [campaign guide](BETA-TESTING.md) records upgrade/downgrade protection,
+bounded dual-mode soak tests and the outstanding manual matrix.
 
 Audit install/update/rollback/removal, artifact identity and existing CI. Establish
 a reproducible source/binary manifest and checksums, then validate clean-account

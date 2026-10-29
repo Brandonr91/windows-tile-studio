@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.3.0-beta.1 — local beta validation
+
+- Prevent silent settings loss when selecting an older installed version; probe
+  a snapshot before activation/rollback/launch and preserve active pointers/data
+  on incompatibility. Current settings enter Recovery on unknown fields/attributes.
+- Bound settings XML size/depth and prohibit DTD resolution.
+- Add actual public-source upgrade/guarded rollback tests and bounded compiled/
+  source-hosted resize/dialog/resource soak coverage.
+- Add beta test instructions and a privacy-conscious feedback template. Manual
+  hardware/login/accessibility, fresh-account, signing and publication gates remain.
+
 ## 0.3.0-preview.8 — local production-delivery preparation
 
 - Versioned source and optional compiled portable ZIPs, per-file SHA-256 manifests

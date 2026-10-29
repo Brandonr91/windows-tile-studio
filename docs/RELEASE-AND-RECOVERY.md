@@ -1,6 +1,7 @@
 # Preview packages, install and recovery
 
-Phase 8 prepares local delivery tooling for `0.3.0-preview.8`. It does not publish
+Phase 8 prepared local delivery tooling; `0.3.0-beta.1` adds guarded settings
+compatibility and the [beta validation campaign](BETA-TESTING.md). It does not publish
 a release, sign binaries, claim a clean-account pass or close hardware/beta gates.
 
 ## Build and verify
@@ -42,11 +43,12 @@ warning blindly; signing and publisher trust remain a release decision.
 ## Install/update without replacing data
 
 Extract the full source/portable bundle into a short writable path. Keep
-Get-FromGitHub.ps1, InstallationSupport.ps1 and Manage-Installation.ps1 together;
+Get-FromGitHub.ps1, InstallationSupport.ps1, Manage-Installation.ps1 and
+Test-ConfigurationCompatibility.ps1 together;
 the installer is no longer a standalone one-file download.
 
 ```powershell
-.\Get-FromGitHub.ps1 -ArchivePath 'C:\Downloads\WindowsTileStudio-0.3.0-preview.8-Source.zip' -ExpectedSha256 '<64-character hash from SHA256SUMS.txt>' -Mode Hosted -NoLaunch
+.\Get-FromGitHub.ps1 -ArchivePath 'C:\Downloads\WindowsTileStudio-0.3.0-beta.1-Source.zip' -ExpectedSha256 '<64-character hash from SHA256SUMS.txt>' -Mode Hosted -NoLaunch
 ```
 
 Replace the example hash with the real value. Default InstallRoot is the
@@ -98,7 +100,13 @@ unrelated processes are not stopped. From the installed folder:
 Rollback/Uninstall.cmd offer confirmed versions of those actions. Rollback checks
 the previous code/artifact and swaps the pointer; invoking it again switches back.
 It does not restore settings backups: preserve data/ before trying versions with
-different schemas. No data migration is silently undone. A missing/corrupt prior
+different schemas. Older versions that cannot preserve all current settings are
+blocked before install/rollback/installed launch; their serializer is probed in
+a bounded child process using a snapshot. Explicitly restore a compatible backup
+before retrying, retaining the newer backup separately. Beta code handles unknown
+fields/attributes through Recovery without automatic overwrite. Direct old-EXE
+launches bypass the installed launcher and are not protected by this guard.
+No data migration is silently undone. A missing/corrupt prior
 version leaves the active pointer intact.
 
 Uninstall removes owned versions/launchers/pointers and only the owned Startup

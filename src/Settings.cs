@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Xml.Serialization;
+using System.Xml;
 
 [Flags] public enum ShortcutModifiers { None=0,Alt=1,Control=2,Shift=4,Windows=8 }
 public class Shortcut {
@@ -84,10 +85,16 @@ public class AppSettings {
 
 public static class SettingsStore {
     static readonly XmlSerializer Serializer=new XmlSerializer(typeof(AppSettings));
+    static SettingsStore(){Serializer.UnknownElement+=delegate{throw new ArgumentException("Unsupported settings fields were preserved. Use the version that created this file or review a backup.");};Serializer.UnknownAttribute+=delegate{throw new ArgumentException("Unsupported settings attributes were preserved. Use the version that created this file or review a backup.");};}
     public static AppSettings Load(string path,out string warning) {
         warning=null;
         if(!File.Exists(path)) return AppSettings.Defaults();
-        try { using(var stream=File.OpenRead(path)) { var s=(AppSettings)Serializer.Deserialize(stream); s.Validate(); return s; } }
+        try { using(var stream=File.OpenRead(path)) {
+            if(stream.Length>1048576)throw new ArgumentException("Settings exceed the 1 MB limit.");
+            var options=new XmlReaderSettings{DtdProcessing=DtdProcessing.Prohibit,XmlResolver=null,MaxCharactersInDocument=1048576};
+            using(var reader=XmlReader.Create(stream,options))while(reader.Read())if(reader.Depth>32)throw new ArgumentException("Settings are nested too deeply.");stream.Position=0;
+            using(var reader=XmlReader.Create(stream,options)){var s=(AppSettings)Serializer.Deserialize(reader);s.Validate();return s;}
+        } }
         catch(Exception e) { warning="Settings could not be loaded. Defaults are running; the original file has been preserved. "+e.GetBaseException().Message; return AppSettings.Defaults(); }
     }
     public static void Save(string path,AppSettings settings) {

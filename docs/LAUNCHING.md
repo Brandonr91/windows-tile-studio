@@ -50,7 +50,7 @@ It needs no Git installation, GitHub token, installer service, or downloaded EXE
 
 After the intended revision has been published, extract/inspect the full source
 bundle, keeping `Get-FromGitHub.ps1`, `InstallationSupport.ps1` and
-`Manage-Installation.ps1` together, then run:
+`Manage-Installation.ps1` and `Test-ConfigurationCompatibility.ps1` together, then run:
 
 ```powershell
 .\Get-FromGitHub.ps1 -Mode Hosted

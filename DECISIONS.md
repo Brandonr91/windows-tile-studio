@@ -192,3 +192,24 @@ earlier inspection; the phase-7 decision above supersedes that status.
 
 When changing an established decision, append its replacement and rationale;
 retain the old decision's history rather than silently removing it.
+
+## Beta compatibility decision, 2026-10-28
+
+Verified defect: the actual public cfdb2df settings serializer ignores and drops
+new launcher position/lock and monitor fields when saving a newer file. Keep
+settings version 1 for existing compatible upgrades, but fail into Recovery on
+unknown elements/attributes rather than accepting a lossy partial load. Bound
+XML size/depth and prohibit DTDs. Existing Recovery suppresses automatic saves.
+
+Installed code selection probes legacy settings types against a snapshot before
+activation, rollback or launch. Current code declares preserve-and-recover so
+corrupt/future files can still reach its Recovery UI without a redundant startup
+compile. The guard fails closed on a missing probe or incompatible legacy file;
+restoring a compatible backup is explicit and does not delete the newer backup.
+The probe runs trusted selected source with a parent deadline, not in a sandbox.
+Per-file integrity protects consistency, not authenticity against a local writer.
+Direct old executables and launchers from older bundles remain outside the guard.
+
+Use a local unsigned beta kit and scoped upgrade/soak evidence before broader
+testing. No phase 9 or production certification is invented; external/fresh-account,
+hardware/login/accessibility and publisher/signing gates remain explicit.

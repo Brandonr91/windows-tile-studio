@@ -18,10 +18,11 @@ if($Action -eq 'Rollback'){
     $previous=Read-WtsPointer (Join-Path $InstallRoot 'previous.json')
     $previousPath=Assert-WtsChild $InstallRoot (Join-Path $InstallRoot ('versions\'+$previous.version))
     Test-WtsInstalledPointer $InstallRoot $previous
+    Assert-WtsConfiguration $InstallRoot $previousPath
     if($PSCmdlet.ShouldProcess($InstallRoot,'Switch to the previous verified version; keep data and startup preference')){Set-WtsCurrent $InstallRoot $previous}
     return
 }
-$owned=@('versions','current.json','current.json.bak','previous.json','previous.json.bak','Launch-Installed.ps1','Launch-Installed.ps1.bak','Start.cmd','Start.cmd.bak','Manage-Installation.ps1','Manage-Installation.ps1.bak','InstallationSupport.ps1','InstallationSupport.ps1.bak','Rollback.cmd','Rollback.cmd.bak','Uninstall.cmd','Uninstall.cmd.bak')
+$owned=@('versions','current.json','current.json.bak','previous.json','previous.json.bak','Launch-Installed.ps1','Launch-Installed.ps1.bak','Start.cmd','Start.cmd.bak','Manage-Installation.ps1','Manage-Installation.ps1.bak','InstallationSupport.ps1','InstallationSupport.ps1.bak','Test-ConfigurationCompatibility.ps1','Test-ConfigurationCompatibility.ps1.bak','Rollback.cmd','Rollback.cmd.bak','Uninstall.cmd','Uninstall.cmd.bak')
 if($RemoveData){$owned+=@('data','.windows-tile-studio.json','.windows-tile-studio.json.bak')}
 foreach($name in $owned){$target=Assert-WtsChild $InstallRoot (Join-Path $InstallRoot $name);if(Test-Path -LiteralPath $target -PathType Container){[void]@(Get-WtsTreeFiles $target)}}
 if(!$PSCmdlet.ShouldProcess($InstallRoot,('Uninstall owned code/launchers; '+$(if($RemoveData){'DELETE this installation data'}else{'PRESERVE data and unrelated files'})))){return}

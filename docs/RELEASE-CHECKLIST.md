@@ -14,6 +14,11 @@ Record the artifact hash, source revision, machine/account and evidence for each
 - Actual installed Hosted/Compiled launch, rollback launch and running-install refusal.
 - Source-only hosting and legacy guarded restoration tests.
 - Read-only Windows CI configured; hosted CI execution still needs evidence.
+- Beta.1 actual public cfdb2df upgrade with synthetic preferences, blocked lossy
+  install/rollback/launch and compatible backup rollback; separate empty workspace
+  library retained byte-for-byte. Representative personal captures remain untested.
+- Thirty repeated resize cycles plus dialog churn in each mode; bounded GDI/private
+  growth and 15-second idle samples. Multi-day physical-input testing remains open.
 
 ## Manual/beta gates still open
 

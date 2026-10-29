@@ -138,10 +138,11 @@ class IntegrationTests {
         passed.Add("Settings UI saves custom layouts and Appearance visibility/reset; draft cancellation preserves original launcher settings.");
         passed.Add("Grid replacement confirmation/undo, failed-save draft retention, and discard/keep-editing close safeguards pass.");
     }
-    static void TestStartupRecovery(string directory,bool reserveShortcut) {
+    static void TestStartupRecovery(string directory,bool reserveShortcut,bool futureFields=false) {
         string priorData=data; data=directory; Directory.CreateDirectory(data);
         string settingsPath=Path.Combine(data,"settings.xml"); var initial=AppSettings.Defaults(); initial.ShowLauncherTab=false;
         if(reserveShortcut) SettingsStore.Save(settingsPath,initial); else File.WriteAllText(settingsPath,"unreadable settings fixture");
+        if(futureFields){SettingsStore.Save(settingsPath,initial);File.WriteAllText(settingsPath,File.ReadAllText(settingsPath).Replace("</AppSettings>","<FuturePreference>retained fixture</FuturePreference></AppSettings>"));}
         string original=File.ReadAllText(settingsPath);
         using(var blocker=new Form()) {
             if(reserveShortcut) Check(NativeMethods.RegisterHotKey(blocker.Handle,980,0x4000|(uint)initial.FlyoutShortcut.Modifiers,(uint)initial.FlyoutShortcut.Key),"Could not reserve startup shortcut");
@@ -156,7 +157,7 @@ class IntegrationTests {
             } finally { if(reserveShortcut) NativeMethods.UnregisterHotKey(blocker.Handle,980); }
         }
         data=priorData;
-        passed.Add(reserveShortcut?"Reserved startup shortcut opens recoverable settings without replacing the saved file.":"Corrupt startup settings opens recovery while preserving the original bytes.");
+        passed.Add(futureFields?"Future settings fields open Recovery and suppress autosave, preserving original bytes.":reserveShortcut?"Reserved startup shortcut opens recoverable settings without replacing the saved file.":"Corrupt startup settings opens recovery while preserving the original bytes.");
     }
     static void TestCompatibility(string directory) {
         string previousData=data; data=directory; Directory.CreateDirectory(data);
@@ -259,7 +260,25 @@ class IntegrationTests {
             } finally { if(!browser.HasExited) { browser.CloseMainWindow(); if(!browser.WaitForExit(2000)) browser.Kill(); } }
         }
     }
-    static void Run(string directory,string hostedScript) {
+    static void BetaSoak(int cycles,string mode) {
+        Action<int,string> dialog=delegate(int command,string title){Command(command,0,IntPtr.Zero);IntPtr window=IntPtr.Zero;Wait(()=>{window=NativeMethods.FindWindow(null,title);return window!=IntPtr.Zero&&NativeMethods.IsWindowVisible(window);},"Soak dialog did not become visible");NativeMethods.PostMessage(window,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(window),"Soak dialog did not close");};
+        for(int i=0;i<3;i++){dialog(SixSlotSnap.SettingsCommand,"Windows Tile Studio — settings");dialog(SixSlotSnap.WorkspacesCommand,"Windows Tile Studio — workspaces");}
+        controller.Refresh();uint gdiBefore=GetGuiResources(controller.Handle,0);long privateBefore=controller.PrivateMemorySize64;var clock=Stopwatch.StartNew();
+        for(int cycle=0;cycle<cycles;cycle++) {
+            int column=cycle%3,slot=column+(cycle%2)*3;var baseline=forms.Select(f=>Bounds(f.Handle)).ToArray();scenario="beta soak "+cycle;
+            BeginResize(forms[slot].Handle);Pump(100);var next=Bounds(forms[slot].Handle);int delta=(cycle%2==0?12:-12);if(slot<3)next.B+=delta;else next.T+=delta;Move(slot,next);Pump(130);NotifyWinEvent(11,forms[slot].Handle,0,0);Pump(430);CheckAll();
+            for(int i=0;i<6;i++){var actual=Bounds(forms[i].Handle);Check(actual.L==baseline[i].L&&actual.R==baseline[i].R,"Soak height gesture changed a width");if(i!=column&&i!=column+3)Check(Equal(actual,baseline[i]),"Soak height gesture changed a flanking window");}
+            if(cycle%4==0){baseline=forms.Select(f=>Bounds(f.Handle)).ToArray();slot=cycle%2;BeginResize(forms[slot].Handle);Pump(100);next=Bounds(forms[slot].Handle);next.R+=(cycle%8==0?12:-12);Move(slot,next);Pump(130);NotifyWinEvent(11,forms[slot].Handle,0,0);Pump(430);CheckAll();for(int i=0;i<6;i++){var actual=Bounds(forms[i].Handle);Check(actual.T==baseline[i].T&&actual.B==baseline[i].B,"Soak width gesture changed heights");}}
+            if(cycle%3==0){dialog(SixSlotSnap.SettingsCommand,"Windows Tile Studio — settings");dialog(SixSlotSnap.WorkspacesCommand,"Windows Tile Studio — workspaces");}
+            Check(!(bool)State().Attribute("launcherVisible")&&State().Elements("Zone").Count()==6,"Soak lost assignments or resurrected the bar");
+            if((cycle+1)%10==0)Console.WriteLine("Soak "+mode+": "+(cycle+1)+"/"+cycles+" resize cycles.");
+        }
+        controller.Refresh();double cpu=controller.TotalProcessorTime.TotalMilliseconds;Pump(15000);controller.Refresh();double idleCpu=controller.TotalProcessorTime.TotalMilliseconds-cpu;uint gdiAfter=GetGuiResources(controller.Handle,0);long privateAfter=controller.PrivateMemorySize64;
+        Check(gdiAfter<=gdiBefore+128,"Soak exceeded the bounded GDI growth budget");Check(privateAfter<=privateBefore+128L*1024*1024,"Soak exceeded the bounded private-memory growth budget");
+        new XElement("BetaSoak",new XAttribute("mode",mode),new XAttribute("cycles",cycles),new XAttribute("elapsedMs",clock.ElapsedMilliseconds),new XAttribute("idleIntervalMs",15000),new XAttribute("idleCpuMs",idleCpu),new XAttribute("gdiBefore",gdiBefore),new XAttribute("gdiAfter",gdiAfter),new XAttribute("privateBefore",privateBefore),new XAttribute("privateAfter",privateAfter),new XAttribute("passed",true)).Save(Path.Combine(data,"beta-soak-summary.xml"));
+        passed.Add("Bounded "+mode+" soak: "+cycles+" height/width cycles, dialog churn, pair-only heights, six assignments, hidden bar, resource budgets and 15-second idle sample pass.");
+    }
+    static void Run(string directory,string hostedScript,int soakCycles=0) {
         data=directory; Directory.CreateDirectory(data);
         Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before integration tests.");
         var settings=AppSettings.Defaults(); settings.ShowLauncherTab=true; SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
@@ -284,6 +303,7 @@ class IntegrationTests {
         passed.Add("Closing the real controller launcher hides it to tray and saves visibility while leaving the controller and hotkeys running.");
         for(int i=0;i<6;i++) Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle);
         CheckAll(); Check(State().Elements("Zone").Count()==6,"Not all six zones were assigned"); passed.Add("Six external-process test windows placed and tracked.");
+        if(soakCycles>0){BetaSoak(soakCycles,hostedScript==null?"Compiled":"SourceHosted");Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero);Wait(()=>controller.HasExited,"Soak controller did not exit");File.WriteAllLines(Path.Combine(data,"integration-result.txt"),new[]{"PASS"}.Concat(passed));return;}
         var displayBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();int refreshes=(int)State().Attribute("displayRefreshes");
         foreach(int notification in new[]{0x7e,0x1a,0x218}) {
             IntPtr notificationResult;
@@ -422,6 +442,7 @@ class IntegrationTests {
         TestEditor();
         TestStartupRecovery(Path.Combine(data,"startup-conflict"),true);
         TestStartupRecovery(Path.Combine(data,"startup-corrupt"),false);
+        TestStartupRecovery(Path.Combine(data,"startup-future"),false,true);
         TestCompatibility(Path.Combine(data,"compatibility"));
         File.WriteAllLines(Path.Combine(data,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
     }
@@ -434,7 +455,7 @@ class IntegrationTests {
                 Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before compatibility tests.");
                 data=directory; forms=new Form[0]; TestCompatibility(Path.Combine(directory,"compatibility"));
                 Directory.CreateDirectory(directory); File.WriteAllLines(Path.Combine(directory,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
-            } else Run(directory,hostedScript);
+            } else {int soak=Array.IndexOf(args,"--beta-soak"),cycles=0;if(soak>=0){if(soak+1>=args.Length||!int.TryParse(args[soak+1],out cycles)||cycles<10||cycles>200)throw new ArgumentException("Beta soak needs 10–200 cycles.");}Run(directory,hostedScript,cycles);}
             Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0;
         }
         catch(Exception e) { Directory.CreateDirectory(directory); File.WriteAllText(Path.Combine(directory,"integration-error.txt"),e.ToString()); Console.Error.WriteLine(e); return 1; }

@@ -47,8 +47,10 @@ controller runs locally without an AI service, API key, or network connection.
 
 ## Start
 
-Local preview.8 adds versioned Source/PortableCompiled packages, manifests and
-checksums, validated installation, rollback and data-preserving uninstall. See
+Local beta.1 adds settings-preserving downgrade guards and a
+[beta test guide](docs/BETA-TESTING.md) to the phase-8 versioned
+Source/PortableCompiled packages, manifests/checksums, validated installation,
+rollback and data-preserving uninstall. See
 [release and recovery](docs/RELEASE-AND-RECOVERY.md). Packages are unsigned
 previews; the [production checklist](docs/RELEASE-CHECKLIST.md) retains manual
 account/hardware/accessibility/beta gates. No release is published automatically.

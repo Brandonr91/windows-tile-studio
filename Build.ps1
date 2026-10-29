@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[string]$HostedSourceRoot,[string]$OutputDirectory)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[ValidateRange(0,200)][int]$BetaSoak=0,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -68,10 +68,18 @@ if ($WorkspaceIntegration) {
     & $nativeTest --hidden-dialogs
     if ($LASTEXITCODE -ne 0) { throw 'Hidden-startup dialog tests failed.' }
 }
-if ($Integration -or $HostedIntegration -or $Compatibility) {
+if ($Integration -or $HostedIntegration -or $Compatibility -or $BetaSoak) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'
     & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$integrationExecutable" (Join-Path $PSScriptRoot 'tests\IntegrationTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Integration test compilation failed.' }
+    if ($BetaSoak) {
+        if($BetaSoak -lt 10){throw 'Beta soak requires 10–200 cycles.'}
+        & $integrationExecutable (Join-Path $output 'beta-soak-compiled') --beta-soak $BetaSoak
+        if($LASTEXITCODE -ne 0){throw 'Compiled beta soak failed.'}
+        $soakSource=if($HostedSourceRoot){[IO.Path]::GetFullPath($HostedSourceRoot)}else{$PSScriptRoot}
+        & $integrationExecutable (Join-Path $output 'beta-soak-hosted') --beta-soak $BetaSoak --hosted (Join-Path $soakSource 'Start-Hosted.ps1')
+        if($LASTEXITCODE -ne 0){throw 'Source-hosted beta soak failed.'}
+    }
     if ($Integration) {
         & $integrationExecutable
         if ($LASTEXITCODE -ne 0) { throw 'Integration tests failed; inspect bin/integration-data.' }

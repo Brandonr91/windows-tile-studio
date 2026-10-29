@@ -1,5 +1,87 @@
 # Handoff
 
+## Current checkpoint: beta validation, 2026-10-28
+
+`0.3.0-beta.1` follows phase 8 on feature/polish-launchers. All eight phases
+have local core implementations; this is release validation, not phase 9 or a
+published production release. Read docs/BETA-TESTING.md and RELEASE-CHECKLIST.md.
+
+Reproduced against actual public `cfdb2df728466b1256383cf9b8417b21a486a1ca`:
+its serializer silently drops newer launcher position/lock and monitor settings.
+Beta SettingsStore now enters Recovery on unknown elements/attributes, keeps
+original bytes and suppresses autosave through existing Recovery behavior.
+XML loads cap 1 MiB/32 levels and prohibit DTD/resolver use. Version remains 1;
+no settings migration or backup restoration is automatic.
+
+InstallationSupport probes legacy settings types against a temporary snapshot
+before install/rollback/installed launch. It rejects lossy selections without
+changing pointers/settings. Test-ConfigurationCompatibility.ps1 is the fourth
+installer companion. Current source declares preserve-and-recover capability,
+allowing corrupt/future files to reach Recovery without an extra startup compile.
+Direct old EXEs/older launchers bypass the new guard. Trusted selected source runs
+in a bounded child process, not a sandbox. New-BetaKit.ps1 checks archive hashes
+and collects packages/provenance and test/recovery docs into a new local folder;
+no user data collection, invitations, uploads or publication.
+
+Verified local scope:
+
+- Build -Test: 198564. Compiled LauncherUi/EditorUi/WorkspaceUi/AccessibilityUi,
+  WorkspaceIntegration/cold hidden dialogs and full HostedIntegration pass.
+  This includes future-field Recovery preserving bytes, existing resize ownership,
+  concurrent-source, hotkey, font/paint, minimum/frame and isolated Chrome checks.
+- Source-hosted General/workspace and accessibility suites pass independently;
+  LauncherTests and ReleaseTests pass, including data retention and failed update
+  integrity/pointer protection. Destructive/shortcut operations use temp fixtures.
+- PublicUpgradeTests installs and launches actual immutable public source, upgrades
+  to beta with synthetic names/keys/geometry, refuses incompatible rollback,
+  downgrade installation and actual installed legacy launch, then exercises a
+  compatible rollback after explicitly restoring fixture settings. An empty valid
+  separate workspace library is retained byte-for-byte; personal captured workspaces
+  are not claimed. Public ZIP SHA256 is
+  eb8d75d6efa9af522bcbdf864fa9995e7689eaf1969144d875a047942ee5890f.
+- Build -BetaSoak 30: both compiled and hosted pass 30 height cycles plus width
+  gestures/dialog churn, six assignments and hidden-bar checks. Compiled GDI
+  48→47, private 33,251,328→35,942,400 bytes; hosted GDI 48→58, private
+  93,892,608→101,863,424. Each sample took about 46 seconds after warmup and
+  reported 0 ms process CPU during its 15-second idle interval. These are bounded
+  local observations, not multi-day leak/performance or physical-input guarantees.
+- InstalledLaunchTests exercises actual stable Hosted/Compiled launch and rollback
+  with no adoption of real windows. Windows Application crash events are sampled
+  separately, not continuously monitored. Inspect the final external error report.
+
+Evidence outside Git: outputs/windows-tile-studio-beta-*.txt/json, including
+native, hosted-workspace, hosted-accessibility, launchers, release, public-upgrade,
+installed, windows-errors and deployment. Later *-final reports identify final
+clean-commit packages. Packages are bin/beta-releases/, kit bin/beta-kit/;
+release-info.json supplies exact source revision/dirty state and archive hashes.
+Earlier preview.8 bin/releases artifacts remain separate and unchanged. Development
+packages may record dirty source; use the final clean provenance, not an old PASS.
+
+Daily delivery target is repo bin/SixSlotSnap.exe with repo data/, beta.1, bar
+hidden and no Recovery; verify the process/command line plus final deployment
+report rather than stale XML. The preexisting enabled Startup shortcut must stay
+byte-identical and direct to its original repo binary/data; no startup migration
+or enablement was performed. Hosted delivery receives all fourteen current source
+files and Start-Hosted.ps1, retaining separate data and no second controller.
+Fallback binary/settings/hosted sources are work/beta-validation-fallback. Prior
+preview source is Git 2fe2297. Verify deployed state after compaction.
+
+Exact next steps:
+1. Read all five root context files; inspect status/log/remotes and live process.
+   Confirm final beta package/kit provenance and deployment/error evidence.
+2. Continue the user's priority. Remaining release gates require a fresh account/VM,
+   representative personal configs/backups, actual login, physical displays/docking/
+   sleep, screen reader/OS text/contrast, privilege/hung/unusual apps, competing tilers
+   and longer daily/external use. Mark untested cases honestly; do not change account
+   settings, sign, publish or send tester messages merely to fill a checklist.
+3. Collect feedback using the local template; resolve reproduced defects with scoped
+   regressions. Preserve adjacent-pair heights, hidden bar, local-only runtime and
+   existing startup/data. Theme/text-size preferences remain unimplemented.
+4. Remote CI is configured but unexecuted. Reconcile divergent public/local histories
+   without force push only when publication is requested; preserve six-slot-snap.
+
+The following phase-8 checkpoint is historical.
+
 ## Current checkpoint: phase 8 delivery preparation, 2026-10-28
 
 Implemented and deployed locally as `0.3.0-preview.8`, following `508783a` on

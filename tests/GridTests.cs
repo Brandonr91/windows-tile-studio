@@ -68,6 +68,10 @@ class GridTests {
         string warning; var loaded=SettingsStore.Load(path,out warning);
         Check(warning==null && loaded.Profiles.Count==6,"Settings round trip failed");
         Check(loaded.FlyoutShortcut.ToString()=="Ctrl+Alt+Win+Space","Flyout default changed");
+        var originalXml=File.ReadAllText(path);string future=originalXml.Replace("</AppSettings>","<FutureSetting>keep-private-value</FutureSetting></AppSettings>");File.WriteAllText(path,future);SettingsStore.Load(path,out warning);Check(warning!=null&&File.ReadAllText(path)==future,"Unknown settings fields were silently discarded");
+        future=originalXml.Replace("<AppSettings ","<AppSettings futureAttribute=\"keep-private-value\" ");File.WriteAllText(path,future);SettingsStore.Load(path,out warning);Check(warning!=null&&File.ReadAllText(path)==future,"Unknown settings attributes were silently discarded");
+        File.WriteAllText(path,"<!DOCTYPE AppSettings [<!ENTITY test 'private'>]><AppSettings>&test;</AppSettings>");SettingsStore.Load(path,out warning);Check(warning!=null,"Settings XML accepted a DTD");
+        File.WriteAllText(path,new string(' ',1048577));SettingsStore.Load(path,out warning);Check(warning!=null,"Oversized settings were accepted");File.WriteAllText(path,originalXml);loaded=SettingsStore.Load(path,out warning);
         Check(!loaded.LauncherPositionSet,"Old/default settings must use the clock-area launcher position");
         Check(!loaded.LauncherPositionLocked,"Old/default settings must leave the bar draggable");
         s.LauncherPositionLocked=true;SettingsStore.Save(path,s.Clone());loaded=SettingsStore.Load(path,out warning);
