@@ -6,6 +6,38 @@ using System.Windows.Forms;
 using Microsoft.Win32;
 using System.Collections.Generic;
 
+// Shared geometry for subtle rounded surfaces; no bitmap assets or web runtime.
+public static class StudioDrawing {
+    public static System.Drawing.Drawing2D.GraphicsPath Rounded(RectangleF b,float radius) {
+        var path=new System.Drawing.Drawing2D.GraphicsPath();float d=Math.Max(1,Math.Min(radius*2,Math.Min(b.Width,b.Height)));
+        path.AddArc(b.Left,b.Top,d,d,180,90);path.AddArc(b.Right-d,b.Top,d,d,270,90);path.AddArc(b.Right-d,b.Bottom-d,d,d,0,90);path.AddArc(b.Left,b.Bottom-d,d,d,90,90);path.CloseFigure();return path;
+    }
+    public static Color Blend(Color a,Color b,float amount){return Color.FromArgb((int)(a.R+(b.R-a.R)*amount),(int)(a.G+(b.G-a.G)*amount),(int)(a.B+(b.B-a.B)*amount));}
+}
+public class StudioPanel : Panel {
+    public StudioPanel(){DoubleBuffered=true;}
+    protected override void OnPaintBackground(PaintEventArgs e) {
+        var p=UiTheme.PaletteFor(FindForm());e.Graphics.Clear(p.Background);if(Width<2||Height<2)return;
+        e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        using(var path=StudioDrawing.Rounded(new RectangleF(0,0,Width-1,Height-1),14))using(var fill=new SolidBrush(p.Panel))using(var border=new Pen(p.Border)){e.Graphics.FillPath(fill,path);e.Graphics.DrawPath(border,path);}
+    }
+}
+public class LayoutOverview : Control {
+    readonly LayoutProfile profile;
+    public LayoutOverview(LayoutProfile value){profile=value.Clone();DoubleBuffered=true;ResizeRedraw=true;AccessibleName=value.Name+" layout preview";AccessibleDescription=value.Columns.Count+" columns, "+value.SlotCount+" zones. Preview only. Use Edit visually to change dividers.";AccessibleRole=AccessibleRole.Graphic;TabStop=false;}
+    protected override void OnPaint(PaintEventArgs e) {
+        if(Width<40||Height<40)return;var p=UiTheme.PaletteFor(FindForm());bool contrast=SystemInformation.HighContrast;
+        e.Graphics.Clear(p.Panel);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        var model=new LayoutModel(profile);model.Work=new SixSlotSnap.RECT{L=6,T=6,R=Width-6,B=Height-6};
+        for(int i=0;i<profile.SlotCount;i++) {
+            var r=model.RectFor(i);var box=new Rectangle(r.L+4,r.T+4,Math.Max(1,r.R-r.L-8),Math.Max(1,r.B-r.T-8));
+            Color end=contrast?p.Panel:StudioDrawing.Blend(p.Panel,p.Line,0.12f+(i%3)*0.045f);
+            using(var path=StudioDrawing.Rounded(box,10))using(var brush=new System.Drawing.Drawing2D.LinearGradientBrush(box,p.Panel,end,50f))using(var border=new Pen(contrast?p.Border:StudioDrawing.Blend(p.Border,p.Line,0.3f))){e.Graphics.FillPath(brush,path);e.Graphics.DrawPath(border,path);}
+            TextRenderer.DrawText(e.Graphics,(i+1).ToString("00"),Font,box,p.Text,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+        }
+    }
+}
+
 // Native page selection is retained behind an accessible, painted navigation rail.
 public class NavigationTabs : TabControl {
     public NavigationTabs(bool sidebar) {SizeMode=TabSizeMode.Fixed;ItemSize=new Size(1,1);Appearance=TabAppearance.FlatButtons;}
@@ -13,7 +45,7 @@ public class NavigationTabs : TabControl {
     public void AddNavigation(Control container,bool sidebar) {
         var rail=new FlowLayoutPanel{Dock=sidebar?DockStyle.Left:DockStyle.Top,Width=168,Height=54,FlowDirection=sidebar?FlowDirection.TopDown:FlowDirection.LeftToRight,WrapContents=false,AutoScroll=true,Padding=new Padding(8),AccessibleName=sidebar?"Settings navigation":"General navigation"};
         foreach(TabPage page in TabPages) {
-            var button=new NavigationButton{Text=page.Text,Width=sidebar?148:137,Height=38,Margin=new Padding(2,2,2,6),AccessibleName="Open "+page.Text,Selected=delegate{return SelectedTab==page;}};
+            var button=new NavigationButton{Text=page.Text,IconKey=sidebar?page.Text:null,Width=sidebar?148:137,Height=sidebar?58:38,Margin=new Padding(2,2,2,6),AccessibleName="Open "+page.Text,Selected=delegate{return SelectedTab==page;}};
             button.Click+=delegate{SelectedTab=page;};rail.Controls.Add(button);
         }
         SelectedIndexChanged+=delegate{rail.Invalidate(true);};container.Controls.Add(rail);BringToFront();
@@ -21,14 +53,44 @@ public class NavigationTabs : TabControl {
 }
 public class NavigationButton : Button {
     public Func<bool> Selected;
+    public string IconKey;
+    bool hovered;
+    protected override void OnMouseEnter(EventArgs e){hovered=true;Invalidate();base.OnMouseEnter(e);}
+    protected override void OnMouseLeave(EventArgs e){hovered=false;Invalidate();base.OnMouseLeave(e);}
     protected override void OnPaint(PaintEventArgs e) {
         var p=UiTheme.PaletteFor(FindForm());bool active=Selected!=null&&Selected();
         e.Graphics.Clear(p.Background);
         var bounds=new Rectangle(0,0,Width-1,Height-1);
-        if(active)using(var brush=new SolidBrush(p.Panel))e.Graphics.FillRectangle(brush,bounds);
-        if(active)using(var brush=new SolidBrush(p.Line))e.Graphics.FillRectangle(brush,0,9,3,Height-18);
-        TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(14,0,Width-20,Height),Enabled?p.Text:p.Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
+        e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        if(active||hovered)using(var path=StudioDrawing.Rounded(bounds,9))using(var brush=new SolidBrush(active?p.Selected:p.Panel))e.Graphics.FillPath(brush,path);
+        if(active)using(var brush=new SolidBrush(p.Line))e.Graphics.FillRectangle(brush,0,14,3,Height-28);
+        if(IconKey!=null)DrawIcon(e.Graphics,active?p.Text:p.Muted,new Rectangle(14,Height/2-9,18,18));
+        int left=IconKey==null?14:44;
+        TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(left,0,Width-left-5,Height),Enabled?p.Text:p.Muted,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
         if(Focused&&ShowFocusCues){bounds.Inflate(-4,-4);ControlPaint.DrawFocusRectangle(e.Graphics,bounds,p.Text,p.Background);}
+    }
+    void DrawIcon(Graphics g,Color color,Rectangle r) {
+        using(var pen=new Pen(color,1.4f)) {
+            if(IconKey=="Layouts"){for(int x=0;x<2;x++)for(int y=0;y<2;y++)g.DrawRectangle(pen,r.X+x*10,r.Y+y*10,6,6);}
+            else if(IconKey=="Hotkeys"){g.DrawRectangle(pen,r.X,r.Y+3,18,12);for(int x=3;x<16;x+=5)g.DrawLine(pen,r.X+x,r.Y+7,r.X+x+1,r.Y+7);g.DrawLine(pen,r.X+5,r.Y+11,r.X+13,r.Y+11);}
+            else if(IconKey=="General"){g.DrawEllipse(pen,r.X+4,r.Y+4,10,10);for(int i=0;i<8;i++){double a=i*Math.PI/4;g.DrawLine(pen,r.X+9+(float)Math.Cos(a)*7,r.Y+9+(float)Math.Sin(a)*7,r.X+9+(float)Math.Cos(a)*10,r.Y+9+(float)Math.Sin(a)*10);}}
+            else {g.DrawLine(pen,r.X+9,r.Y+13,r.X+9,r.Y);g.DrawLine(pen,r.X+9,r.Y,r.X+4,r.Y+5);g.DrawLine(pen,r.X+9,r.Y,r.X+14,r.Y+5);g.DrawLines(pen,new[]{new Point(r.X,r.Y+12),new Point(r.X,r.Bottom),new Point(r.Right,r.Bottom),new Point(r.Right,r.Y+12)});}
+        }
+    }
+}
+public class ThemeChoice : Button {
+    public AppearanceMode Choice;
+    public Func<bool> Selected;
+    UiPalette preview;
+    public void ApplyTheme(){preview=UiTheme.Resolve(Choice,SystemInformation.HighContrast,UiTheme.SystemIsDark(),UiTheme.Accent());AccessibleDescription=Selected!=null&&Selected()?"Selected appearance":"Choose this appearance";Invalidate();}
+    protected override void OnPaint(PaintEventArgs e) {
+        if(preview==null)return;var p=UiTheme.PaletteFor(FindForm());bool active=Selected!=null&&Selected();e.Graphics.Clear(p.Panel);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+        var box=new Rectangle(1,1,Width-3,Height-3);
+        using(var path=StudioDrawing.Rounded(box,12))using(var brush=new SolidBrush(preview.Background))using(var pen=new Pen(active?p.Line:p.Border,active?2:1)){e.Graphics.FillPath(brush,path);e.Graphics.DrawPath(pen,path);}
+        using(var brush=new SolidBrush(preview.Panel)){e.Graphics.FillRectangle(brush,16,16,Width-32,13);e.Graphics.FillRectangle(brush,16,36,34,Height-77);e.Graphics.FillRectangle(brush,58,36,Width-74,Height-77);}
+        TextRenderer.DrawText(e.Graphics,Text,Font,new Rectangle(12,Height-37,Width-24,26),preview.Text,TextFormatFlags.Left|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPrefix);
+        if(active)using(var pen=new Pen(preview.Text,1.6f))e.Graphics.DrawLines(pen,new[]{new Point(Width-34,Height-26),new Point(Width-30,Height-22),new Point(Width-23,Height-30)});
+        if(Focused&&ShowFocusCues)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-6,-6),preview.Text,preview.Background);
     }
 }
 public class StudioButton : Button {
@@ -69,7 +131,7 @@ public static class UiTheme {
     public static UiPalette Resolve(AppearanceMode mode,bool contrast,bool systemDark,Color accent) {
         if(contrast)return UiPalette.ForContrast(true);
         bool dark=mode==AppearanceMode.Dark||(mode==AppearanceMode.System&&systemDark);
-        return dark?new UiPalette{Background=Color.FromArgb(32,32,32),Panel=Color.FromArgb(45,45,45),Text=Color.FromArgb(245,245,245),Muted=Color.FromArgb(200,200,200),Border=Color.FromArgb(76,76,76),Line=accent,Selected=Color.FromArgb(62,62,62),SelectedText=Color.White}:
+        return dark?new UiPalette{Background=Color.FromArgb(8,18,25),Panel=Color.FromArgb(14,29,38),Text=Color.FromArgb(240,246,248),Muted=Color.FromArgb(164,187,198),Border=Color.FromArgb(43,65,77),Line=accent,Selected=Color.FromArgb(27,53,65),SelectedText=Color.White}:
             new UiPalette{Background=Color.FromArgb(243,243,243),Panel=Color.White,Text=Color.FromArgb(26,26,26),Muted=Color.FromArgb(85,85,85),Border=Color.FromArgb(210,210,210),Line=accent,Selected=Color.FromArgb(224,235,247),SelectedText=Color.FromArgb(20,20,20)};
     }
     static AppearanceMode ModeFor(Form form) {
@@ -111,9 +173,10 @@ public class UiPalette {
             UiTheme.Resolve(AppearanceMode.Dark,false,false,Color.FromArgb(0,120,212));
     }
     public static void Apply(Control root,UiPalette palette) {
-        root.BackColor=palette.Background;root.ForeColor=palette.Text;
+        root.BackColor=root.Parent is StudioPanel?palette.Panel:palette.Background;root.ForeColor=palette.Text;
         var page=root as TabPage;if(page!=null)page.UseVisualStyleBackColor=false;
         var button=root as Button;if(button!=null){button.UseVisualStyleBackColor=false;button.FlatStyle=FlatStyle.Flat;button.BackColor=palette.Panel;button.FlatAppearance.BorderColor=palette.Border;button.FlatAppearance.MouseOverBackColor=palette.Selected;button.FlatAppearance.MouseDownBackColor=palette.Selected;}
+        var choice=root as ThemeChoice;if(choice!=null)choice.ApplyTheme();
         var text=root as TextBoxBase;if(text!=null){text.BackColor=palette.Panel;text.BorderStyle=BorderStyle.FixedSingle;}
         var list=root as ListBox;if(list!=null){list.BackColor=palette.Panel;list.BorderStyle=BorderStyle.FixedSingle;}
         var combo=root as ComboBox;if(combo!=null){

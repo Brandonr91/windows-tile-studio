@@ -1,3 +1,7 @@
+## Latest UI checkpoint, 2026-10-29
+
+Local beta.4 implements the reference-driven manager composition and theme cards. See [design](../DESIGN.md) and the latest HANDOFF for verified scope, native-test limits and deployment. Recovery hardening/live occupancy remain pending; published beta.2 is unchanged.
+
 ## Appearance implementation update, 2026-10-29
 
 The user explicitly requested immediate implementation. Local beta.3 now includes System/Light/Dark, draft previews, shared styling and manager navigation rails. See [appearance](APPEARANCE.md). This supersedes older statements below that these controls are only planned. Recovery hardening and the fuller six-slot overview/simplification remain pending; broader UI/OS validation remains separate. Published beta.2 is unchanged.
@@ -93,3 +97,7 @@ Acceptance: approved visual direction, complete everyday and General flows,
 consistent components, accessible navigation and DPI/paint regressions checked.
 No new version/tag/asset publication follows from this plan alone; beta.2 remains
 immutable. Recovery work should lead this sequence.
+
+## Reference UI follow-up, 2026-10-29
+
+Local beta.4 implements the visual preview/library/inspector composition, icon rail, rounded surfaces and theme-preview cards. See ../DESIGN.md. Planned live occupancy/status, broader simplification and freeze-after-probe recovery remain separate outstanding work.

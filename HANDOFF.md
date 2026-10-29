@@ -1,5 +1,56 @@
 # Handoff
 
+## Latest implementation: reference-inspired manager, 2026-10-29
+
+Local beta.4 (file 0.3.0.12) now implements the user's dashboard reference direction:
+rounded navy/white surfaces, icon rail, large numbered draft preview, thumbnail
+layout library, grouped numeric inspector and visual theme cards. General/Share
+and Hotkeys use matching card surfaces. System/Light/Dark, Windows accent following,
+high contrast, Save/Cancel and source-hosted delivery are retained. DESIGN.md owns
+visual tokens/composition; no native placement/resize logic or schema was changed.
+
+Fixed a reproduced recomposition regression: reparenting initialized native
+controls could mark a fresh settings draft dirty, leading to a spurious discard
+prompt and blocking a normal recovery-controller quit. Clear initialization-only
+dirty state at constructor completion; real subsequent edits still prompt. New
+pristine normal/Recovery-form close assertions fail before and pass after this fix.
+Build -StartupRecovery adds a focused native guard using the existing conflict,
+corrupt and future-field startup fixtures; it requires the daily controller stopped.
+
+Verification this turn:
+- 198564 geometry/settings checks; compiled AccessibilityUi, EditorUi, WorkspaceUi
+  and LauncherUi pass. New coverage: visual theme-card selection/selector sync,
+  accessible selected description, 16-zone preview at three sizes, pristine close.
+- PowerShell 5.1 STA hosted AccessibilityUi/EditorUi pass against the final fix;
+  WorkspaceUi/LauncherUi passed during this composition change. Initial hosted
+  keyboard Tab check failed once, then passed on retry. Actual speech/OS theme
+  changes/mixed-DPI hardware remain unverified.
+- Final compiled native Compatibility passes hung/max/aspect/timeout/minimum,
+  pair-only 3/4-row/corner resize, lifecycle and isolated Chrome cases. Focused
+  native StartupRecovery passes all three original-file-preserving cases.
+- Full Integration is NOT a clean pass for this turn: earlier attempts encountered
+  a disposed fixture, then the reproduced dirty-prompt issue; after that fix the
+  full run reached the flyout and recorded outside mouse/foreground input that
+  dismissed it. Do not convert this into a claimed full-suite/hosted-native pass.
+- Light/Dark rendered screens inspected; final live Windows 11 Layouts screen
+  opened/foregrounded through Computer Use and visually inspected.
+- Actual daily repo EXE process 29008/runtime beta.4: six same HWNDs and unchanged
+  outer bounds, no Recovery, bar hidden, original Startup bytes unchanged. Zero
+  sampled app-specific crash events in preceding 35 minutes. Re-verify PIDs next
+  session; local results/private snapshots are under ignored bin/studio-*.
+- Existing hosted delivery src/ mirrors all fourteen updated C# files; separate
+  hosted data retained. No second controller remains. Backup of prior daily EXE
+  and data is bin/studio-design-backup. No user windows were intentionally arranged
+  by testing. Source/package manifest includes DESIGN.md for future packages.
+
+Next steps: user visual review of the open Layouts manager and Appearance cards.
+Keep numeric editing and the existing interactive visual editor reachable. Resume
+freeze-after-probe recovery hardening from docs/NEXT-MILESTONES.md when requested;
+this passive preview does not show live occupancy. Full native interaction checks
+need a quiet input interval if repeated. No push/tag/release happened; published
+beta.2 remains frozen. Local builds do not imply production certification.
+
+
 ## Latest implementation: appearance and manager refresh, 2026-10-29
 
 The user explicitly requested implementation now, overriding the earlier planned

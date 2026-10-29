@@ -22,6 +22,10 @@ public class AccessibilityUiTests {
         string root=args.Length>0?args[0]:Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"accessibility-ui-data");Directory.CreateDirectory(root);
         try {
             var source=AppSettings.Defaults();var original=source.Profiles[0].Clone();
+            foreach(var notice in new string[]{null,"Disposable recovery notice"})using(var pristine=new SnapSettingsForm(source,notice)) {
+                bool prompted=false;pristine.ConfirmAction=delegate{prompted=true;return false;};pristine.Show();Application.DoEvents();pristine.Close();
+                Check(!prompted&&!pristine.Visible,"Opening/recomposing pristine settings marked the draft dirty");
+            }
             // Resolve both OS modes without changing this account's Windows appearance.
             var accent=Color.FromArgb(130,50,170);
             Check(UiTheme.Resolve(AppearanceMode.System,false,true,accent).Background==UiTheme.Resolve(AppearanceMode.Dark,false,false,accent).Background,"System dark resolution failed");
@@ -43,7 +47,8 @@ public class AccessibilityUiTests {
                 var rail=Find(themed,"Settings navigation");Check(rail.Visible&&rail.Right<=themed.Controls.OfType<TabControl>().Single().Left,"Navigation rail overlaps the editor");
                 var choice=(ComboBox)Find(themed,"App appearance");Check(choice.Items.Count==3&&choice.SelectedIndex==0,"Three-mode appearance selector missing");
                 foreach(var mode in new[]{AppearanceMode.Light,AppearanceMode.Dark}) {
-                    choice.SelectedIndex=(int)mode;Application.DoEvents();
+                    ((Button)Find(themed,"Use "+mode+" appearance")).PerformClick();Application.DoEvents();
+                    Check(choice.SelectedIndex==(int)mode&&Find(themed,"Use "+mode+" appearance").AccessibleDescription.Contains("Selected"),"Theme card and selector diverged");
                     Check(themed.Draft.Appearance==mode&&source.Appearance==AppearanceMode.System&&UiTheme.Mode==AppearanceMode.System,"Preview escaped its draft");
                     Check(themed.BackColor==UiTheme.Resolve(mode,SystemInformation.HighContrast,false,UiTheme.Accent()).Background,"Preview did not update surfaces");
                     Render(themed,Path.Combine(root,"appearance-"+mode+".png"));
@@ -52,6 +57,10 @@ public class AccessibilityUiTests {
                 themed.SaveRequested=delegate{return "Injected save failure";};themed.ReportError=delegate{};((Button)Find(themed,"Save changes")).PerformClick();
                 Check(themed.Visible&&source.Appearance==AppearanceMode.System,"Failed save applied theme/closed draft");
                 ((Button)Find(themed,"Cancel")).PerformClick();Check(source.Appearance==AppearanceMode.System&&source.Profiles[0].GeometryMatches(original),"Cancel changed saved appearance or geometry");
+            }
+            using(var overview=new LayoutOverview(LayoutProfile.Create("preview","Sixteen zones",4,4))) {
+                foreach(var size in new[]{new Size(80,60),new Size(424,224),new Size(800,420)}){overview.Size=size;Render(overview,Path.Combine(root,"overview-"+size.Width+".png"));}
+                Check(overview.AccessibilityObject.Role==AccessibleRole.Graphic&&overview.AccessibleDescription.Contains("16 zones"),"Overview accessibility summary missing");
             }
             using(var themed=new SnapSettingsForm(source)) {
                 themed.Show();((ComboBox)Find(themed,"App appearance")).SelectedIndex=2;bool savedTheme=false;

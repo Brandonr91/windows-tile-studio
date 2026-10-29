@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.0-beta.4 — local reference-inspired manager
+
+- Rounded cards, icon navigation, large draft layout preview, thumbnail library,
+  grouped inspector and clickable appearance previews; native editing retained.
+- Fix initialization-only dirty notifications from recomposing the UI; verify
+  pristine close and native startup Recovery quit on isolated fixtures.
+- Local development build; published beta.2 assets remain unchanged.
+
+## 0.3.0-beta.3 — local appearance controls
+
+- System/Light/Dark with Windows accent following, draft preview, Save/Cancel,
+  high-contrast priority and matching supported native titlebar hints.
+- Shared palette and manager navigation; compiled/source-hosted delivery retained.
+
 ## 0.3.0-beta.2 — settings accessibility labels
 
 - Name the main settings page selector and Hotkeys Change/Clear columns so their

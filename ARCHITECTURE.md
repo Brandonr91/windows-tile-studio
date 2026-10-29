@@ -430,3 +430,7 @@ for recorded evidence; these tests do not establish universal app compatibility.
 ## Local beta.3 appearance implementation, 2026-10-29
 
 UiSupport now supplies UiTheme, native-page-backed navigation rails and rounded managed buttons. AppSettings.Appearance is a validated enum (System default, Light, Dark), cloned/persisted but excluded from portable export. UiLayout installs form theming; settings supplies a draft-mode provider, while the controller applies the saved mode at load/successful Save. SystemEvents refreshes cached form palettes on the UI thread; disposal removes subscriptions/caches. Native DWM titlebar/corner hints are best-effort. See docs/APPEARANCE.md for scope, tests and OS-owned widget limits.
+
+## Local beta.4 visual composition, 2026-10-29
+
+UiSupport adds StudioPanel/StudioDrawing, passive LayoutOverview and clickable ThemeChoice previews. GeneralSettings.ConfigureStudioLayout reuses existing draft controls in overview/library/inspector cards; StudioWrap supplies common General/Share surfaces. LayoutModel supplies preview geometry. A native owner-drawn ListBox supplies profile thumbnails; navigation retains native buttons and TabControl selection. No controller placement or schema change follows from this redesign. See DESIGN.md.

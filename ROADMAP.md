@@ -1,3 +1,7 @@
+## Latest UI checkpoint, 2026-10-29
+
+Local beta.4 implements the reference-driven manager composition and theme cards. See [design](DESIGN.md) and the latest HANDOFF for verified scope, native-test limits and deployment. Recovery hardening/live occupancy remain pending; published beta.2 is unchanged.
+
 ## Appearance implementation update, 2026-10-29
 
 The user explicitly requested immediate implementation. Local beta.3 now includes System/Light/Dark, draft previews, shared styling and manager navigation rails. See [appearance](docs/APPEARANCE.md). This supersedes older statements below that these controls are only planned. Recovery hardening and the fuller six-slot overview/simplification remain pending; broader UI/OS validation remains separate. Published beta.2 is unchanged.
@@ -217,3 +221,7 @@ Diagnostic export is now implemented with an explicit aggregate allowlist and
 preview/local save, separate from raw local log access. User-selectable themes/
 text sizes remain unimplemented; standard controls and system high contrast are
 the current appearance support. See HANDOFF for accepted reports and measurements.
+
+## Reference-driven UI implemented locally, 2026-10-29
+
+Beta.4 now provides the large draft preview, layout library, grouped inspector, rounded General/Share surfaces, icon rail and theme-preview cards requested from the user's reference. See DESIGN.md. Recovery hardening, live occupancy/status and broader workflow simplification remain pending. The passive preview does not claim live app state. Nothing was published.

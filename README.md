@@ -333,3 +333,5 @@ official Microsoft or OpenAI product.
 
 
 Local development beta.3 adds **General → Appearance → System / Light / Dark**, draft previews and a cleaner manager navigation/style. See [appearance](docs/APPEARANCE.md). Published beta.2 downloads do not contain this local change yet.
+
+Local development beta.4 refreshes the manager with rounded cards, an icon rail, a large draft layout preview, thumbnail library and visual theme choices. See [design](DESIGN.md). It is local-only; published beta.2 downloads remain unchanged.

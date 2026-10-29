@@ -1,6 +1,7 @@
 # Explicit release inputs. Runtime/user/build folders are never included.
 AGENTS.md
 ARCHITECTURE.md
+DESIGN.md
 DECISIONS.md
 HANDOFF.md
 ROADMAP.md

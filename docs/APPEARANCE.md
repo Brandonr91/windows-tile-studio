@@ -41,3 +41,5 @@ This is a local development version. Published beta.2 and its assets stay immuta
 Recovery hardening and the broader six-slot overview redesign remain outstanding.
 
 Native integration follow-up: compiled full Integration passed. Hosted full native tests remain incomplete after two flyout failures; the second explicitly observed outside mouse input/foreground changes. Focused hosted UI suites pass. Final local deployment retained all six handles/bounds and original startup shortcut bytes; no sampled app crash events. See HANDOFF for evidence paths and limits.
+
+Local beta.4 adds clickable theme-preview cards synchronized with the dropdown, rounded General panels and the reference-driven navy/white visual system. Save/Cancel and Windows mode/accent following are unchanged. See ../DESIGN.md and the latest HANDOFF.

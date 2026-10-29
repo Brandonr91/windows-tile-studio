@@ -513,7 +513,14 @@ class IntegrationTests {
         string directory=args.Length>0?Path.GetFullPath(args[0]):Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"integration-data");
         string hostedScript=null; int hosted=Array.IndexOf(args,"--hosted"); if(hosted>=0 && hosted+1<args.Length) hostedScript=Path.GetFullPath(args[hosted+1]);
         try {
-            if(args.Contains("--compatibility-only")) {
+            if(args.Contains("--startup-recovery-only")) {
+                Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before recovery tests.");
+                data=directory;forms=new Form[0];Directory.CreateDirectory(directory);
+                TestStartupRecovery(Path.Combine(directory,"startup-conflict"),true);
+                TestStartupRecovery(Path.Combine(directory,"startup-corrupt"),false);
+                TestStartupRecovery(Path.Combine(directory,"startup-future"),false,true);
+                File.WriteAllLines(Path.Combine(directory,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
+            } else if(args.Contains("--compatibility-only")) {
                 Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before compatibility tests.");
                 data=directory; forms=new Form[0]; TestCompatibility(Path.Combine(directory,"compatibility"),hostedScript);
                 Directory.CreateDirectory(directory); File.WriteAllLines(Path.Combine(directory,"integration-result.txt"),new[]{"PASS"}.Concat(passed));

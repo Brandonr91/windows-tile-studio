@@ -236,3 +236,7 @@ move v0.3.0-beta.2 or replace its frozen assets. Future fixes need a new version
 verified provenance; old beta validation does not imply production readiness.
 
 Appearance follow-up: consult docs/APPEARANCE.md. Preserve System/Light/Dark, high-contrast priority, draft-only preview and Save/Cancel. Keep user-preference handlers marshalled to the form thread and unsubscribe on disposal; cache palette lookups outside paint. Retain accessible navigation providers and run compiled/hosted AccessibilityUi plus LauncherUi for changes. Never change the user's Windows theme to test this automatically.
+
+Manager visuals: consult DESIGN.md before changing cards, navigation or previews. LayoutOverview is a passive draft preview; keep Edit visually and precise numeric editing reachable. Theme preview cards and the selector must edit the same draft and expose selected feedback. Run compiled and hosted AccessibilityUi/EditorUi/WorkspaceUi/LauncherUi for these surfaces; preserve small-viewport scrolling and native providers.
+
+Build -StartupRecovery runs focused conflict/corrupt/future-settings native startup fixtures with isolated data and no daily controller. Freshly constructed normal/Recovery settings must close without an unsaved prompt; initialization notifications are not user edits. Actual edits must retain the existing discard protection.

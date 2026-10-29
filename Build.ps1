@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[ValidateRange(0,200)][int]$BetaSoak=0,[string]$HostedSourceRoot,[string]$OutputDirectory)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$StartupRecovery,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[ValidateRange(0,200)][int]$BetaSoak=0,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -68,7 +68,7 @@ if ($WorkspaceIntegration) {
     & $nativeTest --hidden-dialogs
     if ($LASTEXITCODE -ne 0) { throw 'Hidden-startup dialog tests failed.' }
 }
-if ($Integration -or $HostedIntegration -or $Compatibility -or $BetaSoak) {
+if ($Integration -or $HostedIntegration -or $Compatibility -or $StartupRecovery -or $BetaSoak) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'
     & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$integrationExecutable" (Join-Path $PSScriptRoot 'tests\IntegrationTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Integration test compilation failed.' }
@@ -83,6 +83,10 @@ if ($Integration -or $HostedIntegration -or $Compatibility -or $BetaSoak) {
     if ($Integration) {
         & $integrationExecutable
         if ($LASTEXITCODE -ne 0) { throw 'Integration tests failed; inspect bin/integration-data.' }
+    }
+    if ($StartupRecovery) {
+        & $integrationExecutable (Join-Path $output 'startup-recovery-data') --startup-recovery-only
+        if ($LASTEXITCODE -ne 0) { throw 'Startup recovery native checks failed.' }
     }
     if ($Compatibility) {
         & $integrationExecutable (Join-Path $output 'compatibility-data') --compatibility-only

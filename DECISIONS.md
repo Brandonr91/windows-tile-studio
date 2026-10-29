@@ -314,3 +314,9 @@ does not provide the three-mode selector. Recovery remains the first priority.
 ## Implement appearance now, 2026-10-29
 
 The user's explicit request to implement themes/UI now supersedes the earlier recovery-first execution order for this scoped change. Keep framework/source-hosting compatibility: use shared WinForms palette/navigation/button components with documented Windows 11 DWM hints. Add one enum preference, System by default; preview only the settings draft and inherit it in owned dialogs. Apply globally only after successful persistence. Preserve high contrast, native providers and geometry. Cache colors outside paint; remove static system-event subscriptions on disposal. This delivers themes/basic navigation refresh, not the planned six-slot overview or freeze-after-probe recovery fix. No public release/push is implied.
+
+## Reference-driven manager composition, 2026-10-29
+
+The user requested a UI closer to their supplied dashboard reference. Implement its rounded cards, dark navy surfaces, icon rail, visual preview and grouped inspector in the existing compatible WinForms stack. Preserve Windows accent and System/Light/Dark rather than hard-code the reference's accent. Reuse controls/handlers, retain numeric editing and accessibility, and clearly identify the overview as a passive draft preview. This changes composition/painting, not tiling ownership or recovery logic. Keep source hosting and published beta.2 intact.
+
+Recomposition fix: reset draft dirty state only after constructor initialization completes, before user input is possible. Regression-check pristine normal/Recovery close and retained protection for real edits. Add a focused StartupRecovery test switch to verify controller quit without rerunning input-sensitive flyout scenarios. Broad native run interruptions remain recorded, not silently counted as passes.
