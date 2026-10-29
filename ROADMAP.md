@@ -1,5 +1,15 @@
 # Roadmap and next work
 
+## Next development priorities, 2026-10-29
+
+The user made recovery hardening mandatory, endorsed a simpler manager and
+added a very modern manager UI as a sixth item. Extra reset/proportion conveniences
+and app assignment are not the immediate user priority; do not duplicate existing
+behavior. Follow [next milestones](docs/NEXT-MILESTONES.md): recovery first,
+simpler six-slot-focused navigation, then a cohesive modern interface. Those
+changes are planned, not implemented. Preserve the validated six-slot behavior
+and the published beta.2 bytes. No UI framework migration has been chosen.
+
 ## Current: beta/release validation, 2026-10-28
 
 User feedback, 2026-10-29: extensive real-use testing of the six-slot layout and

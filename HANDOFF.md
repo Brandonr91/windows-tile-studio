@@ -1,5 +1,26 @@
 # Handoff
 
+## Latest checkpoint: next recovery/UI priorities, 2026-10-29
+
+User priority update after extensive positive six-slot testing: #1 reset need is
+already satisfied in their workflow; #2/#3 proportion/app-assignment conveniences
+may help others but are not personally important. Recovery (#4) is a must,
+simplifying the manager (#5) is good, and a very modern manager UI (#6) is wanted.
+The concrete planned sequence/acceptance is docs/NEXT-MILESTONES.md. No new app
+functionality, framework choice, UI redesign, test result or release is claimed.
+
+First recovery step is a disposable external app that answers the size probe and
+then freezes before synchronous placement. Verify the existing heartbeat failure
+and unrelated bounds, then design/test bounded recovery including stale/late
+placement after resume. Repeating the already-hung-target test is insufficient.
+Preserve pair-only heights, the other windows, explicit restore/relaunch and saved
+settings/startup. Modernization should use a reviewed visual prototype and retain
+source-hosted delivery unless a different tradeoff is explicitly accepted.
+
+Feedback and this plan are local documentation commits, not additional public
+release assets. Beta.2 stays unchanged. Follow the user's current request before
+starting a large implementation or publishing these records.
+
 ## Latest checkpoint: user-reported six-slot acceptance, 2026-10-29
 
 The user reports extensive testing of the six-slot layout and its dynamic resizing,

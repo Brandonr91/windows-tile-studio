@@ -288,3 +288,15 @@ prerelease and independently verify all public download hashes. These steps are
 complete. Never move this tag or overwrite these release bytes to refresh docs.
 Future changes require a new version and relevant validation. This beta's known
 manual/placement risks remain disclosed; publication is not production certification.
+
+## User priorities after core acceptance, 2026-10-29
+
+The user considers the proposed #1 reset behavior already satisfactory. Treat
+additional #2 proportion conveniences and #3 app assignment as optional for other
+users, rather than priorities for this user's workflow. Current preference
+persistence/workspace tools are implemented; do not conflate them with new presets
+or assignment rules. Recovery (#4) is mandatory; simplification (#5) is wanted;
+a very modern manager UI (#6) is explicitly requested. Prioritize recovery,
+simplification, then modern UI, preserving validated six-slot behavior. This
+records scope, not completion or a selected framework/runtime migration. See
+docs/NEXT-MILESTONES.md for acceptance criteria and the freeze-after-probe repro.
