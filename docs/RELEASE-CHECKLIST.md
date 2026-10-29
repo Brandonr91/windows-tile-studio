@@ -30,6 +30,9 @@ with an actual Windows logout/login or a short sample with several days of use.
 - Beta.2 live keyboard acceptance and named provider-tree page/action headers;
   compiled/hosted accessible-object regressions pass. Actual screen-reader speech
   and Windows contrast/text-size switching remain unverified.
+- Exact beta.2 lifecycle, installed Hosted/Compiled/rollback launch and actual
+  public-source upgrade/guarded rollback pass. See [release draft](RELEASE-BETA-2.md)
+  for frozen hashes, source provenance and verification scope.
 
 ## Manual/beta gates still open
 
@@ -56,8 +59,11 @@ with an actual Windows logout/login or a short sample with several days of use.
       material in source. Unsigned packages remain clearly labeled previews.
 - [ ] Final package inventory/checksums/license/screenshots/help/version/release notes
       match the artifact; backups and rollback instructions were exercised.
-- [ ] Reconcile local/public histories without force push; preserve six-slot-snap.
-      User explicitly authorizes the intended push/tag/release after review.
+- [x] Reconcile reviewed local/public histories without force push: equivalent
+      48b96b2/cfdb2df baselines, local d056d17 with unchanged tested source tree.
+      The original six-slot repository was untouched.
+- [ ] User explicitly authorizes the intended push/tag/release after reviewing
+      scope, exact artifacts and remaining limits; remote CI runs and is verified.
 
 ## Scope decisions to resolve before claiming all optional polish
 

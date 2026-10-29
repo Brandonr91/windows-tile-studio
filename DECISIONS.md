@@ -247,3 +247,18 @@ objects now give the action cells context; avoid a custom accessibility provider
 for this small problem. Verify both accessible objects and the installed live
 tree, plus keyboard open/Cancel/focus-return routes. Do not equate those checks
 with screen-reader announcements or change Windows appearance to claim coverage.
+
+## Equivalent-baseline history reconciliation, 2026-10-29
+
+Read-only fetch proved public cfdb2df is equivalent modulo EOL to local 48b96b2,
+which is an ancestor of the tested local implementation. Both descend from 51ffa88
+but record the early polish independently, producing textual merge conflicts.
+After the equivalence check, use a local history-only ours merge with parents
+89613a2/cfdb2df and assert the full tree is unchanged. d056d17 preserves both
+histories and makes the public tip an ancestor without a force push or public
+mutation. This rationale does not authorize discarding unknown future upstream
+changes; every subsequent public tip needs fresh review.
+
+Keep reviewed beta.2 archives frozen at 89613a2. Later review documentation does
+not change their provenance; a publication tag for those assets must name that
+exact source. No tag/push/release or CI pass is inferred from local preparation.

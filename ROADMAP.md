@@ -2,6 +2,13 @@
 
 ## Current: beta/release validation, 2026-10-28
 
+Release-review update, 2026-10-29: exact beta.2 archives pass lifecycle, installed
+Hosted/Compiled/rollback launch and actual-public upgrade/guard tests. The concrete
+review is docs/RELEASE-BETA-2.md. Public/local equivalent early baselines are now
+reconciled locally with an unchanged source tree; force push is unnecessary.
+Next is review/authorized publication preparation, retaining explicit unverified
+manual limits. No public push, PR/tag/release, signing or remote CI run occurred.
+
 Latest app update, 2026-10-29: local beta.2 fixes the unnamed settings page selector
 and Hotkeys action headers found in the running installation. Actual Ctrl+Tab,
 General arrows/End, Tab/Shift+Tab, diagnostic preview open/Escape/focus return and

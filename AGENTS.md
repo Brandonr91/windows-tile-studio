@@ -216,3 +216,10 @@ workflow is configured locally; do not claim a GitHub CI pass before it runs.
 Do not commit `bin/`, runtime logs, layout preferences, account details, or
 machine-specific helper scripts. Document user-visible changes and limits.
 Do not publish, upload a release, or enable automatic startup unless requested.
+
+Beta.2 release-review checkpoint: docs/RELEASE-BETA-2.md owns frozen artifact
+hashes/provenance. Do not silently overwrite reviewed ZIPs after docs/history
+changes. Public cfdb2df matched local 48b96b2 modulo EOL; d056d17 reconciles both
+histories with an unchanged application tree. Do not repeat an ours merge for
+unknown future upstream changes. Fetch/recheck ancestry and diff before an
+authorized push; force push is not needed for the reviewed public baseline.

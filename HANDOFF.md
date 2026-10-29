@@ -1,5 +1,39 @@
 # Handoff
 
+## Latest checkpoint: beta.2 release review, 2026-10-29
+
+Exact clean-89613a2 beta.2 archives now pass ReleaseTests, InstalledLaunchTests
+and actual-public-source PublicUpgradeTests. Accepted reports outside Git are
+outputs/windows-tile-studio-beta2-release-final.txt, beta2-installed-final.txt,
+beta2-upgrade-final.txt and beta2-release-final.json. The JSON verifies live daily
+beta.2 with six assignments, hidden bar/no Recovery, settings/Startup bytes
+preserved and zero matching sampled Windows crash events. The daily app was
+paused only for isolated native launch tests and restored in finally. No fresh
+Windows account, daily uninstall, real-app adoption or startup preference change.
+
+Read docs/RELEASE-BETA-2.md for the concrete release draft, exact artifact hashes,
+verified scope, limits and publication preparation. Existing bin/beta2-releases
+and beta2-kit remain frozen at source 89613a20b63448e7b6d4a44dc27e81c63a117579;
+later history/docs commits do not replace their bytes. Beta.1 artifacts remain
+separate. No new app/version/deployment change was needed for release review.
+
+History finding supersedes older warnings that assumed no compatible merge:
+public cfdb2df and local baseline 48b96b2 have equivalent tracked contents when
+ignoring EOLs, with shared ancestor 51ffa88. Verified local merge d056d17 has
+parents 89613a2 and cfdb2df and the identical tree to 89613a2. Both histories are
+retained, public tip is an ancestor and force push is unnecessary. This is local
+only; origin/main remains cfdb2df. Targeted tracked-content/reachable-path checks
+found no matched credential/private-key/account-path/email/runtime-payload patterns;
+do not generalize a targeted scan into comprehensive secret clearance.
+
+Next: user review of the release draft and remaining limits. No push, PR, tag,
+GitHub Release, signing, remote CI or publication occurred. A subsequent authorized
+push must first fetch and recheck public ancestry/diff; preserve six-slot-snap.
+Frozen-asset publication must tag exact source 89613a2 rather than newer review
+docs. If changing source/artifacts, use new provenance and rerun relevant checks.
+Actual speech/OS appearance/hardware/login/privilege/freeze-after-probe/multi-day
+coverage remains unverified; fresh-account validation stays explicitly waived.
+
 ## Latest checkpoint: live keyboard/accessibility acceptance, 2026-10-29
 
 Current daily app is local `0.3.0-beta.2` (file version 0.3.0.10). Actual beta.1

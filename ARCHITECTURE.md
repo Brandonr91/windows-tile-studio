@@ -47,6 +47,11 @@ aggregates and fixed configuration filenames. No runtime functionality changes.
 
 ## Scope and execution
 
+Release-review records: docs/RELEASE-BETA-2.md separates frozen clean-89613a2
+packages from subsequent documentation/history commits. A verified history-only
+merge connects the equivalent published baseline without changing application
+files. This is delivery provenance, not an application/runtime mechanism.
+
 Windows Tile Studio is a local C#/Windows Forms controller using Win32 window
 APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
