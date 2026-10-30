@@ -37,6 +37,7 @@ public class VisualLayoutSession {
 public class VisualLayoutCanvas : Control {
     public readonly VisualLayoutSession Session;
     public Action Changed;
+    public Action GestureEnded;
     bool dragging,vertical;
     int column,boundary;
     int selectedDivider;
@@ -89,29 +90,29 @@ public class VisualLayoutCanvas : Control {
         if(dragging) {var a=Area;if(Session.Move(vertical,column,boundary,vertical?(e.X-a.Left)/(double)a.Width:(e.Y-a.Top)/(double)a.Height))Notify();}
         else {bool v;int c,b;Cursor=Hit(e.Location,out v,out c,out b)?(v?Cursors.VSplit:Cursors.HSplit):Cursors.Default;}
     }
-    void End(bool cancel) {if(!dragging)return;dragging=false;Session.End(cancel);Capture=false;Notify();}
+    void End(bool cancel) {if(!dragging)return;dragging=false;Session.End(cancel);Capture=false;Notify();if(GestureEnded!=null)GestureEnded();}
     protected override void OnMouseUp(MouseEventArgs e) {base.OnMouseUp(e);if(e.Button==MouseButtons.Left)End(false);}
     protected override void OnMouseCaptureChanged(EventArgs e) {base.OnMouseCaptureChanged(e);if(dragging&&!Capture)End(false);}
     protected override bool ProcessCmdKey(ref Message message,Keys key) {
         if(key==Keys.Escape&&dragging){End(true);return true;}
-        if(!dragging&&(key==(Keys.Control|Keys.Z)||key==(Keys.Control|Keys.Y))){if(key==(Keys.Control|Keys.Z))Session.Undo();else Session.Redo();Notify();return true;}
+        if(!dragging&&(key==(Keys.Control|Keys.Z)||key==(Keys.Control|Keys.Y))){if(key==(Keys.Control|Keys.Z))Session.Undo();else Session.Redo();Notify();if(GestureEnded!=null)GestureEnded();return true;}
         var list=Dividers;if(!dragging&&list.Count>0) {
             if(key==Keys.PageDown||key==Keys.PageUp){selectedDivider=(selectedDivider+(key==Keys.PageDown?1:list.Count-1))%list.Count;Notify();return true;}
             var code=key&Keys.KeyCode;bool modifiers=(key&Keys.Modifiers)==Keys.None||(key&Keys.Modifiers)==Keys.Shift;
             if(modifiers&&(code==Keys.Left||code==Keys.Right||code==Keys.Up||code==Keys.Down)) {
                 var d=list[selectedDivider%list.Count];bool appropriate=d.Vertical?(code==Keys.Left||code==Keys.Right):(code==Keys.Up||code==Keys.Down);
-                if(appropriate){double position=d.Vertical?Session.Profile.Columns.Take(d.Boundary).Sum(c=>c.Width):Session.Profile.Columns[d.Column].Rows.Take(d.Boundary).Sum();double step=(key&Keys.Shift)!=0?0.001:0.01;Session.Begin();Session.Move(d.Vertical,d.Column,d.Boundary,position+((code==Keys.Left||code==Keys.Up)?-step:step));Session.End(false);Notify();}return true;
+                if(appropriate){double position=d.Vertical?Session.Profile.Columns.Take(d.Boundary).Sum(c=>c.Width):Session.Profile.Columns[d.Column].Rows.Take(d.Boundary).Sum();double step=(key&Keys.Shift)!=0?0.001:0.01;Session.Begin();Session.Move(d.Vertical,d.Column,d.Boundary,position+((code==Keys.Left||code==Keys.Up)?-step:step));Session.End(false);Notify();if(GestureEnded!=null)GestureEnded();}return true;
             }
         }
         return base.ProcessCmdKey(ref message,key);
     }
-    protected override void Dispose(bool disposing) {if(disposing){Changed=null;dragging=false;Session.End(true);}base.Dispose(disposing);}
+    protected override void Dispose(bool disposing) {if(disposing){Changed=null;GestureEnded=null;dragging=false;Session.End(true);}base.Dispose(disposing);}
     protected override void OnPaint(PaintEventArgs e) {
         base.OnPaint(e);if(Width<40||Height<40)return;var a=Area;
         var model=new LayoutModel(Session.Profile){Work=new SixSlotSnap.RECT{L=a.Left,T=a.Top,R=a.Right,B=a.Bottom}};
         for(int i=0;i<Session.Profile.SlotCount;i++) {
             var r=model.RectFor(i);var box=Rectangle.FromLTRB(r.L+3,r.T+3,r.R-3,r.B-3);if(box.Width<1||box.Height<1)continue;
-            using(var brush=new SolidBrush(palette.Panel))e.Graphics.FillRectangle(brush,box);
+            using(var path=StudioDrawing.Rounded(box,9))using(var brush=new SolidBrush(palette.Panel))using(var pen=new Pen(palette.Border)){e.Graphics.FillPath(brush,path);e.Graphics.DrawPath(pen,path);}
             TextRenderer.DrawText(e.Graphics,(i+1).ToString(),Font,box,ForeColor,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.NoPadding);
         }
         using(var pen=new Pen(palette.Line,3)) {
@@ -123,7 +124,7 @@ public class VisualLayoutCanvas : Control {
             }
         }
         var dividers=Dividers;
-        if(dividers.Count>0){var d=dividers[selectedDivider%dividers.Count];using(var pen=new Pen(palette.Text,Focused?5:2)){pen.DashStyle=System.Drawing.Drawing2D.DashStyle.Dash;
+        if(dividers.Count>0){var d=dividers[selectedDivider%dividers.Count];using(var pen=new Pen(palette.Line,Focused?5:2)){pen.DashStyle=System.Drawing.Drawing2D.DashStyle.Dash;
             if(d.Vertical){float x=a.Left+(float)(Session.Profile.Columns.Take(d.Boundary).Sum(c=>c.Width)*a.Width);e.Graphics.DrawLine(pen,x,a.Top,x,a.Bottom);}
             else{float x=a.Left+(float)(Session.Profile.Columns.Take(d.Column).Sum(c=>c.Width)*a.Width),right=x+(float)(Session.Profile.Columns[d.Column].Width*a.Width),y=a.Top+(float)(Session.Profile.Columns[d.Column].Rows.Take(d.Boundary).Sum()*a.Height);e.Graphics.DrawLine(pen,x,y,right,y);}}}
         if(Focused)ControlPaint.DrawFocusRectangle(e.Graphics,new Rectangle(3,3,Width-6,Height-6),palette.Text,palette.Background);
@@ -137,7 +138,7 @@ public class VisualLayoutDialog : Form {
         Text="Edit layout visually";AccessibleName=Text;ClientSize=new Size(760,510);MinimumSize=new Size(650,450);StartPosition=FormStartPosition.CenterParent;
         var hint=new Label{Text="Drag a divider, or focus the canvas: Page Up/Down selects; arrows adjust 1%; Shift adjusts 0.1%.\nCtrl+Z/Y: undo/redo. Tab leaves the canvas. Horizontal changes affect only their adjacent pair.\nThis is a draft; real windows change only after Save changes in settings.",Dock=DockStyle.Top,Height=76,Padding=new Padding(12,10,12,0)};
         Canvas=new VisualLayoutCanvas(profile){Dock=DockStyle.Fill};var footer=new FlowLayoutPanel{Dock=DockStyle.Bottom,Height=48,Padding=new Padding(10,6,0,0)};
-        var undo=new Button{Text="Undo",Width=90,Enabled=false};var redo=new Button{Text="Redo",Width=90,Enabled=false};var use=new Button{Text="Use proportions",Width=150};var cancel=new Button{Text="Cancel",Width=90,DialogResult=DialogResult.Cancel};
+        var undo=new StudioButton{Text="Undo",Width=90,Enabled=false};var redo=new StudioButton{Text="Redo",Width=90,Enabled=false};var use=new StudioButton{Text="Use proportions",Width=150};var cancel=new StudioButton{Text="Cancel",Width=90,DialogResult=DialogResult.Cancel};
         footer.Controls.AddRange(new Control[]{undo,redo,use,cancel});Controls.Add(Canvas);Controls.Add(footer);Controls.Add(hint);Canvas.BringToFront();
         var status=new Label{Text=Canvas.SelectionText,Dock=DockStyle.Bottom,Height=28,Padding=new Padding(10,4,0,0),AccessibleName="Selected visual divider",AccessibleRole=AccessibleRole.StatusBar};Controls.Add(status);status.BringToFront();
         Canvas.Changed=delegate{undo.Enabled=Canvas.Session.CanUndo;redo.Enabled=Canvas.Session.CanRedo;status.Text=Canvas.SelectionText;};

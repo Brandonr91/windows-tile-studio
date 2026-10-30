@@ -229,3 +229,7 @@ the current appearance support. See HANDOFF for accepted reports and measurement
 ## Reference-driven UI implemented locally, 2026-10-29
 
 Beta.4 now provides the large draft preview, layout library, grouped inspector, rounded General/Share surfaces, icon rail and theme-preview cards requested from the user's reference. See DESIGN.md. Recovery hardening, live occupancy/status and broader workflow simplification remain pending. The passive preview does not claim live app state. Nothing was published.
+
+## Authorized beta.6 expansion, 2026-10-29
+
+Scope: live windows/status/validated retry; embedded visual-first editing with numeric Advanced; themed manager/flyout/dialog polish; setup GUI and owned Start menu actions; then a new prerelease. Latest HANDOFF tracks implementation/verification. Signing needs a publisher certificate. Broader hardware/assistive-technology/long-duration coverage remains limited. No first-run walkthrough was selected.

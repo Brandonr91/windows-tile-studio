@@ -67,11 +67,11 @@ public partial class SnapSettingsForm : Form {
     public void ImportPortable(string path,bool replace,bool importHotkeys) {
         var candidate=PortableLayouts.Candidate(Draft,PortableLayouts.Load(path),replace,importHotkeys);StageImport(candidate);
     }
-    public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null,Func<string> diagnostics=null) {
+    public SnapSettingsForm(AppSettings source,string recoveryNotice=null,StartupRegistration login=null,string dataDirectory=null,Func<string> diagnostics=null,Func<LiveDashboardState> live=null,Func<string,string> retry=null) {
         Draft=source.Clone(); Text="Windows Tile Studio — settings"; AccessibleName="Windows Tile Studio settings";
         AutoScaleMode=AutoScaleMode.None; Font=new Font("Segoe UI",9); ClientSize=new Size(1200,840); FormBorderStyle=FormBorderStyle.FixedDialog; MaximizeBox=false; StartPosition=FormStartPosition.CenterScreen;
         var tabs=new NavigationTabs(true){Dock=DockStyle.Fill,AccessibleName="Settings pages"}; Controls.Add(tabs);
-        var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); generalPage=new TabPage("General"); var appearancePage=new TabPage("Layouts bar"); tabs.TabPages.AddRange(new[]{layoutPage,shortcutPage,generalPage});
+        var layoutPage=new TabPage("Layouts"); var shortcutPage=new TabPage("Hotkeys"); generalPage=new TabPage("General"); var appearancePage=new TabPage("Layouts bar"); var livePage=new TabPage("Live windows");livePage.Controls.Add(new LiveDashboard(live,retry){Dock=DockStyle.Fill});tabs.TabPages.AddRange(new[]{livePage,layoutPage,shortcutPage,generalPage});
         ConfigureGeneral(generalPage,appearancePage,login,dataDirectory,diagnostics);
         TabPage recoveryPage=null;
         if(!string.IsNullOrEmpty(recoveryNotice)) {
@@ -199,6 +199,7 @@ public partial class SnapSettingsForm : Form {
         var shortcutSurface=new StudioPanel{Dock=DockStyle.Fill,Padding=new Padding(20),AccessibleName="Keyboard shortcuts card"};
         shortcutPage.Controls.Add(shortcutSurface);shortcutSurface.Controls.Add(shortcuts);
         tabs.AddNavigation(this,true);
+        tabs.SelectedTab=recoveryPage??(live!=null?livePage:layoutPage);
         var heading=new Panel{Dock=DockStyle.Top,Height=76};
         heading.Controls.Add(new Label{Text="Windows Tile Studio",Font=new Font(Font.FontFamily,19,FontStyle.Regular),AutoSize=true,Location=new Point(20,10)});
         Controls.Add(heading);
@@ -215,7 +216,14 @@ public partial class SnapSettingsForm : Form {
         name.Text=selected.Name; columns.Value=selected.Columns.Count; rows.Value=selected.Columns[0].Rows.Count;
         proportions.Rows.Clear(); for(int i=0;i<selected.Columns.Count;i++) proportions.Rows.Add(i+1,selected.Columns[i].Width.ToString("0.########",CultureInfo.InvariantCulture),string.Join(", ",selected.Columns[i].Rows.Select(v=>v.ToString("0.########",CultureInfo.InvariantCulture))));
         while(preview.Controls.Count>0) preview.Controls[0].Dispose();
-        var card=new LayoutOverview(selected){Dock=DockStyle.Fill};preview.Controls.Add(card);UiPalette.Apply(card,UiTheme.PaletteFor(this));
+        var canvas=new VisualLayoutCanvas(selected){Dock=DockStyle.Fill};preview.Controls.Add(canvas);UiPalette.Apply(canvas,UiTheme.PaletteFor(this));
+        bool gestureRemembered=false;canvas.GestureEnded=delegate{gestureRemembered=false;};
+        canvas.Changed=delegate {
+            if(selected.GeometryMatches(canvas.Session.Profile))return;
+            // Pointer samples update only the draft; the canvas retains per-gesture history.
+            if(!gestureRemembered){RememberGrid();gestureRemembered=true;}selected.Columns=canvas.Session.Profile.Columns.Select(c=>c.Clone()).ToList();dirty=true;
+            bool old=refreshing;refreshing=true;proportions.Rows.Clear();for(int i=0;i<selected.Columns.Count;i++)proportions.Rows.Add(i+1,selected.Columns[i].Width.ToString("R",CultureInfo.InvariantCulture),string.Join(", ",selected.Columns[i].Rows.Select(v=>v.ToString("R",CultureInfo.InvariantCulture))));refreshing=old;
+        };
         refreshing=previousRefresh;
     }
     bool ReadEditor() {

@@ -46,3 +46,7 @@ Published beta.2 remains unchanged. Recovery hardening and a live occupancy/stat
 overview are separate future work; this change supplies the visual composition.
 
 Final native checks: Compatibility and focused StartupRecovery pass. Fixed and regression-tested initialization-only dirty notifications from control reparenting. Full Integration remains incomplete after external input dismissed the flyout; see HANDOFF. Daily beta.4 retained six window assignments/bounds and original startup bytes.
+
+## Beta.6 expansion
+
+Live windows is the running-manager default: display selector, slot cards with local app process labels/status, last outcome and explicit Retry. It is separate from layout drafts. Layouts embeds the divider canvas as the primary control; Advanced reveals numeric weights. Larger modal editing remains reachable. Rounded canvas zones and shared hover/pressed/selected buttons extend to flyout, editor and workspaces. See docs/LIVE-MANAGER.md.

@@ -1,3 +1,12 @@
+# 0.3.0-beta.6
+
+- Live per-display dashboard with occupancy, process labels, disconnected/minimized/maximized states and explicit validated retry.
+- Embedded visual editing, one grid undo per gesture, numeric Advanced and larger editor.
+- Rounded controls and shared hover/pressed/selection styling across manager, flyout and dialogs.
+- Per-user setup GUI, optional stable Start menu shortcut and conflict-safe removal. Startup stays separately opt-in; data retained.
+- Includes beta.3/.4 appearance/redesign and beta.5 bounded placement recovery since published beta.2.
+- Unsigned prerelease; broader hardware/accessibility/long-duration coverage remains limited.
+
 # Changelog
 
 ## 0.3.0-beta.5 — local bounded placement recovery

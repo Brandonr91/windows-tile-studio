@@ -1,5 +1,18 @@
 # Handoff
 
+## Beta.6 manager expansion: local implementation, 2026-10-29
+
+User authorized live dashboard, embedded visual-first editing, UI polish and distribution improvements, then a new prerelease. Beta.6/file 0.3.0.14 implements these in sixteen C# sources plus Setup.cmd/Setup.ps1. See docs/LIVE-MANAGER.md and docs/SETUP.md. Signing requires publisher credentials; the release remains unsigned. No first-run walkthrough was selected.
+
+Live status is injected from the controller, visible-page refresh only, no title collection/persistence. Retry uses a displayed token, native property lease/process generation and display/layout/slot checks. No app relaunch or occupied-slot replacement. Embedded editing reuses the visual engine, synchronizes the draft and keeps one grid undo per pointer gesture; Advanced exposes numeric weights. Shared rounded controls extend to flyout/editor/workspaces.
+
+Setup wraps the safe per-user installer, repacks verified manifest entries only, supports Hosted/Compiled and optional stable Start menu links. Conflict/WhatIf/owned uninstall/data retention remain. Real startup is unchanged. Daily beta.5 was stopped normally for isolated tests and restarted in finally; private snapshots stay under bin/studio-next-daily-backup. Beta.5 push is complete at 5af442b; older no-push statements below are historical.
+
+Verification: 198564 geometry checks, compiled/PowerShell5.1 STA EditorUi/WorkspaceUi/AccessibilityUi/LauncherUi pass. Embedded pair-only drag/one-gesture Undo/Advanced and live snapshot/token/disconnection UI checks pass. Native workspace tests verify actual assignments, explicit retry, expired token/process generation/occupied-slot refusal. Compiled/hosted placement-recovery suites, full integration in both modes and focused startup Recovery pass. First integration used obsolete numeric tab positions; corrected fixtures select General by name. Offline LauncherTests/ReleaseTests pass, including setup payload, isolated Start menu add/repeat/remove/conflicts, install/update/rollback/uninstall and source EXE exclusion. Setup GUI fixture installs/verifies Compiled from a local archive with launch/Start menu disabled; source-hosted setup payload remains EXE-free.
+
+Next: inspect final package provenance, deploy to existing daily bin/hosted delivery preserving window bounds/settings/Startup bytes, then commit/push, exact-head CI and new beta.6 publication with verified checksums. Preserve beta.2 assets. Broader hardware/privilege/assistive-technology/long-duration coverage remains limited. Avoid repeating completed tests without a change/failure.
+
+
 ## Completed locally: bounded placement recovery, 2026-10-29
 
 User authorized recovery hardening after the beta.4 push. Local **beta.5** (file

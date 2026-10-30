@@ -26,6 +26,7 @@ public class LayoutCard : UserControl {
         highlighted=slot;
         for(int i=0;i<zones.Count;i++) {
             zones[i].BackColor=i==slot?palette.Selected:palette.Panel;
+            ((StudioButton)zones[i]).Emphasized=i==slot;zones[i].Invalidate();
             zones[i].ForeColor=i==slot?palette.SelectedText:palette.Text;
             zones[i].AccessibleDescription=i==slot?"Selected zone":"Zone";
             zones[i].FlatAppearance.BorderColor=i==slot?palette.Text:palette.Border;
@@ -42,7 +43,7 @@ public class LayoutCard : UserControl {
         for(int i=0;i<profile.SlotCount;i++) {
             int slot=i; var r=model.RectFor(i);
             int padX=Math.Min(S(2),Math.Max(0,(r.R-r.L-1)/3)),padY=Math.Min(S(2),Math.Max(0,(r.B-r.T-1)/3));
-            var button=new Button{Text=r.B-r.T>=S(16)?(i+1).ToString():"",AccessibleName=profile.Name+" zone "+(i+1),TabStop=false,FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(63,71,84),Bounds=new Rectangle(r.L+padX,r.T+padY,Math.Max(1,r.R-r.L-2*padX),Math.Max(1,r.B-r.T-2*padY))};
+            var button=new StudioButton{Text=r.B-r.T>=S(16)?(i+1).ToString():"",AccessibleName=profile.Name+" zone "+(i+1),TabStop=false,FlatStyle=FlatStyle.Flat,ForeColor=Color.White,BackColor=Color.FromArgb(63,71,84),Bounds=new Rectangle(r.L+padX,r.T+padY,Math.Max(1,r.R-r.L-2*padX),Math.Max(1,r.B-r.T-2*padY))};
             button.FlatAppearance.BorderColor=Color.FromArgb(91,107,129); button.FlatAppearance.MouseOverBackColor=Color.FromArgb(44,116,181);
             button.Click+=delegate { if(ZoneSelected!=null) ZoneSelected(profile.Id,slot); };
             Controls.Add(button);

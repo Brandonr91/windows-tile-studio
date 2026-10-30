@@ -71,7 +71,7 @@ public class NavigationButton : Button {
     }
     void DrawIcon(Graphics g,Color color,Rectangle r) {
         using(var pen=new Pen(color,1.4f)) {
-            if(IconKey=="Layouts"){for(int x=0;x<2;x++)for(int y=0;y<2;y++)g.DrawRectangle(pen,r.X+x*10,r.Y+y*10,6,6);}
+            if(IconKey=="Layouts"||IconKey=="Live windows"){for(int x=0;x<2;x++)for(int y=0;y<2;y++)g.DrawRectangle(pen,r.X+x*10,r.Y+y*10,6,6);}
             else if(IconKey=="Hotkeys"){g.DrawRectangle(pen,r.X,r.Y+3,18,12);for(int x=3;x<16;x+=5)g.DrawLine(pen,r.X+x,r.Y+7,r.X+x+1,r.Y+7);g.DrawLine(pen,r.X+5,r.Y+11,r.X+13,r.Y+11);}
             else if(IconKey=="General"){g.DrawEllipse(pen,r.X+4,r.Y+4,10,10);for(int i=0;i<8;i++){double a=i*Math.PI/4;g.DrawLine(pen,r.X+9+(float)Math.Cos(a)*7,r.Y+9+(float)Math.Sin(a)*7,r.X+9+(float)Math.Cos(a)*10,r.Y+9+(float)Math.Sin(a)*10);}}
             else {g.DrawLine(pen,r.X+9,r.Y+13,r.X+9,r.Y);g.DrawLine(pen,r.X+9,r.Y,r.X+4,r.Y+5);g.DrawLine(pen,r.X+9,r.Y,r.X+14,r.Y+5);g.DrawLines(pen,new[]{new Point(r.X,r.Y+12),new Point(r.X,r.Bottom),new Point(r.Right,r.Bottom),new Point(r.Right,r.Y+12)});}
@@ -94,20 +94,24 @@ public class ThemeChoice : Button {
     }
 }
 public class StudioButton : Button {
-    bool hovered;
+    public bool Emphasized;
+    bool hovered,pressed;
+    protected override void OnMouseDown(MouseEventArgs e){pressed=e.Button==MouseButtons.Left;Invalidate();base.OnMouseDown(e);}
+    protected override void OnMouseUp(MouseEventArgs e){pressed=false;Invalidate();base.OnMouseUp(e);}
+    protected override void OnMouseCaptureChanged(EventArgs e){if(!Capture)pressed=false;Invalidate();base.OnMouseCaptureChanged(e);}
     protected override void OnMouseEnter(EventArgs e){hovered=true;Invalidate();base.OnMouseEnter(e);}
     protected override void OnMouseLeave(EventArgs e){hovered=false;Invalidate();base.OnMouseLeave(e);}
     protected override void OnPaint(PaintEventArgs e) {
         var p=UiTheme.PaletteFor(FindForm());bool primary=Text=="Save changes"&&Enabled;
-        Color fill=primary?p.Line:hovered&&Enabled?p.Selected:p.Panel;
-        Color text=Enabled?p.Text:p.Muted;
+        Color fill=primary?p.Line:(hovered||Emphasized||pressed)&&Enabled?p.Selected:p.Panel;
+        Color text=Enabled?(Emphasized?p.SelectedText:p.Text):p.Muted;
         if(primary)text=(0.2126*fill.R+0.7152*fill.G+0.0722*fill.B)>145?Color.Black:Color.White;
         if(SystemInformation.HighContrast&&primary){fill=SystemColors.Highlight;text=SystemColors.HighlightText;}
         e.Graphics.Clear(p.Background);e.Graphics.SmoothingMode=System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
         using(var path=new System.Drawing.Drawing2D.GraphicsPath()) {
             float w=Width-1,h=Height-1,r=8;
             path.AddArc(0,0,r,r,180,90);path.AddArc(w-r,0,r,r,270,90);path.AddArc(w-r,h-r,r,r,0,90);path.AddArc(0,h-r,r,r,90,90);path.CloseFigure();
-            using(var brush=new SolidBrush(fill))e.Graphics.FillPath(brush,path);using(var pen=new Pen(p.Border))e.Graphics.DrawPath(pen,path);
+            using(var brush=new SolidBrush(fill))e.Graphics.FillPath(brush,path);using(var pen=new Pen(Emphasized?p.Line:p.Border,Emphasized?2:1))e.Graphics.DrawPath(pen,path);
         }
         TextRenderer.DrawText(e.Graphics,Text,Font,ClientRectangle,text,TextFormatFlags.HorizontalCenter|TextFormatFlags.VerticalCenter|TextFormatFlags.EndEllipsis|TextFormatFlags.NoPrefix);
         if(Focused&&ShowFocusCues)ControlPaint.DrawFocusRectangle(e.Graphics,Rectangle.Inflate(ClientRectangle,-4,-4),text,fill);

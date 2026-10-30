@@ -337,3 +337,9 @@ Local development beta.3 adds **General → Appearance → System / Light / Dark
 Local development beta.4 refreshes the manager with rounded cards, an icon rail, a large draft layout preview, thumbnail library and visual theme choices. See [design](DESIGN.md). It is local-only; published beta.2 downloads remain unchanged.
 
 Local beta.5 adds bounded native placement recovery using two hidden owned helpers, explicit retry and serialized geometry callbacks. Source-hosted delivery remains available. See [placement recovery and limits](docs/PLACEMENT-RECOVERY.md). The published beta.2 release does not include these local updates.
+
+## Live manager, visual editing and setup
+
+**Live windows** shows current slot occupancy and offers explicit retry after a failed placement. **Layouts** lets you drag dividers directly; numeric weights remain under **Advanced**. System/Light/Dark follows Windows accent. See [manager guide](docs/LIVE-MANAGER.md).
+
+Extract a release ZIP and run **Setup.cmd** for per-user installation. Choose Hosted or Compiled and an optional Start menu shortcut. Safe update/rollback/uninstall retain settings; startup stays opt-in in General. See [setup guide](docs/SETUP.md). Releases remain unsigned until a publisher certificate is available.

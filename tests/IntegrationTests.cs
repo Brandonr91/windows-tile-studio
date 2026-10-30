@@ -107,7 +107,7 @@ class IntegrationTests {
         original.LauncherPositionSet=true; original.LauncherX=456; original.LauncherY=789;
         using(var cancelled=new SnapSettingsForm(original)) {
             cancelled.StartPosition=FormStartPosition.Manual; cancelled.Location=new Point(-30000,-30000); cancelled.ShowInTaskbar=false; cancelled.Show();
-            ((TabControl)Find(cancelled,c=>c is TabControl)).SelectedIndex=2; Pump(30);
+            cancelled.SelectGeneral(); Pump(30);
             ((TabControl)Find(cancelled,c=>c is TabControl&&c.AccessibleName=="General settings categories")).SelectedIndex=1;Pump(30);
             ((Button)Find(cancelled,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
             Check(!cancelled.Draft.LauncherPositionSet && original.LauncherPositionSet && original.LauncherX==456,"Resetting the draft changed live settings before save");
@@ -133,7 +133,7 @@ class IntegrationTests {
             Check(custom.Columns.Count==3,"Declining grid replacement changed the grid");
             editor.ConfirmAction=delegate { return true; };
             ((Button)Find(editor,c=>c is Button && c.Text=="Set grid size")).PerformClick();
-            var tabs=(TabControl)Find(editor,c=>c is TabControl); tabs.SelectedIndex=2; Pump(30);
+            var tabs=(TabControl)Find(editor,c=>c is TabControl); editor.SelectGeneral(); Pump(30);
             var general=(TabControl)Find(editor,c=>c is TabControl&&c.AccessibleName=="General settings categories");general.SelectedTab=general.TabPages.Cast<TabPage>().Single(p=>p.Text=="Layouts bar");Pump(30);
             ((Button)Find(editor,c=>c is Button && c.AccessibleName=="Reset Layouts bar position")).PerformClick();
             ((CheckBox)Find(editor,c=>c is CheckBox && c.AccessibleName=="Show floating Layouts bar")).Checked=false;

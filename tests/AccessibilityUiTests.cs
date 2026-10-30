@@ -52,7 +52,7 @@ public class AccessibilityUiTests {
                     Check(themed.Draft.Appearance==mode&&source.Appearance==AppearanceMode.System&&UiTheme.Mode==AppearanceMode.System,"Preview escaped its draft");
                     Check(themed.BackColor==UiTheme.Resolve(mode,SystemInformation.HighContrast,false,UiTheme.Accent()).Background,"Preview did not update surfaces");
                     Render(themed,Path.Combine(root,"appearance-"+mode+".png"));
-                    var tabs=themed.Controls.OfType<TabControl>().Single();tabs.SelectedIndex=0;Application.DoEvents();Render(themed,Path.Combine(root,"layouts-"+mode+".png"));tabs.SelectedTab=categories.Parent as TabPage;
+                    var tabs=themed.Controls.OfType<TabControl>().Single();tabs.SelectedTab=tabs.TabPages.Cast<TabPage>().Single(p=>p.Text=="Layouts");Application.DoEvents();Render(themed,Path.Combine(root,"layouts-"+mode+".png"));tabs.SelectedTab=categories.Parent as TabPage;
                 }
                 themed.SaveRequested=delegate{return "Injected save failure";};themed.ReportError=delegate{};((Button)Find(themed,"Save changes")).PerformClick();
                 Check(themed.Visible&&source.Appearance==AppearanceMode.System,"Failed save applied theme/closed draft");

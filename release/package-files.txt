@@ -8,6 +8,8 @@ ROADMAP.md
 README.md
 LICENSE
 CHANGELOG.md
+Setup.cmd
+Setup.ps1
 Build.ps1
 Build-Release.ps1
 Get-FromGitHub.ps1

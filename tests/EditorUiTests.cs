@@ -37,6 +37,15 @@ public class EditorUiTests {
             string portable=Path.Combine(root,"sample.tilelayouts.xml");PortableLayouts.Export(portable,source);
             using(var settings=new SnapSettingsForm(source)) {
                 settings.ConfirmAction=delegate{return true;};settings.Show();Application.DoEvents();
+                var embedded=(VisualLayoutCanvas)Find(settings,"Visual layout dividers");
+                int ew=embedded.Width-36,eh=embedded.Height-36,ex=18+ew/2,ey=18+eh/2;
+                Pointer(embedded,"OnMouseDown",ex,ey);Pointer(embedded,"OnMouseMove",ex,ey+18);Pointer(embedded,"OnMouseMove",ex,ey+28);Pointer(embedded,"OnMouseUp",ex,ey+28);
+                Check(!settings.Draft.Profiles[0].GeometryMatches(original)&&source.Profiles[0].GeometryMatches(original),"Embedded drag did not isolate the draft");
+                Check(settings.Draft.Profiles[0].Columns[0].Rows.SequenceEqual(original.Columns[0].Rows)&&settings.Draft.Profiles[0].Columns[2].Rows.SequenceEqual(original.Columns[2].Rows),"Embedded drag changed flanking heights");
+                ((Button)Find(settings,"Undo last grid change")).PerformClick();Check(settings.Draft.Profiles[0].GeometryMatches(original),"Embedded drag Undo did not restore the complete gesture");
+                Check(!Find(settings,"Column and row proportions").Visible,"Numeric weights were not collapsed by default");
+                ((CheckBox)Find(settings,"Show advanced proportions")).Checked=true;Check(Find(settings,"Column and row proportions").Visible,"Advanced did not expose numeric fallback");
+                Render(settings,Path.Combine(root,"inline-layouts.png"));
                 var button=(Button)Find(settings,"Edit proportions visually");Exception modalFailure=null;
                 using(var timer=new Timer{Interval=80}) {
                     timer.Tick+=delegate{timer.Stop();var visual=Application.OpenForms.OfType<VisualLayoutDialog>().Single();try{visual.Canvas.Session.Begin();visual.Canvas.Session.Move(true,-1,1,0.45);visual.Canvas.Session.End(false);((Button)Find(visual,"Use proportions")).PerformClick();}catch(Exception e){modalFailure=e;visual.Dispose();}};
@@ -52,6 +61,17 @@ public class EditorUiTests {
                 Render(settings,Path.Combine(root,"share-layouts.png"));((Button)Find(settings,"Undo portable import")).PerformClick();Check(settings.Draft.Profiles.Count==6,"Undo import failed");
                 settings.ConfirmAction=delegate{return false;};settings.Close();Check(!settings.IsDisposed&&settings.Visible,"Changed portable draft did not protect unsaved close");
                 settings.ConfirmAction=delegate{return true;};settings.Close();Check(source.Profiles[0].GeometryMatches(original)&&source.Profiles.Count==6,"Cancel/discard changed input settings");
+            }
+            var snapshot=new LiveDashboardState{ActiveDisplay="fixture",PlacementReady=true,RetryToken="displayed-token",Issue="Fixture timeout"};
+            snapshot.Displays.Add(new LiveDisplay{Id="fixture",Name="Disposable display",Connected=true,Profile=original.Clone(),Tiles=Enumerable.Range(1,6).Select(i=>new LiveTile{Number=i,Status=i==1?"Occupied":"Empty",Application=i==1?"Disposable app":null}).ToList()});
+            string retried=null;
+            using(var liveForm=new SnapSettingsForm(source,null,null,null,null,delegate{return snapshot;},delegate(string token){retried=token;return "Fixture retry result";})) {
+                liveForm.Show();Application.DoEvents();Check(Find(liveForm,"Live window summary").Text.Contains("1 occupied / 6 zones"),"Live occupancy missing: "+Find(liveForm,"Live window summary").Text+"; page="+liveForm.Controls.OfType<TabControl>().Single().SelectedTab.Text);
+                Check(Find(liveForm,"Zone 1\n\nOccupied\nDisposable app")!=null,"Live app label missing");
+                ((Button)Find(liveForm,"Retry last placement")).PerformClick();Check(retried=="displayed-token","Retry did not use the displayed target token");
+                snapshot.Displays[0].Connected=false;foreach(var tile in snapshot.Displays[0].Tiles)tile.Status="Disconnected";snapshot.RetryToken=null;
+                ((Button)Find(liveForm,"Refresh live windows")).PerformClick();Check(!Find(liveForm,"Retry last placement").Enabled&&Find(liveForm,"Zone 1\n\nDisconnected\nDisposable app")!=null,"Disconnected state or expired retry missing");
+                Render(liveForm,Path.Combine(root,"live-dashboard.png"));liveForm.Close();Check(source.Profiles[0].GeometryMatches(original),"Dashboard altered source geometry");
             }
             Console.WriteLine("PASS: real-loop canvas pointer drag, pair-only heights, Undo/Redo/Escape, paint, visual acceptance, settings draft isolation/grid undo, portable import/failure/undo/discard and sharing-page rendering.");return 0;
         } catch(Exception e){Console.Error.WriteLine(e);return 1;}

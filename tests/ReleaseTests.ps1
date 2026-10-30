@@ -9,7 +9,7 @@ $results=New-Object 'Collections.Generic.List[string]'
 function Assert([bool]$Value,[string]$Message){if(!$Value){throw $Message}}
 function Reject([scriptblock]$Action,[string]$Message){$failed=$false;try{& $Action | Out-Null}catch{$failed=$true};Assert $failed $Message}
 function Install([string]$Zip,[string]$Destination,[string]$Mode='Hosted'){& (Join-Path $root 'Get-FromGitHub.ps1') -ArchivePath $Zip -InstallRoot $Destination -Mode $Mode -ExpectedSha256 (Get-FileHash -LiteralPath $Zip).Hash -NoLaunch}
-function Manage([string]$Destination,[string]$Action,[switch]$RemoveData){& (Join-Path $root 'Manage-Installation.ps1') -InstallRoot $Destination -Action $Action -StartupDirectory $startup -RemoveData:$RemoveData -Confirm:$false}
+function Manage([string]$Destination,[string]$Action,[switch]$RemoveData){& (Join-Path $root 'Manage-Installation.ps1') -InstallRoot $Destination -Action $Action -StartupDirectory $startup -MenuDirectory (Join-Path $run 'isolated-menu') -RemoveData:$RemoveData -Confirm:$false}
 function Candidate([string]$Name,[bool]$Broken,[bool]$UpdateManifest=$true){
     $folder=Join-Path $run $Name;New-Item -ItemType Directory -Path $folder | Out-Null
     Copy-Item -LiteralPath $sourceProject -Destination (Join-Path $folder 'WindowsTileStudio') -Recurse
@@ -35,7 +35,17 @@ try{
     $icon=[Drawing.Icon]::ExtractAssociatedIcon((Join-Path $portableProject 'bin\SixSlotSnap.exe'));Assert ($null -ne $icon) 'Compiled app icon is missing.';$icon.Dispose()
     $results.Add('Source ZIP is byte-repeatable for identical inputs; both manifests verify; source excludes EXEs and compiled identity/icon match the package version.')
     $destination=Join-Path $run "Installed app's folder";$startup=Join-Path $run 'isolated-startup';New-Item -ItemType Directory -Path $startup | Out-Null
+    $setupArchive=Join-Path $run 'setup.zip';New-WtsSetupArchive $sourceProject $setupArchive
+    $setupExtract=Join-Path $run 'setup-extract';Expand-Archive -LiteralPath $setupArchive -DestinationPath $setupExtract;[void](Test-WtsPackage (Join-Path $setupExtract 'WindowsTileStudio') -RequireManifest)
+    Assert ((Get-ChildItem -LiteralPath $setupExtract -Recurse -Filter '*.exe').Count -eq 0) 'Source setup archive emitted an EXE.'
     $first=Install $source $destination
+    $menuDirectory=Join-Path $run 'isolated-menu';New-Item -ItemType Directory -Path $menuDirectory | Out-Null
+    [void](Manage $destination 'AddShortcut');$menuLink=Join-Path $menuDirectory 'Windows Tile Studio.lnk';Assert (Test-Path -LiteralPath $menuLink) 'Owned Start menu shortcut missing.'
+    [void](Manage $destination 'AddShortcut');[void](Manage $destination 'RemoveShortcut');Assert (!(Test-Path -LiteralPath $menuLink)) 'Owned shortcut removal failed.'
+    $shell=New-Object -ComObject WScript.Shell;$link=$null
+    try{$link=$shell.CreateShortcut($menuLink);$link.TargetPath=Join-Path $env:WINDIR 'System32\notepad.exe';$link.Arguments='unrelated';$link.Save()}finally{if($link){[void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($link)};[void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell)}
+    $menuHash=(Get-FileHash -LiteralPath $menuLink).Hash;Reject {Manage $destination 'AddShortcut'} 'Shortcut conflict was overwritten.';[void](Manage $destination 'RemoveShortcut');Assert ((Get-FileHash -LiteralPath $menuLink).Hash -eq $menuHash) 'Unrelated Start menu shortcut changed.'
+    $results.Add('GUI setup payload verifies and source remains EXE-free; Start menu add/repeat/remove/conflict checks pass in a temporary folder.')
     $sentinel=Join-Path $first.DataDirectory 'settings.xml';[IO.File]::WriteAllText($sentinel,'synthetic user settings; never launched')
     [void](Manage $destination 'Validate')
     $repeat=Install $source $destination;Assert ($repeat.VersionDirectory -eq $first.VersionDirectory -and [IO.File]::ReadAllText($sentinel) -eq 'synthetic user settings; never launched') 'Repeat install changed source identity/data.'

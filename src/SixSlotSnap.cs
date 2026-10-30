@@ -86,8 +86,8 @@ public class HotkeyRegistry : IDisposable {
     public void Dispose() { foreach(int id in registered.Keys) NativeMethods.UnregisterHotKey(window,id); registered.Clear(); }
 }
 
-public class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-beta.5";
+public partial class SixSlotSnap : ApplicationContext {
+    public const string ProductVersion="0.3.0-beta.6";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -346,6 +346,7 @@ public class SixSlotSnap : ApplicationContext {
     }
     void AbortResize() {
         IntPtr source=resizeSource;
+        int retrySlot=Array.IndexOf(assigned,source);if(retrySlot>=0)SetPendingRetry(CaptureRetry(source,grid.Profile.Id,retrySlot));
         for(int i=0;i<grid.Profile.SlotCount;i++) if(resizeBaselineValid[i] && assigned[i]==resizeWindows[i] && NativeMethods.IsWindow(assigned[i]) && !NativeMethods.IsIconic(assigned[i]) && !NativeMethods.IsZoomed(assigned[i])) PlaceWindow(assigned[i],resizeBaseline[i],false,false);
         if(resizeStartProfile!=null) grid.Profile.Columns=resizeStartProfile.Columns.Select(c=>c.Clone()).ToList();
         int slot=Array.IndexOf(assigned,source); if(slot>=0) assigned[slot]=IntPtr.Zero;
@@ -362,7 +363,12 @@ public class SixSlotSnap : ApplicationContext {
         Geometry(delegate{CancelResizeSession();foreach(var c in grid.Profile.Columns){c.Width=1.0/grid.Profile.Columns.Count;for(int r=0;r<c.Rows.Count;r++)c.Rows[r]=1.0/c.Rows.Count;}ApplyLayout();SaveSettings();WriteState();});
     }
     public bool SnapTo(IntPtr window,string profileId,int slot) {
-        return GeometryResult(delegate{return SnapToCore(window,profileId,slot);},false);
+        return GeometryResult(delegate{return SnapWithOutcome(window,profileId,slot);},false);
+    }
+    bool SnapWithOutcome(IntPtr window,string profileId,int slot) {
+        var attempt=CaptureRetry(window,profileId,slot);
+        bool success=SnapToCore(window,profileId,slot);
+        SetPendingRetry(success?null:attempt);if(success)ClearRetry(attempt);return success;
     }
     bool SnapToCore(IntPtr window,string profileId,int slot) {
         if(!ValidTarget(window)) { tray.ShowBalloonTip(2500,"Choose a window first","Select the app you want to place, then open the layout flyout.",ToolTipIcon.Info); return false; }
@@ -396,7 +402,7 @@ public class SixSlotSnap : ApplicationContext {
                 else if(!NativeMethods.IsIconic(resizeWindows[i]) && !NativeMethods.IsZoomed(resizeWindows[i])) resizeBaselineValid[i]=false;
             }
             int source=Array.IndexOf(assigned,dragging);
-            if(source<0 || !resizeBaselineValid[source]) { if(source>=0) assigned[source]=IntPtr.Zero; CancelResizeSession(); FitIssue("The source app did not respond to its size query. Snap it again after it responds.",true); return; }
+            if(source<0 || !resizeBaselineValid[source]) { if(source>=0){SetPendingRetry(CaptureRetry(dragging,grid.Profile.Id,source));assigned[source]=IntPtr.Zero;} CancelResizeSession(); FitIssue("The source app did not respond to its size query. Snap it again after it responds.",true); return; }
             resizeProbe.Applied=true;
         }
         RECT proposed=current;
@@ -541,7 +547,7 @@ public class SixSlotSnap : ApplicationContext {
         workspace.Capture(); settingsMonitorId=workspace.Active.Display.Id; settingsOpened=settings.Clone();
         settingsOpened.Profiles=settings.Profiles.Select(p=>workspace.Resolve(settingsMonitorId,p.Id)).ToList();
         try {
-            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice,new StartupRegistration(startupLaunch,new UserStartupValue()),folder,delegate{return DiagnosticReport.Create(settings,DisplayInventory.Connected(),workspace.Sessions.Values.Sum(s=>s.Windows.Count(w=>w!=IntPtr.Zero)),recoveryNotice!=null,string.IsNullOrEmpty(typeof(SixSlotSnap).Assembly.Location));})) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings;if(general&&recoveryNotice==null)form.SelectGeneral(); ShowManagedDialog(form); }
+            using(var form=new SnapSettingsForm(settingsOpened,recoveryNotice,new StartupRegistration(startupLaunch,new UserStartupValue()),folder,delegate{return DiagnosticReport.Create(settings,DisplayInventory.Connected(),workspace.Sessions.Values.Sum(s=>s.Windows.Count(w=>w!=IntPtr.Zero)),recoveryNotice!=null,string.IsNullOrEmpty(typeof(SixSlotSnap).Assembly.Location));},ReadDashboard,RetryDashboard)) { settingsForm=form; form.DisplayContext(workspace.Active.Display.Name); form.SaveRequested=ApplySettings;if(general&&recoveryNotice==null)form.SelectGeneral(); ShowManagedDialog(form); }
         } finally {settingsForm=null;settingsMonitorId=null;settingsOpened=null;}
     }
     void HandleCommand(int message,IntPtr a,IntPtr b) {
@@ -566,11 +572,11 @@ public class SixSlotSnap : ApplicationContext {
             } else if(message==0x312) {
                 int id=a.ToInt32(); if(id==100) OpenFlyout(NativeMethods.GetForegroundWindow(),null); else if(id==200) HideFlyout();
                 else if(id>=201 && id<=207 && flyout!=null && navigationHotkeys.Contains(id)) flyout.Navigate(navigationKeys[id-201],id==206);
-                else if(id>=1 && id<=16) { IntPtr target=flyout==null?NativeMethods.GetForegroundWindow():targetWindow; HideFlyout(); TargetMonitor(target); if(id<=grid.Profile.SlotCount) SnapToCore(target,grid.Profile.Id,id-1); }
+                else if(id>=1 && id<=16) { IntPtr target=flyout==null?NativeMethods.GetForegroundWindow():targetWindow; HideFlyout(); TargetMonitor(target); if(id<=grid.Profile.SlotCount) SnapWithOutcome(target,grid.Profile.Id,id-1); }
                 else if(id>=300 && id<300+settings.Profiles.Count) OpenFlyout(NativeMethods.GetForegroundWindow(),settings.Profiles[id-300].Id);
             } else if(message==ShowCommand) OpenFlyout(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b,null);
             else if(message==SettingsCommand) OpenSettings(); else if(message==WorkspacesCommand)OpenWorkspaces(); else if(message==QuitCommand) ExitThread();
-            else if(message==SnapCommand) { HideFlyout(); TargetMonitor(b); SnapToCore(b,grid.Profile.Id,a.ToInt32()-1); }
+            else if(message==SnapCommand) { HideFlyout(); TargetMonitor(b); SnapWithOutcome(b,grid.Profile.Id,a.ToInt32()-1); }
             else if(message==ProfileCommand && a.ToInt32()>=0 && a.ToInt32()<settings.Profiles.Count) { HideFlyout(); TargetMonitor(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b); UseProfile(settings.Profiles[a.ToInt32()].Id); WriteState(); }
         } catch(Exception e) { Log("Command: "+e); tray.ShowBalloonTip(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
     }
@@ -674,7 +680,7 @@ public class SixSlotSnap : ApplicationContext {
         if(settingsForm!=null && !settingsForm.IsDisposed) { var open=settingsForm; open.DialogResult=DialogResult.Cancel; open.Close(); if(!open.IsDisposed && open.DialogResult==DialogResult.None) return; }
         if(workspaceForm!=null&&!workspaceForm.IsDisposed)workspaceForm.Close();
         disposed=true;
-        placement.Dispose();
+        SetPendingRetry(null);placement.Dispose();
         resizeTimer.Stop(); settleTimer.Stop(); displayTimer.Stop(); SaveSettings(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose(); displayTimer.Dispose();
         if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); if(destroyHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(destroyHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
     }

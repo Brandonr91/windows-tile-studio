@@ -49,6 +49,18 @@ class WorkspaceNativeTests {
                 timer.Tick+=delegate {
                     timer.Stop();try {
                         Check(app.SnapTo(windows[0],"six-grid",0)&&app.SnapTo(windows[1],"six-grid",3),"Fixture initial snaps failed");var before=windows.Select(Bounds).ToArray();
+                        var flags=BindingFlags.Instance|BindingFlags.NonPublic;
+                        var read=typeof(SixSlotSnap).GetMethod("ReadDashboard",flags);var retry=typeof(SixSlotSnap).GetMethod("RetryDashboard",flags);
+                        var make=typeof(SixSlotSnap).GetMethod("CaptureRetry",flags);var stage=typeof(SixSlotSnap).GetMethod("SetPendingRetry",flags);
+                        var live=(LiveDashboardState)read.Invoke(app,null);Check(live.Displays.Sum(d=>d.Tiles.Count(t=>t.Status=="Occupied"))==2,"Dashboard lost actual native assignments");
+                        var pending=make.Invoke(app,new object[]{windows[0],"six-grid",0});stage.Invoke(app,new[]{pending});live=(LiveDashboardState)read.Invoke(app,null);
+                        Check(live.RetryToken!=null&&((string)retry.Invoke(app,new object[]{"expired-token"})).Contains("expired"),"Dashboard accepted a stale token");
+                        Check(((string)retry.Invoke(app,new object[]{live.RetryToken})).StartsWith("Placement succeeded"),"Dashboard explicit retry failed");
+                        Check(windows.Select(Bounds).Zip(before,(a,b)=>Near(a,b)).All(v=>v),"Retry changed another frame");
+                        pending=make.Invoke(app,new object[]{windows[1],"six-grid",0});stage.Invoke(app,new[]{pending});live=(LiveDashboardState)read.Invoke(app,null);
+                        Check(((string)retry.Invoke(app,new object[]{live.RetryToken})).Contains("another window"),"Retry replaced a newly occupied zone");
+                        var started=pending.GetType().GetField("Started");started.SetValue(pending,(long)started.GetValue(pending)-1);Check(((LiveDashboardState)read.Invoke(app,null)).RetryToken==null,"Stale process generation remained retryable");
+                        stage.Invoke(app,new object[]{null});
                         var capture=app.CaptureWorkspace("Native fixture",true);Check(capture.Displays.Sum(d=>d.Windows.Count)==2,"Capture included unassigned windows or lost fixture windows");
                         string saved=Path.Combine(root,"workspaces.xml");WorkspaceStore.Save(saved,new WorkspaceLibrary{Workspaces={capture}});capture=WorkspaceStore.Load(saved).Workspaces.Single();
                         NativeMethods.SetWindowPos(windows[0],IntPtr.Zero,500,400,900,500,0x14);NativeMethods.SetWindowPos(windows[1],IntPtr.Zero,700,500,850,550,0x14);

@@ -56,6 +56,37 @@ function Set-WtsCurrent([string]$Root,$Candidate) {
     if($prior){Write-WtsAtomic $previous ($prior | ConvertTo-Json -Depth 10)}
     try{Write-WtsAtomic $path ($Candidate | ConvertTo-Json -Depth 10)}catch{if($prior){if($null -ne $previousText){Write-WtsAtomic $previous $previousText}else{[void](Assert-WtsChild $Root $previous);Remove-Item -LiteralPath $previous -Force}};throw}
 }
+function New-WtsSetupArchive([string]$Source,[string]$Destination) {
+    $manifest=Test-WtsPackage $Source -RequireManifest -AllowBuildOutput
+    Assert-WtsNoLinks $Destination
+    if(Test-Path -LiteralPath $Destination){throw 'Setup archive destination already exists.'}
+    Add-Type -AssemblyName System.IO.Compression,System.IO.Compression.FileSystem
+    $stream=[IO.File]::Open($Destination,[IO.FileMode]::CreateNew);$zip=New-Object IO.Compression.ZipArchive($stream,[IO.Compression.ZipArchiveMode]::Create,$false)
+    try{foreach($relative in (@($manifest.files | ForEach-Object {$_.path})+@('package-manifest.json'))){$path=Assert-WtsChild $Source (Join-Path $Source $relative);[void][IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip,$path,('WindowsTileStudio/'+$relative),[IO.Compression.CompressionLevel]::Optimal)}}finally{$zip.Dispose();$stream.Dispose()}
+}
+function Get-WtsMenuLink([string]$Root,[string]$Directory) {
+    Assert-WtsNoLinks $Directory
+    $path=Assert-WtsChild $Directory (Join-Path $Directory 'Windows Tile Studio.lnk')
+    $arguments='-NoProfile -STA -ExecutionPolicy Bypass -File "'+(Join-Path $Root 'Launch-Installed.ps1')+'"'
+    [pscustomobject]@{Path=$path;Target=(Join-Path $env:WINDIR 'System32\WindowsPowerShell\v1.0\powershell.exe');Arguments=$arguments}
+}
+function Set-WtsMenuLink([string]$Root,[string]$Directory,[switch]$Remove) {
+    $spec=Get-WtsMenuLink $Root $Directory
+    if($Remove -and !(Test-Path -LiteralPath $spec.Path)){return}
+    if(!$Remove){Test-WtsInstalledPointer $Root (Read-WtsPointer (Join-Path $Root 'current.json'));New-Item -ItemType Directory -Force -Path $Directory | Out-Null}
+    $shell=$null;$link=$null
+    try {
+        $exists=Test-Path -LiteralPath $spec.Path
+        $shell=New-Object -ComObject WScript.Shell;$link=$shell.CreateShortcut($spec.Path)
+        $owned=$exists -and $link.TargetPath -eq $spec.Target -and $link.Arguments -ceq $spec.Arguments
+        if($exists -and !$owned){if($Remove){return};throw 'An unrelated Start menu shortcut already uses this name. It was preserved.'}
+        if($Remove){Remove-Item -LiteralPath $spec.Path -Force;return}
+        $link.TargetPath=$spec.Target;$link.Arguments=$spec.Arguments;$link.WorkingDirectory=$Root;$link.WindowStyle=7;$link.Description='Windows Tile Studio - layouts and linked resizing'
+        $pointer=Read-WtsPointer (Join-Path $Root 'current.json');$icon=Join-Path $Root ('versions\'+$pointer.version+'\bin\SixSlotSnap.exe')
+        if(Test-Path -LiteralPath $icon){$link.IconLocation=$icon+',0'}
+        $link.Save()
+    } finally {if($link){[void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($link)};if($shell){[void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell)}}
+}
 function Invoke-WtsValidation([string]$Executable,[string]$Arguments,[string]$Folder) {
     $out=Join-Path $Folder 'candidate-stdout.txt';$err=Join-Path $Folder 'candidate-stderr.txt'
     $child=Start-Process -FilePath $Executable -ArgumentList $Arguments -WindowStyle Hidden -RedirectStandardOutput $out -RedirectStandardError $err -PassThru
