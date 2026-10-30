@@ -1,5 +1,18 @@
 # Handoff
 
+## SignPath preparation ready for maintainer application — 2026-10-30
+
+User asked whether we can proceed with free signing or they must act. Prepared docs/CODE-SIGNING-POLICY.md, docs/SIGNPATH-APPLICATION.md, README policy link and inert examples/signpath/signing-workflow.yml. No live workflow/application submission/provider account/App authorization/secret/certificate created. Beta.7 installation/releases unchanged and unsigned. Technical preparation is being published for the application; no provider submission or signing activation is authorized.
+
+Read-docs skill used; official Foundation terms/application and GitHub integration fetched. Actual form requires first/last name, email, Code of Conduct and personal-data consent. Marketing consent is separate. Human must supply/accept these directly; MFA required on repo/SignPath accounts. Public snapshot: created October26, MIT, zero stars/forks; counters include verification traffic. Draft does not claim widespread use. Approval is discretionary; reputation may be insufficient.
+
+Template remains outside .github/workflows; main/owner/enabled/configuration gates apply if later activated. Existing checkout/upload pins reused; SignPath v3 SHAf6d04783b4569d051e0c80105fe66e82819d0092 verified from official tag. It uploads a GitHub-built EXE, awaits configured human approval and verifies valid timestamped Authenticode, approved thumbprint and metadata, retaining proof without publication/repacking. Actual signing is untested pending acceptance/configuration. Build-Release currently rebuilds unsigned EXEs; never treat it as signed packaging.
+
+Validation: inert YAML structure/read-only permissions/main/enabled gates, pinned actions, local links and all PowerShell run-block syntax checked; no signing steps executed. Policy/docs are published with an unsigned-status link on the beta.7 download page; assets/tags remain unchanged.
+
+Next: human completes https://signpath.org/apply with own contact/consent. Public download page needs a policy link before submission without changing old tag/asset bytes or claiming signing. After acceptance configure trusted build project/manual policy/certificate/secret directly in provider/GitHub, and review activation/packaging separately. Never request tokens in chat or infer identity from usernames/local paths.
+
+
 ## Beta.7 deployed and published — 2026-10-30
 
 User explicitly authorized updating the existing installation and then publishing beta.7 downloads. Both are complete. Public unsigned prerelease: https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.7 . Frozen clean source 19ea78e3da85aa195eb41eb5ca03b7ff6deca236; annotated tag edd6493d59bbd0303cc8b712d9c2c937143bc967. docs/RELEASE-BETA-7.md owns hashes, provenance, validation and deployment. Preserve beta.2/beta.6/beta.7 immutable tags/assets. Earlier local-only/pending statements below are historical.

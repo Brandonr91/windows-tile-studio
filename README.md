@@ -24,6 +24,10 @@ Built with C#, Windows Forms, and Windows APIs. No external packages or
 replacement taskbar. The current version is an early desktop utility tested
 on Windows 11 with a 5120 × 2160 display at 125% scaling.
 
+## Code signing policy
+
+Current downloads are **unsigned**. We are preparing a SignPath Foundation application; no provider approval or certificate is claimed. See the [Code signing policy](docs/CODE-SIGNING-POLICY.md) for proposed maintainer/approver roles, privacy, build verification and manual approval. The [application preparation](docs/SIGNPATH-APPLICATION.md) identifies personal enrollment/consent steps and limited reputation evidence.
+
 ## Why it was made
 
 An ultrawide desktop had enough room for six useful windows, but placing six

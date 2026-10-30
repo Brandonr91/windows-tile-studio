@@ -1,0 +1,74 @@
+# PREPARATION ONLY: GitHub does not load workflows from examples/.
+# Configure SignPath approval/certificate/artifact rules and review before activation.
+# First-signing proof only; does not produce or publish release ZIPs.
+name: Manual SignPath signing proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  signing-proof:
+    if: github.repository == 'Brandonr91/windows-tile-studio' && github.ref == 'refs/heads/main' && vars.SIGNPATH_ENABLED == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 25
+    environment: signpath-release
+    defaults:
+      run:
+        shell: powershell
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Require approved provider configuration
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_CERTIFICATE_THUMBPRINT: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+        run: |
+          foreach($name in @('SIGNPATH_API_TOKEN','SIGNPATH_ORGANIZATION_ID','SIGNPATH_PROJECT_SLUG','SIGNPATH_SIGNING_POLICY_SLUG','SIGNPATH_CERTIFICATE_THUMBPRINT')) {
+            if([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))){throw ('Missing approved configuration: '+$name)}
+          }
+      - name: Build and check source on the GitHub-hosted runner
+        run: .\Build.ps1 -Test
+      - name: Upload the exact EXE for origin verification
+        id: unsigned
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: signpath-unsigned-exe
+          path: bin/SixSlotSnap.exe
+          if-no-files-found: error
+          retention-days: 7
+      - name: Submit for configured human approval
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 900
+          output-artifact-directory: signed
+      - name: Verify approved signature and product identity
+        env:
+          APPROVED_THUMBPRINT: ${{ vars.SIGNPATH_CERTIFICATE_THUMBPRINT }}
+        run: |
+          $files=@(Get-ChildItem -LiteralPath signed -Recurse -File -Filter '*.exe')
+          if($files.Count -ne 1 -or $files[0].Name -ne 'SixSlotSnap.exe'){throw 'Unexpected signed output.'}
+          $signature=Get-AuthenticodeSignature -LiteralPath $files[0].FullName
+          if($signature.Status -ne 'Valid' -or !$signature.SignerCertificate -or !$signature.TimeStamperCertificate){throw 'Valid timestamped Authenticode signature required.'}
+          if($signature.SignerCertificate.Thumbprint -ine $env:APPROVED_THUMBPRINT){throw 'Signer certificate differs from approved configuration.'}
+          $version=Get-Content -Raw release/version.json | ConvertFrom-Json
+          $identity=[Diagnostics.FileVersionInfo]::GetVersionInfo($files[0].FullName)
+          if($identity.ProductName -ne 'Windows Tile Studio' -or $identity.ProductVersion -ne $version.version -or $identity.FileVersion -ne $version.fileVersion){throw 'Signed product metadata differs from reviewed source.'}
+          [ordered]@{sourceRevision=$env:GITHUB_SHA;version=$version.version;sha256=(Get-FileHash -LiteralPath $files[0].FullName).Hash.ToLowerInvariant();signerThumbprint=$signature.SignerCertificate.Thumbprint;timestamped=$true} | ConvertTo-Json | Set-Content signed/signature-verification.json
+      - name: Retain proof for maintainer review; no release publication
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: signpath-verified-proof
+          path: signed/
+          if-no-files-found: error
+          retention-days: 7

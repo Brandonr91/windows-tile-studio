@@ -344,3 +344,7 @@ User authorized the three proposed amendments. Reproduce CS1619 before fixing it
 ## Beta.7 deployment/publication, 2026-10-30
 
 User authorized deploying the pushed candidate to the existing installation, then publishing downloads. Use exact clean/CI-passed source 19ea78e and frozen validated package bytes; preserve six outer frames, settings and original Startup bytes. Publish a new unsigned prerelease with server digests and independent public hash verification, preserving older tags/assets. This is complete; documentation afterward records evidence without rebuilding or moving the released source.
+
+## Prepare signing without impersonating enrollment, 2026-10-30
+
+User asked whether we can proceed or they must act. Prepare policy, accurate form text and inert signing template using primary SignPath docs and a verified v3 pin. Do not submit, infer personal name/email, accept personal-data/terms consent, change MFA, authorize provider App access or activate signing. Reputation is limited (new repo, no stars/forks); verification downloads are not adoption. Foundation is the proposed certificate publisher. Approval/signing capability is not claimed.
