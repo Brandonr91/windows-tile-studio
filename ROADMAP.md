@@ -1,3 +1,7 @@
+## Latest: beta.6 published, 2026-10-29
+
+Selected live dashboard, visual-first editor, UI polish and setup/distribution work is implemented, tested, deployed and published as an unsigned beta.6. See [release record](docs/RELEASE-BETA-6.md), [live manager](docs/LIVE-MANAGER.md), [setup](docs/SETUP.md) and latest HANDOFF. Signing requires publisher credentials; broader hardware/assistive-technology/long-duration observations remain limited. Follow the user's next request; no pending merge or repeated publication is required.
+
 ## Bounded placement recovery implemented locally, 2026-10-29
 
 Local beta.5 implements and regression-tests freeze-after-query containment, explicit retry, healthy-window preservation and helper cleanup in compiled/hosted modes. Full integration now passes in both modes, including pair-only height behavior. See [placement recovery](docs/PLACEMENT-RECOVERY.md) and latest HANDOFF. This supersedes the older unbounded SetWindowPos risk below within the documented scope. Already committed target frames, app-owned deferred code and OS/DWM/hardware/privilege limits remain distinct. Published beta.2 is unchanged; no new public release follows automatically.

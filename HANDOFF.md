@@ -1,5 +1,16 @@
 # Handoff
 
+## Beta.6 completed, deployed, pushed and published — 2026-10-29
+
+All five selected items are complete within the documented scope. Public unsigned prerelease: https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.6 . Frozen source b052f8377a73105ef8e9d75c9a1400ad02d88a07; annotated tag 8da13c50bdece76c590ffd0f9406af687269c681. See docs/RELEASE-BETA-6.md for exact artifact hashes/provenance, test evidence and deployment record. Do not overwrite either published beta.2 or beta.6.
+
+Final clean packages pass ReleaseTests, actual installed Hosted/Compiled/rollback and Setup GUI install/verification. Public assets independently downloaded anonymously and hash-verified. Source commit CI 40984354491 passed before publication. These supersede older pending checks below. An initial fixture hard-coded General tab position; fixed to select by name. A Setup test script-scope flag was fixed to share a result object. Neither initial failed run is counted as a pass.
+
+Daily uses the exact released compiled EXE at existing bin/SixSlotSnap.exe with existing data, verified six same handles/outer frames, original Startup bytes, hidden bar, no Recovery and placementReady=true. Last PID44000 is transient. Hosted delivery matches sixteen sources and Start-Hosted.ps1. Private snapshots/evidence remain bin/studio-next-*, bin/beta6-deployment.json and temporary WtsR6Final/WtsR6Launch/WtsSetupUi folders. Zero sampled app-specific crash events over the 40-minute local sample. No new startup/menu registration on the daily installation; GUI/installer tests use temporary folders and disable real menu/launch.
+
+Next: use the manager normally and follow the user's next request. Signing is pending publisher certificate/service credentials, not completed. Broader hardware/privilege/assistive-technology/long-duration observations remain limited. No need to repeat passed suites without a new change/failure. Consult these documents and actual Git/process state after compaction; do not resume older pending publication tasks.
+
+
 ## Beta.6 manager expansion: local implementation, 2026-10-29
 
 User authorized live dashboard, embedded visual-first editing, UI polish and distribution improvements, then a new prerelease. Beta.6/file 0.3.0.14 implements these in sixteen C# sources plus Setup.cmd/Setup.ps1. See docs/LIVE-MANAGER.md and docs/SETUP.md. Signing requires publisher credentials; the release remains unsigned. No first-run walkthrough was selected.
