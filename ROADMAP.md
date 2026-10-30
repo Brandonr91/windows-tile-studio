@@ -241,3 +241,7 @@ Scope: live windows/status/validated retry; embedded visual-first editing with n
 ## Notification follow-up, 2026-10-29
 
 Local beta.7 routes automated failure-fixture notifications to status.log without toast calls. See docs/NOTIFICATIONS.md and latest HANDOFF for verification. This is a local test/notification fix; published and daily beta.6 remain unchanged. No new release or deployment is implicit.
+
+## Log audit amendments, 2026-10-30
+
+Local beta.7 now addresses CS1619 via short compiler staging/atomic publication, stale integration evidence via per-run records/latest status, and log clarity via severity/outcome/run/version. New regression coverage includes deep paths and prior-EXE preservation. Classic Windows/Framework path bounds remain explicit; no arbitrary-long-path guarantee. See docs/BUILD-AND-LOG-RELIABILITY.md and latest HANDOFF. Daily/published beta.6 is preserved.

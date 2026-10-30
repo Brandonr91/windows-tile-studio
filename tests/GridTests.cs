@@ -254,6 +254,20 @@ class GridTests {
                 delivery.Post(1000,"Window does not fit","Log-only outcome",ToolTipIcon.Warning,false);
                 if(messages.Count!=3||delivery.LoggedCount!=3||popups!=(quiet?0:2)||delivery.PopupCount!=popups)throw new Exception("Notification routing lost logs or displayed a quiet warning.");
             }
+            string bookkeeping=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"run-record-tests",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(bookkeeping);
+            File.WriteAllText(Path.Combine(bookkeeping,"integration-error.txt"),"historical evidence");
+            var firstRun=new TestRunRecord(bookkeeping,"Fixture","Compiled");File.WriteAllText(Path.Combine(firstRun.DirectoryPath,"integration-error.txt"),"fixture failure");firstRun.Complete(false);
+            var secondRun=new TestRunRecord(bookkeeping,"Fixture","Hosted");
+            var latest=System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml"));
+            Check((string)latest.Attribute("status")=="running"&&firstRun.DirectoryPath!=secondRun.DirectoryPath,"New run inherited a stale status/directory");
+            firstRun.Complete(false);Check((string)System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml")).Attribute("id")==secondRun.Id,"Older completion replaced the newer run");
+            File.WriteAllText(Path.Combine(secondRun.DirectoryPath,"integration-result.txt"),"PASS");secondRun.Complete(true);
+            latest=System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml"));Check((string)latest.Attribute("status")=="passed"&&(string)latest.Attribute("id")==secondRun.Id&&File.Exists(Path.Combine(firstRun.DirectoryPath,"integration-error.txt")),"Passing run lost historical failure or latest identity");
+            var interrupted=new TestRunRecord(bookkeeping,"Fixture","Compiled");Check((string)System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml")).Attribute("status")=="running","Interrupted run left an old PASS current");
+            string logFolder=Path.Combine(bookkeeping,"log");Directory.CreateDirectory(logFolder);var logger=new LocalStatusLog(logFolder,"fixture-version");
+            Check(logger.Write("WARN","FIXTURE_EXPECTED","line one\nline two"),"Structured log write failed");string structured=File.ReadAllText(Path.Combine(logFolder,"status.log"));
+            Check(structured.Contains("level=WARN code=FIXTURE_EXPECTED version=fixture-version run="+logger.RunId)&&File.ReadAllLines(Path.Combine(logFolder,"status.log")).Length==1&&structured.Contains("line one\\nline two"),"Log context or single-line framing failed");
+            File.WriteAllText(Path.Combine(bookkeeping,"not-a-directory"),"fixture");Check(!new LocalStatusLog(Path.Combine(bookkeeping,"not-a-directory"),"fixture").Write("ERROR","FIXTURE","unwritable destination"),"Unwritable log escaped containment");
             HeightPair();
             MinimumConstraints();
             Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));

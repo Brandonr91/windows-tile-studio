@@ -18,6 +18,8 @@ jobs:
           persist-credentials: false
       - name: Geometry and configuration
         run: .\Build.ps1 -Test
+      - name: Deep build paths and failed-publication preservation
+        run: .\tests\BuildPathTests.ps1
       - name: Offline source hosting and installer checks
         run: .\tests\LauncherTests.ps1
       - name: Package install update rollback uninstall

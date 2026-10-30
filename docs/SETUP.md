@@ -41,4 +41,4 @@ SmartScreen or Windows security controls to make installation appear trusted.
 
 The installer retains its existing current-user, dedicated-folder model; no MSI,
 machine-wide registration, automatic updater or automatic startup is introduced.
-Long paths remain subject to the legacy Framework compiler's temporary-path limits.
+Local beta.7 stages compiler inputs/output in a short temporary folder to avoid the reproduced CS1619 failure. Final source/output paths remain subject to classic Windows/Framework bounds; overly deep output/temp bases are rejected clearly. See [build/log reliability](BUILD-AND-LOG-RELIABILITY.md).

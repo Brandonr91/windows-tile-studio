@@ -8,23 +8,53 @@ if (-not (Test-Path -LiteralPath $compiler)) {
     throw 'The Windows .NET Framework C# compiler was not found.'
 }
 $output = if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { Join-Path $PSScriptRoot 'bin' } else { [IO.Path]::GetFullPath($OutputDirectory) }
-New-Item -ItemType Directory -Force -Path $output | Out-Null
 $executable = Join-Path $output 'SixSlotSnap.exe'
 $sources = @(Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs' | ForEach-Object { $_.FullName })
 $version=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'release\version.json') | ConvertFrom-Json
 if($version.version -notmatch '^\d+\.\d+\.\d+(?:-(?:preview|beta|rc)\.\d+)?$' -or $version.channel -notin @('preview','beta','rc','stable') -or $version.assemblyVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or $version.fileVersion -notmatch '^\d+\.\d+\.\d+\.\d+$' -or $version.product -ne 'Windows Tile Studio'){throw 'Invalid release version metadata.'}
 if(!([IO.File]::ReadAllText((Join-Path $PSScriptRoot 'src\SixSlotSnap.cs')).Contains('ProductVersion="'+$version.version+'"'))){throw 'Application and release version metadata disagree.'}
-$metadata=Join-Path $output 'AssemblyInfo.generated.cs'
+$longestOutput=Join-Path $output 'AssemblyInfo.generated.cs'
+if($longestOutput.Length -ge 260){throw 'The output exceeds the legacy Framework file-path limit. Choose a shorter installation/output folder.'}
+$stageParent=[IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\')
+if($stageParent.Length -gt 120){throw 'The temporary folder is too deep for the Framework compiler. Set TEMP and TMP to a shorter writable folder, then retry.'}
+$stage=Join-Path $stageParent ('WtsBuild-'+[Guid]::NewGuid().ToString('N').Substring(0,12))
+New-Item -ItemType Directory -Path $stage | Out-Null
+$oldTemp=$env:TEMP;$oldTmp=$env:TMP
+try {
+$env:TEMP=$stage;$env:TMP=$stage
+$builtExecutable=Join-Path $stage 'SixSlotSnap.exe'
+$stagedSources=@(foreach($file in Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'src') -Filter '*.cs'){$target=Join-Path $stage $file.Name;Copy-Item -LiteralPath $file.FullName -Destination $target;$target})
+$metadata=Join-Path $stage 'AssemblyInfo.generated.cs'
 $attributes='using System.Reflection;[assembly:AssemblyTitle("Windows Tile Studio")][assembly:AssemblyProduct("Windows Tile Studio")][assembly:AssemblyDescription("Local window layouts and linked resizing")][assembly:AssemblyVersion("'+$version.assemblyVersion+'")][assembly:AssemblyFileVersion("'+$version.fileVersion+'")][assembly:AssemblyInformationalVersion("'+$version.version+'")][assembly:AssemblyCompany("Windows Tile Studio contributors")]'
 [IO.File]::WriteAllText($metadata,$attributes,[Text.UTF8Encoding]::new($false))
-$icon=Join-Path $output 'WindowsTileStudio.ico'
+$icon=Join-Path $stage 'WindowsTileStudio.ico'
 & (Join-Path $PSScriptRoot 'tools\New-AppIcon.ps1') -OutputPath $icon
-& $compiler /nologo /target:winexe /reference:Accessibility.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/win32icon:$icon" "/out:$executable" $sources $metadata
-if ($LASTEXITCODE -ne 0) { throw 'Build failed. If the executable is running, exit it from the tray menu first.' }
+& $compiler /nologo /target:winexe /reference:Accessibility.dll /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/win32icon:$icon" "/out:$builtExecutable" $stagedSources $metadata
+if ($LASTEXITCODE -ne 0) { throw 'Compilation failed. No new executable was published; inspect the compiler diagnostics above.' }
+New-Item -ItemType Directory -Force -Path $output | Out-Null
+$pending=Join-Path $output ('.wts-'+[Guid]::NewGuid().ToString('N').Substring(0,8)+'.exe')
+try {
+    [IO.File]::Copy($builtExecutable,$pending,$false)
+    if([IO.File]::Exists($executable)){[IO.File]::Replace($pending,$executable,[NullString]::Value)}else{[IO.File]::Move($pending,$executable)}
+} catch {throw ('Build publication failed. Close the app or choose a shorter writable output folder. The previous executable was retained. '+$_.Exception.Message)}
+finally{if([IO.File]::Exists($pending)){[IO.File]::Delete($pending)}}
+Copy-Item -LiteralPath $metadata,$icon -Destination $output -Force
+} finally {
+    $env:TEMP=$oldTemp;$env:TMP=$oldTmp
+    $resolved=[IO.Path]::GetFullPath($stage)
+    if(!$resolved.StartsWith($stageParent+'\',[StringComparison]::OrdinalIgnoreCase) -or (Split-Path -Leaf $resolved) -notmatch '^WtsBuild-[0-9a-f]{12}$'){throw 'Unexpected compiler staging cleanup path.'}
+    Remove-Item -LiteralPath $resolved -Recurse -Force
+}
 Write-Host "Built $executable"
+$revision='unknown';$dirty='unknown'
+if((Test-Path -LiteralPath (Join-Path $PSScriptRoot '.git')) -and (Get-Command git -ErrorAction SilentlyContinue)){$revision=(& git -C $PSScriptRoot rev-parse HEAD);if($LASTEXITCODE -ne 0){throw 'Could not read test source revision.'};$dirty=(@(& git -C $PSScriptRoot status --porcelain).Count -gt 0).ToString().ToLowerInvariant()}
+elseif(Test-Path -LiteralPath (Join-Path $PSScriptRoot 'package-manifest.json')){$manifest=Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'package-manifest.json') | ConvertFrom-Json;$revision=[string]$manifest.sourceRevision;$dirty=([bool]$manifest.sourceDirty).ToString().ToLowerInvariant()}
+if(!$revision){$revision='unknown'}
+$revision=[Security.SecurityElement]::Escape($revision)
+[IO.File]::WriteAllText((Join-Path $output 'test-source.xml'),('<TestSource revision="'+$revision+'" dirty="'+$dirty+'" />'),[Text.UTF8Encoding]::new($false))
 if ($Test) {
     $testExecutable = Join-Path $output 'GridTests.exe'
-    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll "/reference:$executable" "/out:$testExecutable" (Join-Path $PSScriptRoot 'tests\GridTests.cs')
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$testExecutable" (Join-Path $PSScriptRoot 'tests\GridTests.cs') (Join-Path $PSScriptRoot 'tests\TestRunRecord.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $testExecutable
     if ($LASTEXITCODE -ne 0) { throw 'Grid tests failed.' }
@@ -90,7 +120,7 @@ if ($PlacementRecovery -or $HostedPlacementRecovery) {
 }
 if ($Integration -or $HostedIntegration -or $Compatibility -or $StartupRecovery -or $BetaSoak) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'
-    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$integrationExecutable" (Join-Path $PSScriptRoot 'tests\IntegrationTests.cs')
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$integrationExecutable" (Join-Path $PSScriptRoot 'tests\IntegrationTests.cs') (Join-Path $PSScriptRoot 'tests\TestRunRecord.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Integration test compilation failed.' }
     if ($BetaSoak) {
         if($BetaSoak -lt 10){throw 'Beta soak requires 10–200 cycles.'}

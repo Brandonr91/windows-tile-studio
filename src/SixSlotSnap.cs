@@ -106,7 +106,7 @@ public partial class SixSlotSnap : ApplicationContext {
         for(int i=0;i<navigationKeys.Length;i++) {
             int id=201+i;
             if(!NativeMethods.RegisterHotKey(receiver.Handle,id,0x4000u|(i==5?4u:0u),(uint)navigationKeys[i])) {
-                ReleaseNavigation(); Log("Flyout keyboard navigation unavailable: a navigation key is reserved."); return;
+                ReleaseNavigation(); Log("Flyout keyboard navigation unavailable: a navigation key is reserved.","WARN","NAVIGATION_KEY_CONFLICT"); return;
             }
             navigationHotkeys.Add(id);
         }
@@ -175,8 +175,9 @@ public partial class SixSlotSnap : ApplicationContext {
         protected override void WndProc(ref Message m) { if((m.Msg==0x312 || m.Msg==0x7e || m.Msg==0x1a || m.Msg==0x218 || (m.Msg>=ShowCommand && m.Msg<=DeferredCommand)) && Received!=null) Received(m.Msg,m.WParam,m.LParam); base.WndProc(ref m); }
     }
     readonly NotificationDelivery notifications;
+    readonly LocalStatusLog statusLog;
     void Notify(int duration,string title,string message,ToolTipIcon icon,bool popup=true){notifications.Post(duration,title,message,icon,popup);}
-    void Log(string text) { try { File.AppendAllText(Path.Combine(folder,"status.log"),DateTime.Now.ToString("s")+" "+text+Environment.NewLine); } catch(IOException) {} }
+    void Log(string text,string severity="INFO",string code="APP_EVENT") { statusLog.Write(severity,code,text); }
     static bool Near(RECT a,RECT b) { return Math.Abs(a.L-b.L)<16 && Math.Abs(a.R-b.R)<16 && Math.Abs(a.T-b.T)<16 && Math.Abs(a.B-b.B)<16; }
     static bool Down(int key) { return (NativeMethods.GetAsyncKeyState(key)&0x8000)!=0; }
     static bool MouseDown() { return Down(1)||Down(2)||Down(4); }
@@ -223,13 +224,13 @@ public partial class SixSlotSnap : ApplicationContext {
             }
             workspace.Activate(active.Display);BindActive();displayRefreshes++;
             if(changedDisplays) SaveSettings(); RefreshLauncher(); WriteState();
-        } catch(Exception e) {Log("Display refresh: "+e.Message);}
+        } catch(Exception e) {Log("Display refresh: "+e,"ERROR","DISPLAY_REFRESH_FAILED");}
     }
-    void SaveSettings() { workspace.Capture(); if(preserveInvalidSettings) return; try { SettingsStore.Save(settingsPath,settings); } catch(Exception e) { Log("Settings save failed: "+e.Message); } }
+    void SaveSettings() { workspace.Capture(); if(preserveInvalidSettings) return; try { SettingsStore.Save(settingsPath,settings); } catch(Exception e) { Log("Settings save failed: "+e,"ERROR","SETTINGS_SAVE_FAILED"); } }
     void WriteState() {
         try {
             var root=new XElement("Runtime",new XAttribute("pid",Process.GetCurrentProcess().Id),new XAttribute("version",ProductVersion),new XAttribute("recoveryRequired",recoveryNotice!=null),new XAttribute("controller",receiver.Handle.ToInt64()),new XAttribute("profile",settings.ActiveProfileId),new XAttribute("flyoutVisible",flyout!=null && flyout.Visible),new XAttribute("flyoutHandle",flyout==null?0:flyout.Handle.ToInt64()),new XAttribute("target",targetWindow.ToInt64()),new XAttribute("flyoutShortcut",settings.FlyoutShortcut));
-            root.Add(new XAttribute("notificationsQuiet",notifications.Quiet),new XAttribute("notificationPopups",notifications.PopupCount),new XAttribute("notificationsLogged",notifications.LoggedCount),new XAttribute("placementReady",placement.Ready));
+            root.Add(new XAttribute("logRun",statusLog.RunId),new XAttribute("notificationsQuiet",notifications.Quiet),new XAttribute("notificationPopups",notifications.PopupCount),new XAttribute("notificationsLogged",notifications.LoggedCount),new XAttribute("placementReady",placement.Ready));
             if(lastPlacementIssue!=null) root.Add(new XAttribute("placementIssue",lastPlacementIssue));
             root.Add(new XAttribute("resizing",dragging!=IntPtr.Zero));
             root.Add(new XAttribute("resizeSource",dragging.ToInt64()));
@@ -464,7 +465,7 @@ public partial class SixSlotSnap : ApplicationContext {
             else if(evt==11 && window==dragging) {
                 resizeEnding=true; UpdateDrag(); CompleteResize();
             }
-        } catch(Exception e) { Log("Resize: "+e.Message); }
+        } catch(Exception e) { Log("Resize: "+e,"ERROR","RESIZE_FAILED"); }
     }
     double DpiScale(IntPtr target) { uint dpi=NativeMethods.GetDpiForWindow(target); return dpi==0?1:dpi/96.0; }
     void RefreshLauncher() {
@@ -580,7 +581,7 @@ public partial class SixSlotSnap : ApplicationContext {
             else if(message==SettingsCommand) OpenSettings(); else if(message==WorkspacesCommand)OpenWorkspaces(); else if(message==QuitCommand) ExitThread();
             else if(message==SnapCommand) { HideFlyout(); TargetMonitor(b); SnapWithOutcome(b,grid.Profile.Id,a.ToInt32()-1); }
             else if(message==ProfileCommand && a.ToInt32()>=0 && a.ToInt32()<settings.Profiles.Count) { HideFlyout(); TargetMonitor(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b); UseProfile(settings.Profiles[a.ToInt32()].Id); WriteState(); }
-        } catch(Exception e) { Log("Command: "+e); Notify(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
+        } catch(Exception e) { Log("Command: "+e,"ERROR","COMMAND_FAILED"); Notify(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
     }
     public SavedWorkspace CaptureWorkspace(string name,bool matchTitles) {
         var result=new SavedWorkspace{Name=name,MatchTitles=matchTitles};workspace.Capture();
@@ -638,7 +639,8 @@ public partial class SixSlotSnap : ApplicationContext {
     }
     public SixSlotSnap(string dataDirectory,bool recoverWindows,string sourceDirectory=null,bool quietNotifications=false) {
         folder=dataDirectory; Directory.CreateDirectory(folder);
-        notifications=new NotificationDelivery(quietNotifications,Log,delegate(int duration,string title,string message,ToolTipIcon icon){tray.ShowBalloonTip(duration,title,message,icon);});
+        statusLog=new LocalStatusLog(folder,ProductVersion);
+        notifications=new NotificationDelivery(quietNotifications,delegate(string level,string code,string text){Log(text,level,code);},delegate(int duration,string title,string message,ToolTipIcon icon){tray.ShowBalloonTip(duration,title,message,icon);});
         settingsPath=Path.Combine(folder,"settings.xml"); recover=recoverWindows;
         string assembly=typeof(SixSlotSnap).Assembly.Location;
         startupLaunch=new StartupLaunchSpec{Executable=assembly,DataDirectory=folder};
@@ -664,20 +666,20 @@ public partial class SixSlotSnap : ApplicationContext {
         menu.Items.Add("About Windows Tile Studio",null,delegate { MessageBox.Show("Windows Tile Studio "+ProductVersion+"\n\nCustom layouts, keyboard placement, and linked resizing.\n\nRuns locally. No AI service or account is required to use the controller.","About Windows Tile Studio",MessageBoxButtons.OK,MessageBoxIcon.Information); });
         menu.Items.Add("Exit",null,delegate { ExitThread(); });
         tray=new NotifyIcon{Icon=CreateStudioIcon(),Text="Windows Tile Studio — layouts and hotkeys",ContextMenuStrip=menu,Visible=true}; tray.DoubleClick+=delegate { OpenSettings(true); }; receiver.Received=HandleCommand;
-        resizeTimer.Interval=30; resizeTimer.Tick+=delegate {if(geometryDepth>0)return;Geometry(delegate{try { UpdateDrag(); CompleteResize(); } catch(Exception e) { Log("Resize tick: "+e.Message); }});};
-        settleTimer.Interval=100; settleTimer.Tick+=delegate {if(geometryDepth>0)return;Geometry(delegate{try { if(dragging==IntPtr.Zero) ApplyResizeFrames(true); } catch(Exception e) { Log("Settle: "+e.Message); } if(++settlePasses>=3) settleTimer.Stop();});};
+        resizeTimer.Interval=30; resizeTimer.Tick+=delegate {if(geometryDepth>0)return;Geometry(delegate{try { UpdateDrag(); CompleteResize(); } catch(Exception e) { Log("Resize tick: "+e,"ERROR","RESIZE_TICK_FAILED"); }});};
+        settleTimer.Interval=100; settleTimer.Tick+=delegate {if(geometryDepth>0)return;Geometry(delegate{try { if(dragging==IntPtr.Zero) ApplyResizeFrames(true); } catch(Exception e) { Log("Settle: "+e,"ERROR","RESIZE_SETTLE_FAILED"); } if(++settlePasses>=3) settleTimer.Stop();});};
         flyoutTimer.Interval=20; flyoutTimer.Tick+=delegate { PollFlyout(); };
         displayTimer.Interval=350; displayTimer.Tick+=delegate {if(geometryDepth==0)Geometry(RefreshDisplays);};
         IntPtr foreground=NativeMethods.GetForegroundWindow(); if(ValidTarget(foreground)) lastExternalWindow=foreground;
         eventCallback=OnWindowEvent; eventHook=NativeMethods.SetWinEventHook(3,11,IntPtr.Zero,eventCallback,0,0,0);
         destroyHook=NativeMethods.SetWinEventHook(0x8001,0x8001,IntPtr.Zero,eventCallback,0,0,0);
-        if(destroyHook==IntPtr.Zero) Log("Closed-window event hook unavailable; dead handles are filtered when runtime state is next written.");
-        if(eventHook==IntPtr.Zero) { Notify(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
+        if(destroyHook==IntPtr.Zero) Log("Closed-window event hook unavailable; dead handles are filtered when runtime state is next written.","WARN","DESTROY_HOOK_UNAVAILABLE");
+        if(eventHook==IntPtr.Zero) { Notify(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed.","ERROR","RESIZE_HOOK_UNAVAILABLE"); }
         var initial=workspace.Active;
         foreach(var session in workspace.Sessions.Values.ToArray()) {workspace.Activate(session.Display);BindActive();RecoverAssignments();session.NeedsRecovery=false;}
-        workspace.Activate(initial.Display);BindActive(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
-        if(warning!=null) { Log(warning); Notify(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
-        if(recoveryNotice!=null) { Log("Recovery required: "+recoveryNotice); NativeMethods.PostMessage(receiver.Handle,SettingsCommand,IntPtr.Zero,IntPtr.Zero); }
+        workspace.Activate(initial.Display);BindActive(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".","INFO","APP_READY");
+        if(warning!=null) { Notify(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
+        if(recoveryNotice!=null) { Log("Recovery required: "+recoveryNotice,"WARN","RECOVERY_REQUIRED"); NativeMethods.PostMessage(receiver.Handle,SettingsCommand,IntPtr.Zero,IntPtr.Zero); }
         WriteState();
     }
     protected override void ExitThreadCore() {
@@ -687,7 +689,7 @@ public partial class SixSlotSnap : ApplicationContext {
         disposed=true;
         SetPendingRetry(null);placement.Dispose();
         resizeTimer.Stop(); settleTimer.Stop(); displayTimer.Stop(); SaveSettings(); HideFlyout(); resizeTimer.Dispose(); settleTimer.Dispose(); flyoutTimer.Dispose(); displayTimer.Dispose();
-        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); if(destroyHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(destroyHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped."); base.ExitThreadCore();
+        if(eventHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(eventHook); if(destroyHook!=IntPtr.Zero) NativeMethods.UnhookWinEvent(destroyHook); hotkeys.Dispose(); receiver.DestroyHandle(); if(launcher!=null) launcher.Dispose(); tray.Visible=false; var ownedIcon=tray.Icon; tray.Dispose(); if(ownedIcon!=null) ownedIcon.Dispose(); Log("Stopped.","INFO","APP_STOPPED"); base.ExitThreadCore();
     }
     [STAThread] public static void Main(string[] args) {
         if(args.Length==3&&args[0]=="--placement-worker"){int parent;if(int.TryParse(args[2],out parent))Environment.ExitCode=PlacementBroker.RunWorker(args[1],parent);return;}
@@ -707,7 +709,7 @@ public partial class SixSlotSnap : ApplicationContext {
             if(!created) return;
             int source=Array.IndexOf(args,"--source-root");string sourceRoot=source>=0&&source+1<args.Length?Path.GetFullPath(args[source+1]):null;
             try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"),sourceRoot,args.Contains("--quiet-notifications"))); }
-            catch(Exception e) { Directory.CreateDirectory(folder); File.AppendAllText(Path.Combine(folder,"status.log"),e+Environment.NewLine); MessageBox.Show(e.Message,"Windows Tile Studio could not start"); Environment.ExitCode=1; }
+            catch(Exception e) { Directory.CreateDirectory(folder); new LocalStatusLog(folder,ProductVersion).Write("ERROR","STARTUP_FAILED",e.ToString()); MessageBox.Show(e.Message,"Windows Tile Studio could not start"); Environment.ExitCode=1; }
         }
     }
 }

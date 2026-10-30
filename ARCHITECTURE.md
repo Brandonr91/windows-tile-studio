@@ -450,3 +450,7 @@ Setup.cmd/Setup.ps1 provide a GUI over existing installation primitives. New-Wts
 ## Local beta.7 notification routing
 
 Notifications.cs is the seventeenth source. NotificationDelivery separates per-process presentation from logging; --quiet-notifications/-QuietNotifications suppress toast API calls only. Counters are aggregate runtime state, not preferences. Recovery and placement safeguards/fatal startup handling stay active. Failure-generating native fixtures opt in; the hosted wrapper forwards the switch through its background launch. See docs/NOTIFICATIONS.md. Daily/released beta.6 is unchanged.
+
+## Local beta.7 build/log reliability, 2026-10-30
+
+Build.ps1 stages app compiler inputs/output in a short verified temporary directory, restores caller TEMP/TMP, and atomically publishes only successful EXEs. It stamps test provenance; tests/BuildPathTests.ps1 reproduces deep-path success and preservation on failure. Classic final-path bounds remain. tests/TestRunRecord.cs is test-only, compiled into GridTests/IntegrationTests: immutable run directories, running/pass/fail records and an atomic latest pointer guarded against older completions. LocalStatusLog in Notifications.cs supplies UTC/severity/outcome/version/run and contains I/O/access failures; quiet/default delivery remains separate. See docs/BUILD-AND-LOG-RELIABILITY.md. No new app C# file, settings schema, network service or published binary is added.

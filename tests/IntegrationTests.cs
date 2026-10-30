@@ -173,7 +173,11 @@ class IntegrationTests {
                 receiver=new IntPtr((long)State().Attribute("controller"));
                 Check((bool)State().Attribute("recoveryRequired"),"Startup failure did not enter recovery mode");
                 Check((bool)State().Attribute("notificationsQuiet")&&(int)State().Attribute("notificationPopups")==0,"Recovery fixture displayed a desktop notification");
-                if(!reserveShortcut)Check((int)State().Attribute("notificationsLogged")>0&&File.ReadAllText(Path.Combine(data,"status.log")).Contains("Notification [Settings recovery]"),"Quiet recovery lost its warning log");
+                if(!reserveShortcut){
+                    Wait(()=>(int)State().Attribute("notificationsLogged")>0,"Startup warning was not published to runtime state");
+                    string logged=File.ReadAllText(Path.Combine(data,"status.log"));
+                    Check(logged.Contains("Notification [Settings recovery]")&&logged.Contains("level=WARN code=SETTINGS_RECOVERY")&&logged.Contains("run="+(string)State().Attribute("logRun")),"Quiet recovery lost its warning context");
+                }
                 Wait(()=>NativeMethods.FindWindow(null,"Windows Tile Studio — settings")!=IntPtr.Zero,"Startup recovery did not open settings");
                 Check(!controller.HasExited && File.ReadAllText(settingsPath)==original,"Recovery exited or replaced the original settings");
                 Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Recovery controller did not close");
@@ -315,8 +319,12 @@ class IntegrationTests {
             try { if(executable==null) executable=candidate.MainModule.FileName; } catch(System.ComponentModel.Win32Exception) {} catch(InvalidOperationException) {} finally { candidate.Dispose(); }
         }
         if(executable==null) { passed.Add("Real Chrome frame check skipped: Chrome was not available; disposable frame coverage still passed."); return; }
-        string profile=Path.Combine(data,"isolated-chrome-profile");
-        using(var browser=Process.Start(new ProcessStartInfo(executable,"--user-data-dir=\""+profile+"\" --app=about:blank --no-first-run --no-default-browser-check --disable-background-networking --disable-background-mode"){UseShellExecute=false})) {
+        string profile=Path.Combine(Path.GetTempPath(),"WtsChrome-"+Guid.NewGuid().ToString("N").Substring(0,12));
+        File.WriteAllText(Path.Combine(data,"isolated-chrome-profile-path.txt"),profile);
+        string stderr=Path.Combine(data,"chrome-stderr.log");object stderrLock=new object();
+        using(var browser=Process.Start(new ProcessStartInfo(executable,"--user-data-dir=\""+profile+"\" --app=about:blank --no-first-run --no-default-browser-check --disable-background-networking --disable-background-mode"){UseShellExecute=false,RedirectStandardError=true})) {
+            browser.ErrorDataReceived+=delegate(object sender,DataReceivedEventArgs e){if(e.Data!=null)try{lock(stderrLock)File.AppendAllText(stderr,e.Data+Environment.NewLine);}catch(IOException){}catch(UnauthorizedAccessException){}};
+            browser.BeginErrorReadLine();
             IntPtr window=IntPtr.Zero;
             try {
                 Wait(()=>{if(browser.HasExited)return false;NativeMethods.EnumWindows(delegate(IntPtr w,IntPtr ignored){uint pid;NativeMethods.GetWindowThreadProcessId(w,out pid);if(pid==browser.Id && NativeMethods.IsWindowVisible(w))window=w;return true;},IntPtr.Zero);return window!=IntPtr.Zero;},"Isolated Chrome did not expose a window",15);
@@ -324,7 +332,7 @@ class IntegrationTests {
                 Check(Equal(Bounds(window),Model().RectFor(7)),"Chrome visible frame did not fit its assigned zone");
                 NativeMethods.PostMessage(window,0x10,IntPtr.Zero,IntPtr.Zero);Wait(()=>!NativeMethods.IsWindow(window),"Isolated Chrome did not close");
                 Command(SixSlotSnap.SnapCommand,8,forms[7].Handle); CheckAll();passed.Add("An isolated Chrome app window fits the four-row layout with visible-frame compensation; existing browser profiles/windows were untouched.");
-            } finally { if(!browser.HasExited) { browser.CloseMainWindow(); if(!browser.WaitForExit(2000)) browser.Kill(); } }
+            } finally { if(!browser.HasExited) { browser.CloseMainWindow(); if(!browser.WaitForExit(2000)) browser.Kill(); } browser.CancelErrorRead(); }
         }
     }
     static void BetaSoak(int cycles,string mode) {
@@ -518,6 +526,8 @@ class IntegrationTests {
         if(args.Length==3 && args[0]=="--blocked-probe")return RunBlockedProbe(args[1],args[2]);
         string directory=args.Length>0?Path.GetFullPath(args[0]):Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"integration-data");
         string hostedScript=null; int hosted=Array.IndexOf(args,"--hosted"); if(hosted>=0 && hosted+1<args.Length) hostedScript=Path.GetFullPath(args[hosted+1]);
+        var run=new TestRunRecord(directory,"Integration",(hostedScript==null?"Compiled":"SourceHosted")+(args.Contains("--startup-recovery-only")?" startup recovery":args.Contains("--compatibility-only")?" compatibility":" full"));
+        directory=run.DirectoryPath;bool successful=false;
         try {
             if(args.Contains("--startup-recovery-only")) {
                 Check(NativeMethods.FindWindow(null,SixSlotSnap.ControllerCaption)==IntPtr.Zero,"Exit the running controller before recovery tests.");
@@ -531,12 +541,18 @@ class IntegrationTests {
                 data=directory; forms=new Form[0]; TestCompatibility(Path.Combine(directory,"compatibility"),hostedScript);
                 Directory.CreateDirectory(directory); File.WriteAllLines(Path.Combine(directory,"integration-result.txt"),new[]{"PASS"}.Concat(passed));
             } else {int soak=Array.IndexOf(args,"--beta-soak"),cycles=0;if(soak>=0){if(soak+1>=args.Length||!int.TryParse(args[soak+1],out cycles)||cycles<10||cycles>200)throw new ArgumentException("Beta soak needs 10–200 cycles.");}Run(directory,hostedScript,cycles);}
-            Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0;
+            successful=true;Console.WriteLine("Result directory: "+run.DirectoryPath);Console.WriteLine(string.Join(Environment.NewLine,new[]{"PASS"}.Concat(passed))); return 0;
         }
-        catch(Exception e) { Directory.CreateDirectory(directory); File.WriteAllText(Path.Combine(directory,"integration-error.txt"),e.ToString()); Console.Error.WriteLine(e); return 1; }
+        catch(Exception e) { Directory.CreateDirectory(directory); File.WriteAllText(Path.Combine(directory,"integration-error.txt"),e.ToString()); Console.Error.WriteLine("Result directory: "+run.DirectoryPath);Console.Error.WriteLine(e); return 1; }
         finally {
-            if(controller!=null && !controller.HasExited) { NativeMethods.PostMessage(receiver,SixSlotSnap.QuitCommand,IntPtr.Zero,IntPtr.Zero); if(!controller.WaitForExit(3000)) controller.Kill(); }
-            if(forms!=null) foreach(var f in forms) if(f!=null) f.Dispose();
+            try {
+                if(controller!=null && !controller.HasExited) { NativeMethods.PostMessage(receiver,SixSlotSnap.QuitCommand,IntPtr.Zero,IntPtr.Zero); if(!controller.WaitForExit(3000)) controller.Kill(); }
+                if(forms!=null) foreach(var f in forms) if(f!=null) f.Dispose();
+            } catch(Exception cleanup) {
+                successful=false;
+                string result=Path.Combine(directory,"integration-result.txt");if(File.Exists(result))File.Move(result,Path.Combine(directory,"pre-cleanup-result.txt"));
+                File.AppendAllText(Path.Combine(directory,"integration-error.txt"),"Cleanup failed: "+cleanup+Environment.NewLine);throw;
+            } finally{run.Complete(successful);}
         }
     }
 }
