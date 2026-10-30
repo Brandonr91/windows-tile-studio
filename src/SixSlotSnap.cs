@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public partial class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-beta.6";
+    public const string ProductVersion="0.3.0-beta.7";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -174,6 +174,8 @@ public partial class SixSlotSnap : ApplicationContext {
         public CommandWindow() { CreateHandle(new CreateParams{Caption=ControllerCaption}); }
         protected override void WndProc(ref Message m) { if((m.Msg==0x312 || m.Msg==0x7e || m.Msg==0x1a || m.Msg==0x218 || (m.Msg>=ShowCommand && m.Msg<=DeferredCommand)) && Received!=null) Received(m.Msg,m.WParam,m.LParam); base.WndProc(ref m); }
     }
+    readonly NotificationDelivery notifications;
+    void Notify(int duration,string title,string message,ToolTipIcon icon,bool popup=true){notifications.Post(duration,title,message,icon,popup);}
     void Log(string text) { try { File.AppendAllText(Path.Combine(folder,"status.log"),DateTime.Now.ToString("s")+" "+text+Environment.NewLine); } catch(IOException) {} }
     static bool Near(RECT a,RECT b) { return Math.Abs(a.L-b.L)<16 && Math.Abs(a.R-b.R)<16 && Math.Abs(a.T-b.T)<16 && Math.Abs(a.B-b.B)<16; }
     static bool Down(int key) { return (NativeMethods.GetAsyncKeyState(key)&0x8000)!=0; }
@@ -227,7 +229,7 @@ public partial class SixSlotSnap : ApplicationContext {
     void WriteState() {
         try {
             var root=new XElement("Runtime",new XAttribute("pid",Process.GetCurrentProcess().Id),new XAttribute("version",ProductVersion),new XAttribute("recoveryRequired",recoveryNotice!=null),new XAttribute("controller",receiver.Handle.ToInt64()),new XAttribute("profile",settings.ActiveProfileId),new XAttribute("flyoutVisible",flyout!=null && flyout.Visible),new XAttribute("flyoutHandle",flyout==null?0:flyout.Handle.ToInt64()),new XAttribute("target",targetWindow.ToInt64()),new XAttribute("flyoutShortcut",settings.FlyoutShortcut));
-            root.Add(new XAttribute("placementReady",placement.Ready));
+            root.Add(new XAttribute("notificationsQuiet",notifications.Quiet),new XAttribute("notificationPopups",notifications.PopupCount),new XAttribute("notificationsLogged",notifications.LoggedCount),new XAttribute("placementReady",placement.Ready));
             if(lastPlacementIssue!=null) root.Add(new XAttribute("placementIssue",lastPlacementIssue));
             root.Add(new XAttribute("resizing",dragging!=IntPtr.Zero));
             root.Add(new XAttribute("resizeSource",dragging.ToInt64()));
@@ -278,7 +280,7 @@ public partial class SixSlotSnap : ApplicationContext {
     void FitIssue(string message,bool notify) {
         bool fresh=message!=lastPlacementIssue || (DateTime.UtcNow-lastFitNotice).TotalSeconds>2;
         lastPlacementIssue=message;
-        if(fresh) { lastFitNotice=DateTime.UtcNow; Log(message); if(notify) tray.ShowBalloonTip(3500,"Window does not fit",message,ToolTipIcon.Warning); }
+        if(fresh) { lastFitNotice=DateTime.UtcNow; Notify(3500,"Window does not fit",message,ToolTipIcon.Warning,notify); }
         WriteState();
     }
     static bool SameFrame(RECT a,RECT b) { return Math.Abs(a.L-b.L)<=2 && Math.Abs(a.R-b.R)<=2 && Math.Abs(a.T-b.T)<=2 && Math.Abs(a.B-b.B)<=2; }
@@ -371,7 +373,7 @@ public partial class SixSlotSnap : ApplicationContext {
         SetPendingRetry(success?null:attempt);if(success)ClearRetry(attempt);return success;
     }
     bool SnapToCore(IntPtr window,string profileId,int slot) {
-        if(!ValidTarget(window)) { tray.ShowBalloonTip(2500,"Choose a window first","Select the app you want to place, then open the layout flyout.",ToolTipIcon.Info); return false; }
+        if(!ValidTarget(window)) { Notify(2500,"Choose a window first","Select the app you want to place, then open the layout flyout.",ToolTipIcon.Info); return false; }
         TargetMonitor(window);
         var template=settings.Profiles.FirstOrDefault(p=>p.Id==profileId); if(template==null || slot<0 || slot>=template.SlotCount) return false;
         var profile=workspace.Resolve(workspace.Active.Display.Id,profileId);
@@ -498,7 +500,7 @@ public partial class SixSlotSnap : ApplicationContext {
         if(settingsForm!=null && !settingsForm.IsDisposed) { settingsForm.Activate(); return; }
         if(flyout!=null && flyout.Visible) { HideFlyout(); return; }
         if(!ValidTarget(target) && ValidTarget(lastExternalWindow)) target=lastExternalWindow;
-        if(!ValidTarget(target)) { tray.ShowBalloonTip(2500,"Select an app window","Select a window, then press "+settings.FlyoutShortcut+".",ToolTipIcon.Info); return; }
+        if(!ValidTarget(target)) { Notify(2500,"Select an app window","Select a window, then press "+settings.FlyoutShortcut+".",ToolTipIcon.Info); return; }
         TargetMonitor(target); workspace.Capture();
         targetWindow=target; var monitor=NativeMethods.Monitor(target); var visibleSettings=settings.Clone();
         visibleSettings.Profiles=settings.Profiles.Select(p=>workspace.Resolve(workspace.Active.Display.Id,p.Id)).ToList();
@@ -578,7 +580,7 @@ public partial class SixSlotSnap : ApplicationContext {
             else if(message==SettingsCommand) OpenSettings(); else if(message==WorkspacesCommand)OpenWorkspaces(); else if(message==QuitCommand) ExitThread();
             else if(message==SnapCommand) { HideFlyout(); TargetMonitor(b); SnapWithOutcome(b,grid.Profile.Id,a.ToInt32()-1); }
             else if(message==ProfileCommand && a.ToInt32()>=0 && a.ToInt32()<settings.Profiles.Count) { HideFlyout(); TargetMonitor(b==IntPtr.Zero?NativeMethods.GetForegroundWindow():b); UseProfile(settings.Profiles[a.ToInt32()].Id); WriteState(); }
-        } catch(Exception e) { Log("Command: "+e); tray.ShowBalloonTip(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
+        } catch(Exception e) { Log("Command: "+e); Notify(2500,"Windows Tile Studio",e.Message,ToolTipIcon.Warning); }
     }
     public SavedWorkspace CaptureWorkspace(string name,bool matchTitles) {
         var result=new SavedWorkspace{Name=name,MatchTitles=matchTitles};workspace.Capture();
@@ -634,8 +636,10 @@ public partial class SixSlotSnap : ApplicationContext {
         form.Load+=delegate {form.BeginInvoke((Action)delegate {if(!form.IsDisposed){NativeMethods.ShowWindow(form.Handle,5);form.Activate();}});};
         form.ShowDialog();
     }
-    public SixSlotSnap(string dataDirectory,bool recoverWindows,string sourceDirectory=null) {
-        folder=dataDirectory; Directory.CreateDirectory(folder); settingsPath=Path.Combine(folder,"settings.xml"); recover=recoverWindows;
+    public SixSlotSnap(string dataDirectory,bool recoverWindows,string sourceDirectory=null,bool quietNotifications=false) {
+        folder=dataDirectory; Directory.CreateDirectory(folder);
+        notifications=new NotificationDelivery(quietNotifications,Log,delegate(int duration,string title,string message,ToolTipIcon icon){tray.ShowBalloonTip(duration,title,message,icon);});
+        settingsPath=Path.Combine(folder,"settings.xml"); recover=recoverWindows;
         string assembly=typeof(SixSlotSnap).Assembly.Location;
         startupLaunch=new StartupLaunchSpec{Executable=assembly,DataDirectory=folder};
         if(string.IsNullOrEmpty(assembly)){startupLaunch.Executable=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");if(sourceDirectory==null)startupLaunch.UnavailableReason="Hosted source location is unknown. Start with Start-Hosted.cmd before enabling login startup.";else startupLaunch.SourceScript=Path.Combine(sourceDirectory,"Start-Hosted.ps1");}
@@ -668,12 +672,13 @@ public partial class SixSlotSnap : ApplicationContext {
         eventCallback=OnWindowEvent; eventHook=NativeMethods.SetWinEventHook(3,11,IntPtr.Zero,eventCallback,0,0,0);
         destroyHook=NativeMethods.SetWinEventHook(0x8001,0x8001,IntPtr.Zero,eventCallback,0,0,0);
         if(destroyHook==IntPtr.Zero) Log("Closed-window event hook unavailable; dead handles are filtered when runtime state is next written.");
-        if(eventHook==IntPtr.Zero) { tray.ShowBalloonTip(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
+        if(eventHook==IntPtr.Zero) { Notify(4000,"Linked resizing unavailable","Windows resize notifications could not be registered.",ToolTipIcon.Warning); Log("ERROR: move/size hook registration failed."); }
         var initial=workspace.Active;
         foreach(var session in workspace.Sessions.Values.ToArray()) {workspace.Activate(session.Display);BindActive();RecoverAssignments();session.NeedsRecovery=false;}
         workspace.Activate(initial.Display);BindActive(); SaveSettings(); RefreshLauncher(); WriteState(); Log("Ready "+ProductVersion+"; "+settings.Profiles.Count+" layouts; flyout "+settings.FlyoutShortcut+".");
-        if(warning!=null) { Log(warning); tray.ShowBalloonTip(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
+        if(warning!=null) { Log(warning); Notify(5000,"Settings recovery",warning,ToolTipIcon.Warning); }
         if(recoveryNotice!=null) { Log("Recovery required: "+recoveryNotice); NativeMethods.PostMessage(receiver.Handle,SettingsCommand,IntPtr.Zero,IntPtr.Zero); }
+        WriteState();
     }
     protected override void ExitThreadCore() {
         if(disposed) return;
@@ -701,7 +706,7 @@ public partial class SixSlotSnap : ApplicationContext {
         bool created; using(var mutex=new Mutex(true,"Local\\SixSlotSnapController",out created)) {
             if(!created) return;
             int source=Array.IndexOf(args,"--source-root");string sourceRoot=source>=0&&source+1<args.Length?Path.GetFullPath(args[source+1]):null;
-            try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"),sourceRoot)); }
+            try { Application.Run(new SixSlotSnap(folder,!args.Contains("--no-recover"),sourceRoot,args.Contains("--quiet-notifications"))); }
             catch(Exception e) { Directory.CreateDirectory(folder); File.AppendAllText(Path.Combine(folder,"status.log"),e+Environment.NewLine); MessageBox.Show(e.Message,"Windows Tile Studio could not start"); Environment.ExitCode=1; }
         }
     }

@@ -18,7 +18,7 @@ class WorkspaceNativeTests {
         foreach(bool workspaces in new[]{true,false}) {
             string root=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"hidden-dialog-data",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);var settings=AppSettings.Defaults();settings.ShowLauncherTab=false;foreach(var key in settings.SlotShortcuts)key.Key=Keys.None;settings.FlyoutShortcut.Key=Keys.F23;SettingsStore.Save(Path.Combine(root,"settings.xml"),settings);
             string file=hosted==null?Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"):Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");
-            string arguments=hosted==null?"--no-recover --data-dir \""+root+"\"":"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hosted+"\" -RunInProcess -NoRecover -DataDirectory \""+root+"\"";
+            string arguments=hosted==null?"--quiet-notifications --no-recover --data-dir \""+root+"\"":"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hosted+"\" -RunInProcess -QuietNotifications -NoRecover -DataDirectory \""+root+"\"";
             using(var process=Process.Start(new ProcessStartInfo(file,arguments){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden})) {
                 IntPtr receiver=IntPtr.Zero;
                 try {
@@ -44,7 +44,7 @@ class WorkspaceNativeTests {
             string root=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"workspace-native-data",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(root);string handles=Path.Combine(root,"handles.txt");
             targets=Process.Start(new ProcessStartInfo(Assembly.GetExecutingAssembly().Location,"--targets \""+handles+"\""){UseShellExecute=false});var until=DateTime.UtcNow.AddSeconds(8);while(!File.Exists(handles)&&DateTime.UtcNow<until)Thread.Sleep(20);Check(File.Exists(handles),"Disposable app windows did not start");var windows=File.ReadAllLines(handles).Select(s=>new IntPtr(long.Parse(s))).ToArray();
             var settings=AppSettings.Defaults();settings.ShowLauncherTab=false;foreach(var key in settings.SlotShortcuts)key.Key=Keys.None;settings.FlyoutShortcut.Key=Keys.F23;SettingsStore.Save(Path.Combine(root,"settings.xml"),settings);
-            app=new SixSlotSnap(root,false);
+            app=new SixSlotSnap(root,false,null,true);
             using(var timer=new System.Windows.Forms.Timer{Interval=100}) {
                 timer.Tick+=delegate {
                     timer.Stop();try {

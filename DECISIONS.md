@@ -332,3 +332,7 @@ Native regression follow-up: STA waits demonstrably reentered WinEvent geometry 
 User selected live dashboard, visual-first editing, UI polish and distribution improvements, followed by release at the end. Reuse WinForms/source hosting and the tested gesture engine. Separate live snapshots/immediate retry from draft Save/Cancel. No titles, durable HWNDs or auto-adoption; retry uses token/property/process generation. Preserve adjacent-pair geometry.
 
 Provide per-user GUI setup over existing verified installer primitives and optional stable Start menu links, retaining owned uninstall/rollback/data preservation. Do not invent signing identity. New feature release is beta.6 rather than reusing already-pushed beta.5. The final release step authorizes preparing/pushing and publishing this new unsigned prerelease after validation, preserving beta.2 assets.
+
+## Test notification noise, 2026-10-29
+
+User reported five warning toasts during testing. Exact messages match intentionally corrupt settings, min/max/aspect sizing and timeout fixtures; daily logs/runtime do not show those failures. Treat them as recovered outcomes, not crashes, but do not globally hide actual recovery. Add process-scoped log-only notification delivery and opt native test controllers in. Keep normal launches/fatal handling visible, all recovery/geometry safeguards and private per-controller status logs. No persistent preference, Windows-wide notification change or automatic startup rewrite. Local candidate beta.7; published beta.6 stays immutable.

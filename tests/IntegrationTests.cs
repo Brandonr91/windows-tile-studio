@@ -168,10 +168,12 @@ class IntegrationTests {
         using(var blocker=new Form()) {
             if(reserveShortcut) Check(NativeMethods.RegisterHotKey(blocker.Handle,980,0x4000|(uint)initial.FlyoutShortcut.Modifiers,(uint)initial.FlyoutShortcut.Key),"Could not reserve startup shortcut");
             try {
-                controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+                controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--quiet-notifications --no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
                 Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Recovery controller did not start");
                 receiver=new IntPtr((long)State().Attribute("controller"));
                 Check((bool)State().Attribute("recoveryRequired"),"Startup failure did not enter recovery mode");
+                Check((bool)State().Attribute("notificationsQuiet")&&(int)State().Attribute("notificationPopups")==0,"Recovery fixture displayed a desktop notification");
+                if(!reserveShortcut)Check((int)State().Attribute("notificationsLogged")>0&&File.ReadAllText(Path.Combine(data,"status.log")).Contains("Notification [Settings recovery]"),"Quiet recovery lost its warning log");
                 Wait(()=>NativeMethods.FindWindow(null,"Windows Tile Studio — settings")!=IntPtr.Zero,"Startup recovery did not open settings");
                 Check(!controller.HasExited && File.ReadAllText(settingsPath)==original,"Recovery exited or replaced the original settings");
                 Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Recovery controller did not close");
@@ -188,8 +190,8 @@ class IntegrationTests {
         settings.Profiles.Add(LayoutProfile.Create("compat-four","Compatibility four rows",2,4));
         SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
         forms=new Form[6]; for(int i=0;i<6;i++) { forms[i]=new Form{Text="Disposable compatibility window "+i,StartPosition=FormStartPosition.Manual,Location=new Point(200+30*i,200+30*i),Size=new Size(500,350)}; forms[i].Show(); }
-        if(hostedScript==null)controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
-        else controller=Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe"),"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+        if(hostedScript==null)controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--quiet-notifications --no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+        else controller=Process.Start(new ProcessStartInfo(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe"),"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -QuietNotifications -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
         Wait(()=>File.Exists(Path.Combine(data,"runtime-state.xml")) && (int)State().Attribute("pid")==controller.Id,"Compatibility controller did not start",hostedScript==null?8:20); receiver=new IntPtr((long)State().Attribute("controller"));
         passed.Add("Compatibility controller mode: "+(hostedScript==null?"Compiled":"SourceHosted")+".");
         TestRestrictedApps();
@@ -264,6 +266,9 @@ class IntegrationTests {
         Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==forms[4].Handle.ToInt64()),"Restarted window was implicitly adopted");
         Command(SixSlotSnap.SnapCommand,5,forms[4].Handle);CheckAll();passed.Add("Closed windows release their slots; restarted windows require an explicit snap.");
         TestIsolatedChrome();
+        Check((bool)State().Attribute("notificationsQuiet")&&(int)State().Attribute("notificationPopups")==0&&(int)State().Attribute("notificationsLogged")>0,"Quiet compatibility lost warnings or displayed notifications");
+        Check(File.ReadAllText(Path.Combine(data,"status.log")).Contains("Notification [Window does not fit]"),"Quiet sizing warnings were not logged");
+        passed.Add("Expected sizing warnings are logged with zero desktop popup calls; geometry/recovery protections remain active.");
         Check(!File.ReadAllText(Path.Combine(data,"status.log")).Contains("Reentrant placement"),"Nested geometry callback overlapped placement");
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Compatibility controller did not exit"); data=previousData;
     }
@@ -346,10 +351,10 @@ class IntegrationTests {
         var settings=AppSettings.Defaults(); settings.ShowLauncherTab=true; SettingsStore.Save(Path.Combine(data,"settings.xml"),settings);
         forms=new Form[6]; for(int i=0;i<6;i++) { forms[i]=new Form{Text="Six Slot Snap disposable test "+(i+1),StartPosition=FormStartPosition.Manual,Location=new Point(200+20*i,250+20*i),Size=new Size(450,350)}; forms[i].Show(); NativeMethods.ShowWindow(forms[i].Handle,4); }
         if(hostedScript==null) {
-            controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
+            controller=Process.Start(new ProcessStartInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"SixSlotSnap.exe"),"--quiet-notifications --no-recover --data-dir \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden});
         } else {
             string powershell=Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows),"System32","WindowsPowerShell","v1.0","powershell.exe");
-            controller=Process.Start(new ProcessStartInfo(powershell,"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true});
+            controller=Process.Start(new ProcessStartInfo(powershell,"-NoProfile -STA -ExecutionPolicy Bypass -File \""+hostedScript+"\" -RunInProcess -QuietNotifications -NoRecover -DataDirectory \""+data+"\""){UseShellExecute=false,CreateNoWindow=true,WindowStyle=ProcessWindowStyle.Hidden,RedirectStandardError=true,RedirectStandardOutput=true});
             controller.ErrorDataReceived+=delegate(object sender,DataReceivedEventArgs e) { if(e.Data!=null) try { File.AppendAllText(Path.Combine(data,"host-stderr.txt"),e.Data+Environment.NewLine); } catch(IOException) {} };
             controller.OutputDataReceived+=delegate(object sender,DataReceivedEventArgs e) { if(e.Data!=null) try { File.AppendAllText(Path.Combine(data,"host-stdout.txt"),e.Data+Environment.NewLine); } catch(IOException) {} };
             controller.BeginErrorReadLine(); controller.BeginOutputReadLine();

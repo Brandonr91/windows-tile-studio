@@ -1,5 +1,12 @@
 # Handoff
 
+## Local notification follow-up completed — 2026-10-29
+
+User supplied five warnings from tests. Exact messages match isolated invalid-settings and compatibility fixture logs; daily beta.6 runtime reports no Recovery and daily log contains none of these warning strings. Notifications.cs/NotificationDelivery separates always-on local logging from optional toast delivery. Local beta.7/file 0.3.0.15 adds --quiet-notifications and hosted -QuietNotifications, plus aggregate runtime counters. Native Integration/PlacementRecovery/Workspace fixtures opt in. No persistent setting, Windows-wide suppression, fatal startup suppression or real startup rewrite. Daily/published beta.6 stays unchanged; no push/publication requested.
+
+198564 geometry/settings checks plus new injected quiet/default notification routing checks pass. Focused corrupt/future/conflict startup fixtures pass: quiet=true, zero popup calls and warning log retained, Recovery/original bytes intact. Compiled and PowerShell-hosted focused compatibility checks pass with explicit quiet=true, zero popup calls and retained warning logs, including hung/slow/min/max/aspect/size-limit outcomes. See docs/NOTIFICATIONS.md. Daily stopped normally in an isolated test interval and restored in finally; private backup bin/quiet-notifications-daily-backup. Daily beta.6 is restarted and verified by actual process/runtime: six same handles/outer frames, original Startup bytes, no Recovery and placementReady=true. Test evidence is bin/quiet-notifications/{startup-recovery-data,compatibility-data,hosted}; logs remain private/local. Next: follow the user's next request. No further check/redeployment/release is required merely to complete this test-noise fix. Current candidate is local and unpublished; published beta.6 assets are unchanged.
+
+
 ## Beta.6 completed, deployed, pushed and published — 2026-10-29
 
 All five selected items are complete within the documented scope. Public unsigned prerelease: https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.6 . Frozen source b052f8377a73105ef8e9d75c9a1400ad02d88a07; annotated tag 8da13c50bdece76c590ffd0f9406af687269c681. See docs/RELEASE-BETA-6.md for exact artifact hashes/provenance, test evidence and deployment record. Do not overwrite either published beta.2 or beta.6.

@@ -237,3 +237,7 @@ Beta.4 now provides the large draft preview, layout library, grouped inspector, 
 ## Authorized beta.6 expansion, 2026-10-29
 
 Scope: live windows/status/validated retry; embedded visual-first editing with numeric Advanced; themed manager/flyout/dialog polish; setup GUI and owned Start menu actions; then a new prerelease. Latest HANDOFF tracks implementation/verification. Signing needs a publisher certificate. Broader hardware/assistive-technology/long-duration coverage remains limited. No first-run walkthrough was selected.
+
+## Notification follow-up, 2026-10-29
+
+Local beta.7 routes automated failure-fixture notifications to status.log without toast calls. See docs/NOTIFICATIONS.md and latest HANDOFF for verification. This is a local test/notification fix; published and daily beta.6 remain unchanged. No new release or deployment is implicit.

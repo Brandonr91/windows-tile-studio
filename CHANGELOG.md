@@ -1,3 +1,10 @@
+# 0.3.0-beta.7 (local, unpublished)
+
+- Route automated controller warning notifications to local logs with a per-process quiet switch; normal launches retain popups.
+- Keep settings Recovery, sizing protections, live outcomes and fatal startup handling active.
+- Compiled/hosted native fixtures assert logged warnings and zero popup calls; default/quiet delivery is regression-tested.
+- Existing daily/published beta.6 remains unchanged.
+
 # 0.3.0-beta.6
 
 - Live per-display dashboard with occupancy, process labels, disconnected/minimized/maximized states and explicit validated retry.

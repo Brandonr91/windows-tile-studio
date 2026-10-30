@@ -4,6 +4,7 @@ param(
     [ValidateSet('Run','Show','Settings','Quit','Preview','Validate','PlacementWorker')]
     [string]$Action = 'Run',
     [switch]$NoRecover,
+    [switch]$QuietNotifications,
     [switch]$RunInProcess,
     [string]$StartupOwner,
     [string]$PlacementPipe,
@@ -25,6 +26,7 @@ if (-not $RunInProcess -and $Action -ne 'Validate') {
     $quotedData = '"' + $DataDirectory.TrimEnd('\') + '"'
     $arguments = @('-NoProfile','-STA','-ExecutionPolicy','Bypass','-File',('"'+$scriptPath+'"'),'-RunInProcess','-Action',$Action,'-DataDirectory',$quotedData)
     if ($NoRecover) { $arguments += '-NoRecover' }
+    if ($QuietNotifications) { $arguments += '-QuietNotifications' }
     $child = Start-Process -FilePath $windowsPowerShell -ArgumentList $arguments -WindowStyle Hidden -PassThru
     [PSCustomObject]@{ Mode='PowerShellHosted'; ProcessId=$child.Id; DataDirectory=$DataDirectory }
     return
@@ -89,4 +91,5 @@ switch ($Action) {
     'Preview' { $applicationArguments.Add('--preview') }
 }
 if ($NoRecover) { $applicationArguments.Add('--no-recover') }
+if ($QuietNotifications) { $applicationArguments.Add('--quiet-notifications') }
 [SixSlotSnap]::Main($applicationArguments.ToArray())

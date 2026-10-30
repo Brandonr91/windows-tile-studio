@@ -247,6 +247,13 @@ class GridTests {
             for(int c=1;c<=4;c++) for(int r=1;r<=4;r++) Exercise(LayoutProfile.Create("test","Test",c,r),0,0);
             var ragged=LayoutProfile.Create("ragged","Mixed column rows",3,2); ragged.Columns[1].Rows.Add(1); ragged.Columns[2].Rows.RemoveAt(1); Exercise(ragged,-5120,-2160);
             Config(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            foreach(bool quiet in new[]{false,true}) {
+                var messages=new System.Collections.Generic.List<string>();int popups=0;
+                var delivery=new NotificationDelivery(quiet,messages.Add,delegate(int duration,string title,string text,ToolTipIcon icon){popups++;});
+                foreach(string title in new[]{"Settings recovery","Window does not fit"})delivery.Post(1000,title,"Fixture warning",ToolTipIcon.Warning);
+                delivery.Post(1000,"Window does not fit","Log-only outcome",ToolTipIcon.Warning,false);
+                if(messages.Count!=3||delivery.LoggedCount!=3||popups!=(quiet?0:2)||delivery.PopupCount!=popups)throw new Exception("Notification routing lost logs or displayed a quiet warning.");
+            }
             HeightPair();
             MinimumConstraints();
             Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
