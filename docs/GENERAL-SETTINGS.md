@@ -56,3 +56,5 @@ theme/text-size controls remain unimplemented. Startup is never enabled by an up
 ## Appearance (local beta.3)
 
 Choose System, Light or Dark under General → Appearance. System follows Windows app mode/accent; high contrast takes priority. Preview is draft-only until Save changes. Cancel keeps the saved theme. See [appearance implementation and limits](APPEARANCE.md).
+
+Local beta.5 runs two hidden owned placement helpers behind the single manager/tray entry. A timeout reports retry guidance; no automatic re-snap or app relaunch occurs. General settings remains usable during the tested target freezes. See [placement recovery](PLACEMENT-RECOVERY.md).

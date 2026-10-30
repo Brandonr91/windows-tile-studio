@@ -33,7 +33,7 @@ try{
     $versionMetadata=Get-Content -Raw -LiteralPath (Join-Path $sourceProject 'release\version.json') | ConvertFrom-Json
     Assert ($identity.ProductName -eq 'Windows Tile Studio' -and $identity.ProductVersion -eq $built.version -and $identity.FileVersion -eq $versionMetadata.fileVersion) 'Compiled product identity is wrong.'
     $icon=[Drawing.Icon]::ExtractAssociatedIcon((Join-Path $portableProject 'bin\SixSlotSnap.exe'));Assert ($null -ne $icon) 'Compiled app icon is missing.';$icon.Dispose()
-    $results.Add('Source ZIP is byte-repeatable for identical inputs; both manifests verify; source excludes EXEs and compiled identity/icon match preview.8.')
+    $results.Add('Source ZIP is byte-repeatable for identical inputs; both manifests verify; source excludes EXEs and compiled identity/icon match the package version.')
     $destination=Join-Path $run "Installed app's folder";$startup=Join-Path $run 'isolated-startup';New-Item -ItemType Directory -Path $startup | Out-Null
     $first=Install $source $destination
     $sentinel=Join-Path $first.DataDirectory 'settings.xml';[IO.File]::WriteAllText($sentinel,'synthetic user settings; never launched')

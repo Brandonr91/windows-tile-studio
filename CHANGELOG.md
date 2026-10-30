@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0-beta.5 — local bounded placement recovery
+
+- Isolate native placement/restoration in owned, kill-on-close helper jobs with
+  per-call deadlines, current-user IPC, version/peer/lease checks and explicit retry.
+- Preserve healthy windows through a warm spare; detach uncertain assignments.
+  Prevent late additional movement in tested query/frame/restoration freeze cases.
+- Serialize reentrant geometry callbacks without holding modal UI loops busy.
+- Add compiled/hosted external-process freeze, linked resize and parent-exit tests;
+  atomically publish the blocked-app fixture's ready marker.
+- Already committed target frames can remain changed; broader OS/app behaviors
+  and hardware/privilege cases retain their documented limits. Local-only build.
+
+
 ## 0.3.0-beta.4 — local reference-inspired manager
 
 - Rounded cards, icon navigation, large draft layout preview, thumbnail library,

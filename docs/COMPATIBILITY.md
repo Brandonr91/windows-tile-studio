@@ -1,3 +1,7 @@
+## Local beta.5 recovery update, 2026-10-29
+
+[Bounded placement recovery](PLACEMENT-RECOVERY.md) supersedes the earlier unbounded native-placement limitation in the tested cases. Both full delivery-mode integration suites pass, including the existing size/lifecycle/row scope cases. The older sections retain historical context; parent-side OS/DWM APIs, already committed frames and arbitrary app behavior remain outside the per-call placement cancellation guarantee.
+
 # Compatibility checkpoint: phase 3
 
 ## Beta follow-up: restricted and unresponsive apps, 2026-10-28

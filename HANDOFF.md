@@ -1,5 +1,120 @@
 # Handoff
 
+## Completed locally: bounded placement recovery, 2026-10-29
+
+User authorized recovery hardening after the beta.4 push. Local **beta.5** (file
+0.3.0.13) is implemented, tested and deployed to the existing daily compiled path.
+There are fifteen C# sources. Read docs/PLACEMENT-RECOVERY.md and actual source.
+No GitHub push/tag/release was authorized for this new change; beta.2 assets remain
+unchanged. The earlier beta.4 push remains the public main until a new push.
+
+Implemented: one active plus one spare hidden, owned helper; job kill-on-close;
+current-account pipes with real peer/PID/thread/product-version/window-lease checks;
+250ms per-call placement/window-state bound; verified helper cancellation; uncertain
+assignment release; explicit retry; no async queued SetWindowPos or user-app kill.
+Source hosting starts two fresh in-memory PowerShell helpers and writes no app EXE.
+Geometry roots serialize reentrant WinEvents/timers, preserve modal UI loops and
+keyboard selection, and keep the source-frame bookkeeping/independent heights.
+
+Evidence:
+- Baseline beta.4 SHA61c27e5272130946efa64b6e7e01cd25659f2b6b8d168febec875a805112655f:
+  successful size reply followed by freeze blocked queued settings; move arrived
+  after resume. A sent-message ping alone did not prove UI responsiveness.
+- Final compiled/hosted PlacementRecovery pass query, pre-frame, post-frame,
+  restoration, linked resize and parent-death cases. No additional move after
+  resume; no false assignment; five other frames unchanged; explicit retry and
+  helper cleanup pass. A frame committed BEFORE timeout can remain changed.
+- Full compiled Integration and full HostedIntegration PASS in
+  bin/recovery-final/{integration-data,integration-hosted-data}/integration-result.txt.
+  Both include six-slot pair-only heights, width/height isolation, concurrent-source
+  motion, keyboard/flyout cleanup and compatibility in the requested mode.
+- WorkspaceIntegration and first hidden-dialog checks pass; StartupRecovery passes
+  all conflict/corrupt/future cases. Compiled geometry198564 plus AccessibilityUi,
+  EditorUi, WorkspaceUi and LauncherUi pass; all four hosted UI suites pass.
+- LauncherTests passes source-only hosting/serialization and isolated installer paths.
+  Offline ReleaseTests and installed Hosted/Compiled/rollback smoke pass. Source/host
+  files in the tested package were hash-compared to current application files.
+  The first deep test staging path exceeded legacy compiler temporary-path limits;
+  short temp test roots passed. Do not claim arbitrary long-path installation support.
+- Native regressions found/fixed STA reentry and keyboard callback routing. The
+  blocked-app test now publishes its ready marker atomically to remove a file-read
+  race. Helpers are filtered from test-controller fallback discovery; transient C#
+  compiler children are excluded from helper-count assertions. Earlier failed runs
+  are diagnostic history, not final passing evidence.
+
+Deployment verified against actual process/runtime: daily repo bin/SixSlotSnap.exe,
+PID42608 (transient), beta.5, placementReady true, no Recovery, bar hidden, exactly
+six same handles and unchanged outer bounds versus the pre-test snapshot. Original
+Windows Tile Studio.lnk bytes unchanged. Exactly two owned helper children; no
+stray test/hosted controllers. Existing hosted delivery has matching fifteen source
+files AND updated Start-Hosted.ps1; its separate data is retained. Live aggregate
+result is ignored bin/recovery-deployment.json; private snapshots/backups stay in
+bin/recovery-final-daily-backup and bin/recovery-* and must not ship.
+
+Observed helper footprint: ~37MiB combined private bytes for compiled helpers;
+~167MiB for hosted helpers at fixture startup. The daily compiled main and helpers
+used 0 sampled CPU milliseconds over a 2-second idle interval. This is bounded
+local evidence, not a multi-day resource guarantee. Zero sampled app-specific
+Application Error/.NET Runtime crash events over the preceding two hours.
+
+Isolated package evidence: temp WtsR5/4c40f94200414a1382084cad4d02e9b8 and
+WtsR5Native/9daac4dca0b5454b877c3e57de926975. Packages contain dirty-checkout
+provenance from local validation; they are not public release assets or a replacement
+for frozen beta.2. Source package app hashes match the final implementation; later
+context/test-only updates do not change the deployed native implementation.
+
+Next: normal daily use/feedback, then an explicitly requested review/push/new beta.
+Keep the old baseline and frozen beta.2 assets. Parent-side OS/DWM calls, app-owned
+already-running/deferred code, physical multi-monitor/DPI/power, privilege/competing
+manager and long-duration use remain broader manual coverage. Do not promise atomic
+rollback of code the target already executed. Re-verify live ownership before future
+native tests; normal quit stops only the manager and its owned helper jobs.
+
+
+## In progress: bounded native placement, 2026-10-29
+
+User authorized the recovery-hardening step after the beta.4 push. Active work is
+local beta.5/file 0.3.0.13, currently UNCOMMITTED and NOT DEPLOYED to the daily bin.
+Daily remains the retained beta.4 EXE; native batches quit/restart it normally in
+finally blocks. Do not push/release or replace published beta.2 assets implicitly.
+
+Read docs/PLACEMENT-RECOVERY.md and actual source. New fifteenth source file
+PlacementBroker.cs uses two job-contained helpers, account-restricted local pipes,
+actual peer/PID/thread/version/window-lease checks, 250ms per-call native placement
+and state-change bounds, verified helper termination, warm-spare promotion and
+explicit retry. Hosted workers use Start-Hosted Action PlacementWorker in memory.
+Baseline beta.4 freeze-after-size-reply was proved: queued settings blocked and a
+move arrived after resume. Both fixed delivery modes passed query/pre-frame/
+post-frame/restore, no late additional movement, explicit retry, linked resize,
+helper normal cleanup and parent-death cleanup. A precommitted frame can remain
+changed; no atomic rollback of arbitrary app code is promised.
+
+Broader tests exposed reentrant WinEvent callbacks during native/STA waits,
+corrupting pipe sequencing. Confirmed with a defensive broker assertion. Current
+controller adds geometry-depth/posted replay, skips nested timer ticks, preserves
+modal-dialog message loops and refuses synchronous public saves/restores while
+busy. Owned backend guard remains defensive. Latest compiled PlacementRecovery
+and Compatibility pass with no reentrant errors. Full compiled/hosted batches
+are being repeated against the final serialization change. A new compatibility
+assertion checks the log for reentrant placement errors.
+
+Current batch session is a tool-session detail, not repository state. Output under
+bin/recovery-final includes WorkspaceIntegration, hidden-dialog, hosted placement
+races, full Integration/HostedIntegration and StartupRecovery. Check actual
+result files and process ownership before proceeding. Earlier failed/incomplete
+native runs must not be counted as final passes. Source-hosted child discovery
+now filters live SixSlotSnap/PowerShell children, excluding the temporary C# compiler.
+InstalledLaunchTests fallback discovery excludes placement helpers.
+
+Next exact steps: finish full native batch; run final compiled/hosted UI and
+launcher checks; package/isolated installed-launch checks if relevant; measure
+helper memory/idle cost; deploy tested EXE plus all fifteen hosted sources AND
+updated Start-Hosted.ps1 with real startup bytes/data preserved. Verify all six
+handles/bounds, bar-hidden and no Recovery. Final context/changelog/roadmap must
+record actual outcomes, helper overhead and remaining limits. Keep original
+backup/runtime/config snapshots local under ignored bin/recovery-*.
+
+
 ## Latest implementation: reference-inspired manager, 2026-10-29
 
 Local beta.4 (file 0.3.0.12) now implements the user's dashboard reference direction:

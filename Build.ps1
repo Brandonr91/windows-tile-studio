@@ -1,4 +1,4 @@
-param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$StartupRecovery,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[ValidateRange(0,200)][int]$BetaSoak=0,[string]$HostedSourceRoot,[string]$OutputDirectory)
+param([switch]$Test,[switch]$Integration,[switch]$HostedIntegration,[switch]$Compatibility,[switch]$StartupRecovery,[switch]$PlacementRecovery,[switch]$HostedPlacementRecovery,[switch]$LauncherUi,[switch]$EditorUi,[switch]$WorkspaceUi,[switch]$WorkspaceIntegration,[switch]$AccessibilityUi,[ValidateRange(0,200)][int]$BetaSoak=0,[string]$HostedSourceRoot,[string]$OutputDirectory)
 $ErrorActionPreference = 'Stop'
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) {
@@ -67,6 +67,26 @@ if ($WorkspaceIntegration) {
     if ($LASTEXITCODE -ne 0) { throw 'Workspace native tests failed.' }
     & $nativeTest --hidden-dialogs
     if ($LASTEXITCODE -ne 0) { throw 'Hidden-startup dialog tests failed.' }
+}
+if ($PlacementRecovery -or $HostedPlacementRecovery) {
+    $raceTest=Join-Path $output 'PlacementRecoveryTests.exe'
+    & $compiler /nologo /target:exe /reference:System.Windows.Forms.dll /reference:System.Drawing.dll /reference:System.Core.dll /reference:System.Xml.Linq.dll "/reference:$executable" "/out:$raceTest" (Join-Path $PSScriptRoot 'tests\PlacementRecoveryTests.cs')
+    if($LASTEXITCODE -ne 0){throw 'Placement race test compilation failed.'}
+    if($PlacementRecovery){
+        foreach($phase in @('query','changing','changed','restore')){& $raceTest (Join-Path $output ('placement-'+$phase)) --phase $phase;if($LASTEXITCODE -ne 0){throw ('Placement recovery failed: '+$phase)}}
+        & $raceTest (Join-Path $output 'placement-linked-resize') --resize-race
+        if($LASTEXITCODE -ne 0){throw 'Linked placement recovery failed.'}
+        & $raceTest (Join-Path $output 'placement-parent-exit') --phase changing --crash-parent
+        if($LASTEXITCODE -ne 0){throw 'Placement parent-exit cleanup failed.'}
+    }
+    if($HostedPlacementRecovery){
+        $raceSource=if($HostedSourceRoot){[IO.Path]::GetFullPath($HostedSourceRoot)}else{$PSScriptRoot}
+        foreach($phase in @('query','changing','changed','restore')){& $raceTest (Join-Path $output ('hosted-placement-'+$phase)) --phase $phase --hosted (Join-Path $raceSource 'Start-Hosted.ps1');if($LASTEXITCODE -ne 0){throw ('Hosted placement recovery failed: '+$phase)}}
+        & $raceTest (Join-Path $output 'hosted-placement-linked-resize') --resize-race --hosted (Join-Path $raceSource 'Start-Hosted.ps1')
+        if($LASTEXITCODE -ne 0){throw 'Hosted linked placement recovery failed.'}
+        & $raceTest (Join-Path $output 'hosted-placement-parent-exit') --phase changing --crash-parent --hosted (Join-Path $raceSource 'Start-Hosted.ps1')
+        if($LASTEXITCODE -ne 0){throw 'Hosted placement parent-exit cleanup failed.'}
+    }
 }
 if ($Integration -or $HostedIntegration -or $Compatibility -or $StartupRecovery -or $BetaSoak) {
     $integrationExecutable = Join-Path $output 'IntegrationTests.exe'

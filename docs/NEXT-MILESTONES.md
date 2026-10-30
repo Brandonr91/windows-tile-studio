@@ -1,3 +1,7 @@
+## Bounded placement recovery implemented locally, 2026-10-29
+
+Local beta.5 implements and regression-tests freeze-after-query containment, explicit retry, healthy-window preservation and helper cleanup in compiled/hosted modes. Full integration now passes in both modes, including pair-only height behavior. See [placement recovery](PLACEMENT-RECOVERY.md) and latest HANDOFF. This supersedes the older unbounded SetWindowPos risk below within the documented scope. Already committed target frames, app-owned deferred code and OS/DWM/hardware/privilege limits remain distinct. Published beta.2 is unchanged; no new public release follows automatically.
+
 ## Latest UI checkpoint, 2026-10-29
 
 Local beta.4 implements the reference-driven manager composition and theme cards. See [design](../DESIGN.md) and the latest HANDOFF for verified scope, native-test limits and deployment. Recovery hardening/live occupancy remain pending; published beta.2 is unchanged.

@@ -1,11 +1,13 @@
 [CmdletBinding()]
 param(
     [string]$DataDirectory,
-    [ValidateSet('Run','Show','Settings','Quit','Preview','Validate')]
+    [ValidateSet('Run','Show','Settings','Quit','Preview','Validate','PlacementWorker')]
     [string]$Action = 'Run',
     [switch]$NoRecover,
     [switch]$RunInProcess,
-    [string]$StartupOwner
+    [string]$StartupOwner,
+    [string]$PlacementPipe,
+    [int]$PlacementParent
 )
 $ErrorActionPreference = 'Stop'
 if ([string]::IsNullOrWhiteSpace($DataDirectory)) { $DataDirectory = Join-Path $PSScriptRoot 'data' }
@@ -17,6 +19,7 @@ if (-not (Test-Path -LiteralPath $windowsPowerShell)) {
 
 # The background host is always Windows PowerShell 5.1 in an STA thread.
 # No application EXE or OutputAssembly is produced by this launcher.
+if ($Action -eq 'PlacementWorker' -and -not $RunInProcess) { throw 'Placement workers require the direct in-process host.' }
 if (-not $RunInProcess -and $Action -ne 'Validate') {
     $scriptPath = Join-Path $PSScriptRoot 'Start-Hosted.ps1'
     $quotedData = '"' + $DataDirectory.TrimEnd('\') + '"'
@@ -40,6 +43,9 @@ if (-not ('SixSlotSnap' -as [type])) {
     Add-Type -LiteralPath $sourceFiles -ReferencedAssemblies System.dll,System.Core.dll,System.Xml.dll,System.Xml.Linq.dll,System.Drawing.dll,System.Windows.Forms.dll,Accessibility.dll
 }
 
+if ($Action -eq 'PlacementWorker') {
+    exit [PlacementBroker]::RunWorker($PlacementPipe,$PlacementParent)
+}
 if ($Action -eq 'Validate') {
     New-Item -ItemType Directory -Force -Path $DataDirectory | Out-Null
     $settings = [AppSettings]::Defaults()

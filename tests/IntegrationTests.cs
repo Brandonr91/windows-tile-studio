@@ -32,7 +32,7 @@ class IntegrationTests {
         using(var gate=new EventWaitHandle(false,EventResetMode.ManualReset,gateName))
         using(var form=new Form{Text="Disposable blocked app",StartPosition=FormStartPosition.Manual,Location=new Point(260,260),Size=new Size(500,350)})
         using(var timer=new System.Windows.Forms.Timer{Interval=300}) {
-            timer.Tick+=delegate{timer.Stop();File.WriteAllText(ready,form.Handle.ToInt64().ToString());WaitForSingleObject(gate.SafeWaitHandle,30000);File.WriteAllText(ready+".resumed","ready");};
+            timer.Tick+=delegate{timer.Stop();File.WriteAllText(ready+".tmp",form.Handle.ToInt64().ToString());File.Move(ready+".tmp",ready);WaitForSingleObject(gate.SafeWaitHandle,30000);File.WriteAllText(ready+".resumed","ready");};
             form.Shown+=delegate{timer.Start();};
             Application.Run(form);return 0;
         }
@@ -264,6 +264,7 @@ class IntegrationTests {
         Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==forms[4].Handle.ToInt64()),"Restarted window was implicitly adopted");
         Command(SixSlotSnap.SnapCommand,5,forms[4].Handle);CheckAll();passed.Add("Closed windows release their slots; restarted windows require an explicit snap.");
         TestIsolatedChrome();
+        Check(!File.ReadAllText(Path.Combine(data,"status.log")).Contains("Reentrant placement"),"Nested geometry callback overlapped placement");
         Command(SixSlotSnap.QuitCommand,0,IntPtr.Zero); Wait(()=>controller.HasExited,"Compatibility controller did not exit"); data=previousData;
     }
     static void TestRestrictedApps() {

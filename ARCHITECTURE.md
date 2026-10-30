@@ -65,7 +65,7 @@ APIs. It places and links real app windows; it does not modify Windows' built-in
 Snap layout catalog, replace the taskbar, or create virtual monitors. The original
 `Brandonr91/six-slot-snap` repository is a separate preserved predecessor.
 
-`Build.ps1` compiles all fourteen `src/*.cs` files using the installed .NET Framework
+`Build.ps1` compiles all fifteen `src/*.cs` files using the installed .NET Framework
 compiler, with framework assemblies and no external packages. Output remains
 `bin/SixSlotSnap.exe`. `Start.cmd` calls `Start.ps1` for this compiled mode.
 release/version.json also drives generated assembly/file/product metadata and
@@ -434,3 +434,9 @@ UiSupport now supplies UiTheme, native-page-backed navigation rails and rounded 
 ## Local beta.4 visual composition, 2026-10-29
 
 UiSupport adds StudioPanel/StudioDrawing, passive LayoutOverview and clickable ThemeChoice previews. GeneralSettings.ConfigureStudioLayout reuses existing draft controls in overview/library/inspector cards; StudioWrap supplies common General/Share surfaces. LayoutModel supplies preview geometry. A native owner-drawn ListBox supplies profile thumbnails; navigation retains native buttons and TabControl selection. No controller placement or schema change follows from this redesign. See DESIGN.md.
+
+## Bounded placement helpers (local beta.5)
+
+PlacementBroker.cs is the fifteenth source file. The controller retains geometry, state and assignment ownership; native positioning/external state changes run through current-user pipes in two owned, hidden, job-contained helper processes. A per-call deadline cancels the owned helper and promotes a warm spare. Worker lease/PID/thread/protocol/version checks prevent stale requests; uncertain targets are detached and retry is explicit. Source hosting uses Start-Hosted -Action PlacementWorker in a fresh in-memory host, preserving source-only delivery. See docs/PLACEMENT-RECOVERY.md for lifecycle, test evidence and limitations.
+
+Native geometry entry points now hold a transaction depth and replay reentrant callbacks through an owned posted message. Nested resize/settle ticks are skipped; modal UI and flyout navigation remain outside long-lived transactions and invoke guarded mutations. The broker rejects overlapping calls defensively; native tests assert no reentry errors. Helper private-byte samples were ~37MiB compiled/~167MiB hosted in this environment; idle sampled CPU was zero, not a universal resource promise.
