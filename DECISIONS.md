@@ -340,3 +340,7 @@ User reported five warning toasts during testing. Exact messages match intention
 ## Amend the log audit findings, 2026-10-30
 
 User authorized the three proposed amendments. Reproduce CS1619 before fixing it; a 218-character disposable project root fails with the previous compiler path and succeeds with short compiler staging. Preserve the target EXE on compiler/publication errors and fail clearly beyond remaining classic path limits, without Windows-wide policy changes. Keep old test artifacts and use immutable per-run records/latest pointers rather than deleting evidence. Result status must include cleanup; an interrupted/newer run must not leave an old PASS looking current. Use explicit runtime severity/outcome codes and run IDs; never turn expected rejected fits into crashes or hide fatal feedback. Keep quiet test delivery. Chrome needs a short disposable profile because its nested cache names can exceed classic path bounds. No new release or external push follows merely from these local amendments.
+
+## Beta.7 deployment/publication, 2026-10-30
+
+User authorized deploying the pushed candidate to the existing installation, then publishing downloads. Use exact clean/CI-passed source 19ea78e and frozen validated package bytes; preserve six outer frames, settings and original Startup bytes. Publish a new unsigned prerelease with server digests and independent public hash verification, preserving older tags/assets. This is complete; documentation afterward records evidence without rebuilding or moving the released source.

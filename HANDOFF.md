@@ -1,5 +1,18 @@
 # Handoff
 
+## Beta.7 deployed and published — 2026-10-30
+
+User explicitly authorized updating the existing installation and then publishing beta.7 downloads. Both are complete. Public unsigned prerelease: https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.7 . Frozen clean source 19ea78e3da85aa195eb41eb5ca03b7ff6deca236; annotated tag edd6493d59bbd0303cc8b712d9c2c937143bc967. docs/RELEASE-BETA-7.md owns hashes, provenance, validation and deployment. Preserve beta.2/beta.6/beta.7 immutable tags/assets. Earlier local-only/pending statements below are historical.
+
+Exact source CI 41118442748 passed. Clean Source/PortableCompiled assets pass manifests/repeatability and isolated ReleaseTests; actual installed Hosted/Compiled/rollback and Setup GUI checks pass. Four server asset digests verified before publication, four anonymous public downloads hash-verified after publication. No signing credentials supplied; release is unsigned.
+
+Daily existing bin/SixSlotSnap.exe now is the exact release EXE, SHA4c20b75f4c49885eaad1433345b5f3176bee6a06ff2beb55f45eca774be15259. Actual process/runtime verifies beta.7, same six handles/outer frames, byte-identical settings and original Startup link, hidden bar, placementReady=true, no Recovery, two owned helpers and notificationsQuiet=false. Current run logs have zero ERROR entries/zero popups; no matching Windows app-crash event in preceding 30-minute sample. Hosted delivery now mirrors seventeen sources AND Start-Hosted.ps1; data remains separate/intact. Private snapshots/evidence are bin/beta7-daily-backup, bin/beta7-deployment.json and bin/beta7-public-verification. Do not ship them.
+
+Private deployment verifier initially used a runtime-file read without delete sharing and raced atomic replacement. Shared ReadWrite/Delete stream completed verification; no app crash or app source change. Temp exact-package fixtures: WtsR7Final/29fcf7fe623c48849f82b33698d0eed0, WtsR7Launch/8c68e809f14d4da7844eaea8a714f9c7, WtsSetupUi/8a56cb44d64a4184a717c14ab35e35ef.
+
+Next: normal use and the user's next request; no pending publication/redeployment or new feature expansion required. Signing requires publisher credentials. Broader hardware/DPI/power/privilege/assistive-technology and long-duration limits remain. Consult latest context plus actual Git/process state after compaction; do not resume historical pending work.
+
+
 ## Build, test-evidence and log amendments complete locally — 2026-10-30
 
 User authorized the three log-audit follow-ups and asked what comes next while validation was active. All three are implemented and checked in the beta.7 candidate. Read docs/BUILD-AND-LOG-RELIABILITY.md. Earlier quiet-only commit 48796a9 was pushed on request; these new amendments have not been pushed or released. Current daily/published beta.6 stays unchanged.

@@ -1,4 +1,4 @@
-# 0.3.0-beta.7 (candidate, not a published release)
+# 0.3.0-beta.7 (published 2026-10-30)
 
 - Route automated controller warning notifications to local logs with a per-process quiet switch; normal launches retain popups.
 - Keep settings Recovery, sizing protections, live outcomes and fatal startup handling active.
@@ -6,7 +6,7 @@
 - Stage app compilation in short temporary paths and atomically publish success, preserving prior EXEs on failure; add deep-path CI regression.
 - Give integration checks unique run directories and latest status/provenance; retain historical artifacts.
 - Add UTC severity/outcome/version/run context to local logs; isolate Chrome test profile/stderr.
-- Existing daily/published beta.6 remains unchanged.
+- Deployed to the existing installation and published as an unsigned prerelease; previous beta.6 downloads remain unchanged.
 
 # 0.3.0-beta.6
 

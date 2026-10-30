@@ -4,7 +4,7 @@ A small Windows desktop controller with a persistent custom-layout flyout,
 editable layouts and hotkeys, and connected window resizing. Its default
 layout is three columns by two rows, with independent row dividers.
 
-**[Download beta.6](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.6)** — live slot dashboard, direct visual divider editing, System/Light/Dark appearance and guided per-user setup. Extract a release ZIP and run **Setup.cmd**, or use the portable/source launchers. This prerelease is unsigned. See [release verification](docs/RELEASE-BETA-6.md) and [the roadmap](ROADMAP.md).
+**[Download beta.7](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.7)** — live slot dashboard, direct visual divider editing, System/Light/Dark appearance and guided per-user setup. Extract a release ZIP and run **Setup.cmd**, or use the portable/source launchers. This prerelease is unsigned. See [release verification](docs/RELEASE-BETA-7.md) and [the roadmap](ROADMAP.md).
 
 Phase-7 preview adds keyboard divider editing (Page Up/Down selects, arrows
 adjust, Shift for finer steps, Ctrl+Z/Y undo/redo), resizable/scrolled dialogs,

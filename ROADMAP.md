@@ -1,3 +1,7 @@
+## Latest: beta.7 deployed and published, 2026-10-30
+
+The user authorized local update followed by publication; both are complete. Quiet test warnings, deep build-path handling, per-run test records and structured logs are in the released/running beta.7. See [release record](docs/RELEASE-BETA-7.md) and latest HANDOFF. Six window frames, settings and original Startup bytes were preserved. Signing needs publisher credentials; broader hardware/accessibility/long-duration limits remain. Follow the next user request; no repeat publication is pending.
+
 ## Latest: beta.6 published, 2026-10-29
 
 Selected live dashboard, visual-first editor, UI polish and setup/distribution work is implemented, tested, deployed and published as an unsigned beta.6. See [release record](docs/RELEASE-BETA-6.md), [live manager](docs/LIVE-MANAGER.md), [setup](docs/SETUP.md) and latest HANDOFF. Signing requires publisher credentials; broader hardware/assistive-technology/long-duration observations remain limited. Follow the user's next request; no pending merge or repeated publication is required.

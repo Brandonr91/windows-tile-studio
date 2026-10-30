@@ -1,7 +1,6 @@
 # Build paths, test records and local logs
 
-Implemented locally in the beta.7 candidate, October 30, 2026. Published beta.6
-and the existing daily installation remain unchanged.
+Published in beta.7 and deployed to the existing installation on October 30, 2026. Earlier beta.6 downloads remain unchanged. See [release evidence](RELEASE-BETA-7.md).
 
 ## Compiler path handling
 

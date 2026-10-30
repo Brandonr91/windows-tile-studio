@@ -15,7 +15,7 @@ the daily installation had no matching warnings and reported recoveryRequired=fa
 These are distinct from an unhandled .NET exception or application startup failure.
 Do not hide fatal failures or remove sizing/recovery protections to silence tests.
 
-Local beta.7 adds per-process **--quiet-notifications** in compiled mode and
+Beta.7 adds per-process **--quiet-notifications** in compiled mode and
 **-QuietNotifications** to Start-Hosted.ps1 (forwarded into a background host too).
 All native failure-generating controller fixtures opt in. NotificationDelivery
 always writes `Notification [category] message` to that controller's **status.log**;
@@ -31,6 +31,4 @@ compiled/hosted behavior. Private fixture logs remain under ignored bin/, distin
 from the daily data/status.log. General → Support → Open local log opens the daily
 log. Logs are local and may contain private context; no automatic upload is added.
 
-This local test-harness fix does not replace published beta.6 or silently deploy a
-new daily version. Future tests must build current source/use the quiet option;
-old released binaries cannot recognize a flag added afterward.
+Beta.7 was explicitly deployed/published on October 30; earlier beta.6 downloads remain unchanged. Future tests must use beta.7 or newer source/binaries and the quiet option. Old beta.6 binaries do not recognize the new flag. See [release evidence](RELEASE-BETA-7.md).
