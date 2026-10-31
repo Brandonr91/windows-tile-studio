@@ -497,3 +497,11 @@ uses bounded SendMessageTimeout plus a refresh-condition wait for synthetic
 notifications. Full input-sensitive integration is not a pass. Actual daily restart
 preserved six frames/assignments/settings and confirms saved-proportion recovery
 on this installation; physical topology/power limits remain.
+
+## Beta.9 publication, 2026-10-31
+
+Frozen clean c220d7f is published as v0.3.0-beta.9 after exact-source CI and
+clean-package offline lifecycle checks. All public assets were independently
+hash-verified. This metadata checkpoint adds no recovery coordinator or phase-2
+behavior; the daily executable/process and preferences were not changed for
+publication. docs/RELEASE-BETA-9.md owns exact source/tag/asset provenance.

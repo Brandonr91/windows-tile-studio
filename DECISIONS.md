@@ -386,3 +386,14 @@ record the input/focus-interrupted full suite as failed, without promising broad
 UI acceptance. Deploy tested beta.9 locally with provenance and mirrored source,
 verify six same windows and byte-identical preferences, and keep published tags/
 assets untouched. No push or publication follows this local authorization.
+
+## Publish beta.9 and describe phase 2, 2026-10-31
+
+User explicitly authorized a new beta.9 prerelease and requested a phase-2
+description. Push/freeze reviewed current work normally, require exact-source CI,
+package only clean manifest inputs, verify offline lifecycle/server digests and
+anonymous public hashes, and preserve all earlier releases. Publish unsigned with
+incomplete input-sensitive/physical acceptance disclosed. Keep running deployment
+unchanged. Proposed recovery coordination is separate from automatic identity
+reattachment and a constraint solver; neither is authorized for implementation
+by this publication request. Future binary changes need a new version/tag.

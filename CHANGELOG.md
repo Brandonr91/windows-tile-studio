@@ -1,4 +1,4 @@
-# 0.3.0-beta.9 (deployed locally 2026-10-31, unpublished)
+# 0.3.0-beta.9 (published 2026-10-31)
 
 - Hide the floating bar for fresh configurations; preserve explicit saved visibility and historical defaults for legacy XML with an omitted field.
 - Recover only windows matching saved slot frames, preserving saved proportions instead of adopting current top/bottom splits.

@@ -1,3 +1,21 @@
+## Beta.9 published; proposed phase 2, 2026-10-31
+
+Unsigned beta.9 published from frozen clean source c220d7f after exact-source CI,
+clean-package lifecycle checks and public hash verification. See
+[release evidence](docs/RELEASE-BETA-9.md). Existing daily beta.9 was not replaced.
+
+Next proposed work is the recovery foundation, not automatic application matching
+or spanning. Separate topology, application-lifecycle and rejected-placement
+recovery states; coordinate their ownership and cancellation; retain unavailable
+placement/layout intent without stale live ownership; keep wait-for-original-
+display as the default; bound/debounce retries and stop on actual rejection.
+Expose pending/blocked/ambiguous/released reasons and explicit retry in the manager
+without repeated popups. Manual release takes priority. Preserve existing geometry
+and helper cancellation. Start with pure state transitions and deterministic
+regressions; native tests/physical acceptance remain separately scoped.
+This is a recommendation, not implemented functionality or authorization to start
+phase 2. User requested publication followed by a description only.
+
 ## Phase 1 deployed locally, 2026-10-31
 
 User-approved beta.9 deployment completed. Fresh-hidden and saved-proportion

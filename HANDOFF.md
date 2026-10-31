@@ -1,5 +1,44 @@
 # Handoff
 
+## Beta.9 published and public downloads verified — 2026-10-31
+
+User requested publication followed by a description of the next phase. Complete:
+https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.9
+Release ID430015651, published2026-10-31T15:24:49Z, prerelease=true/draft=false,
+unsigned. Frozen clean source c220d7fb67a0bb6e95e94c77bbc96c89c929cba4; annotated
+tag75e50fa0cf87b28173cab7f96ceaf15908ed574b. docs/RELEASE-BETA-9.md owns exact
+hashes/source/test limitations. Preserve immutable beta.9 and earlier tags/assets.
+
+Reviewed all17 app sources against deployed-source-hashes.json; exact match.
+Committed/pushed the existing beta.8+phase1 changes normally. Exact-source main CI
+41214424109 passed (including new hosted geometry step). Clean frozen packages
+passed ReleaseTests under TEMP/WtsR9Release/b9a9e4f7a3a74938986efea825e81414:
+manifest integrity/source repeatability, icon/version, setup payload, isolated
+menu, install/update/rollback/corrupt-candidate safeguards/uninstall/data retention.
+All4 GitHub server digests verified before publish; all4 anonymous public download
+hashes matched afterward. Frozen bin/beta9-final; public copies/evidence
+bin/beta9-public-verification. Helpers/notes are outside Git at task work/
+Publish-Beta9.ps1 and beta9-notes.md, reusing existing reviewed release tooling.
+No credentials printed/stored; signing remains unconfigured. SourceZIP SHA
+3802e664ffef96f2d38a122a450998689dee9bdea7768abe7e03079c3faa5e7c; compiledZIP SHA
+d503026159ee3e33986bfd40de5591f6f43a2a665a9e7bccf14db7b4eafc3ff7.
+
+Daily PID30912 and its2helpers remained running throughout publication; localEXE
+SHA16e7f6cc69a7b2c378dcdd3d5ba142bd52d812c3ff34808a460c6a7f3b255f35 unchanged.
+Packaging recompiles separately; do not claim release EXE byte-identical to this
+previous build. No startup/settings/mirror/deployment changes for publication.
+Full input-sensitive integration remains incomplete; physical multi-monitor/
+docking/sleep acceptance remains unverified and is disclosed on release page.
+
+Next: answer user's next request. Proposed phase2 is recovery coordination/state
+foundation: distinct topology/app-lifecycle/placement rejection reasons, bounded
+retry/cancellation and actionable pending/blocked/ambiguous/released manager
+status, default retain unavailable intent/wait for original display, manual
+release precedence. It is not yet implemented; app identity reattachment belongs
+to phase3 and constraints/spanning later. Do not start phase2 from this handoff
+alone. Post-publication docs commit records completion without rebuilding/moving
+the frozen source or assets.
+
 ## Beta.9 publication authorized — 2026-10-31
 
 User requested publishing beta.9, then a description of phase 2. Review/freeze

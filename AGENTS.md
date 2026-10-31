@@ -283,3 +283,9 @@ and full hosted integration was not run. Native API minimize now handles WM_SIZE
 in addition to WM_SYSCOMMAND. Preserve both paths. This approval completes this
 local deployment only; it does not authorize push/publication or future unrelated
 desktop changes. Consult latest HANDOFF and actual process state.
+
+Beta.9 publication completed 2026-10-31 by explicit request. Preserve frozen
+c220d7f/tag v0.3.0-beta.9 and all four asset bytes; docs/RELEASE-BETA-9.md records
+provenance. Exact source CI passed and public downloads were hash-verified. Daily
+beta.9 remains the earlier tested local EXE; do not redeploy merely to match a
+fresh Framework compiler hash. Phase 2 is proposed/described only, not started.
