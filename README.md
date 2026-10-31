@@ -4,7 +4,7 @@ A small Windows desktop controller with a persistent custom-layout flyout,
 editable layouts and hotkeys, and connected window resizing. Its default
 layout is three columns by two rows, with independent row dividers.
 
-**[Download beta.7](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.7)** — live slot dashboard, direct visual divider editing, System/Light/Dark appearance and guided per-user setup. Extract a release ZIP and run **Setup.cmd**, or use the portable/source launchers. This prerelease is unsigned. See [release verification](docs/RELEASE-BETA-7.md) and [the roadmap](ROADMAP.md).
+**[Download beta.9](https://github.com/Brandonr91/windows-tile-studio/releases/tag/v0.3.0-beta.9)** — hidden-by-default fresh setup, saved-proportion recovery, detailed resize failure logs, live slot dashboard and System/Light/Dark appearance. Extract a release ZIP and run **Setup.cmd**, or use the portable/source launchers. This prerelease is unsigned. See [release verification](docs/RELEASE-BETA-9.md) and [the roadmap](ROADMAP.md).
 
 Phase-7 preview adds keyboard divider editing (Page Up/Down selects, arrows
 adjust, Shift for finer steps, Ctrl+Z/Y undo/redo), resizable/scrolled dialogs,
@@ -141,7 +141,10 @@ The target window remains the one selected when you opened the flyout.
 The small **Layouts** bar near the taskbar clock opens the same panel. Hold
 the left mouse button anywhere on the bar and drag to move it; its position
 is remembered across restarts. It sits above the taskbar by default. It can
-be hidden in settings. You can also use **Ctrl+Alt+1** through **Ctrl+Alt+9**
+be hidden in settings. Local beta.9 defaults fresh configurations to hidden while
+retaining saved visibility preferences; it was deployed locally on October 31.
+Earlier beta.7 downloads remain unchanged.
+You can also use **Ctrl+Alt+1** through **Ctrl+Alt+9**
 to place the active window in a numbered zone of the current layout.
 The default six-window layout is numbered as follows:
 
@@ -181,9 +184,10 @@ The previous file is kept in `data/settings.xml.bak` when replacing settings.
 Earlier portable builds used `bin/`; their settings are imported on first use.
 An invalid settings file is preserved while defaults run; a warning explains
 the recovery. When the controller starts, it
-reconnects windows already occupying the saved columns. Current complementary
-top/bottom pairs take priority over stale saved row heights. If a window has
-moved outside its slot, snap it back using the selector or shortcuts.
+reconnects windows already occupying the saved slots. The local beta.9 build
+preserves saved row heights instead of learning ratios from current
+window frames; mismatches need an explicit re-snap using the selector or shortcuts.
+See [phase-1 changes and verification limits](docs/PHASE-1-RECOVERY.md).
 
 The tray menu opens the layout manager, resets proportions in the current
 layout, or exits the controller. Exit and delete the project folder to remove it.

@@ -18,6 +18,8 @@ jobs:
           persist-credentials: false
       - name: Geometry and configuration
         run: .\Build.ps1 -Test
+      - name: Source-hosted geometry and configuration
+        run: powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File .\tests\GridTests.ps1
       - name: Deep build paths and failed-publication preservation
         run: .\tests\BuildPathTests.ps1
       - name: Offline source hosting and installer checks

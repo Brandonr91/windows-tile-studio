@@ -142,6 +142,9 @@ public class LauncherTab : NonactivatingForm {
     }
     protected override void WndProc(ref Message m) {
         if(m.Msg==0x10 || (m.Msg==0x112 && (m.WParam.ToInt64()&0xfff0)==0xf020)) {HideToTray();m.Result=IntPtr.Zero;return;}
+        // ShowWindow(SW_MINIMIZE) bypasses WM_SYSCOMMAND. Preserve the same
+        // hide-to-tray preference for that native path too.
+        if(m.Msg==0x5 && m.WParam.ToInt64()==1) {base.WndProc(ref m);HideToTray();return;}
         if(m.Msg==0x2e0) {
             var suggested=(SixSlotSnap.RECT)System.Runtime.InteropServices.Marshal.PtrToStructure(m.LParam,typeof(SixSlotSnap.RECT));
             SetScale((m.WParam.ToInt64()&0xffff)/96.0);

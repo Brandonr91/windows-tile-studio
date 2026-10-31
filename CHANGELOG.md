@@ -1,3 +1,16 @@
+# 0.3.0-beta.9 (deployed locally 2026-10-31, unpublished)
+
+- Hide the floating bar for fresh configurations; preserve explicit saved visibility and historical defaults for legacy XML with an omitted field.
+- Recover only windows matching saved slot frames, preserving saved proportions instead of adopting current top/bottom splits.
+- Handle native API minimization through hide-to-tray as well as the existing close/system-command routes.
+- Add compiled/source-hosted geometry/settings and native lifecycle regressions; lifecycle, paint/DPI and focused compatibility checks pass in both delivery modes. Full input-sensitive integration remains incomplete.
+
+# 0.3.0-beta.8 (local, unreleased)
+
+- Preserve the first resize failure before rollback, including affected app/zone, source boundary, physical requested/actual frames and underlying stage.
+- Correlate abort/restoration diagnostics in the local log; retain geometry, helper cancellation, explicit re-snap and notification behavior.
+- Validate refusing-neighbor evidence and baseline restoration in compiled/source-hosted compatibility tests; raw identifiers stay outside aggregate reports.
+
 # 0.3.0-beta.7 (published 2026-10-30)
 
 - Route automated controller warning notifications to local logs with a per-process quiet switch; normal launches retain popups.

@@ -348,3 +348,41 @@ User authorized deploying the pushed candidate to the existing installation, the
 ## Prepare signing without impersonating enrollment, 2026-10-30
 
 User asked whether we can proceed or they must act. Prepare policy, accurate form text and inert signing template using primary SignPath docs and a verified v3 pin. Do not submit, infer personal name/email, accept personal-data/terms consent, change MFA, authorize provider App access or activate signing. Reputation is limited (new repo, no stars/forks); verification downloads are not adoption. Foundation is the proposed certificate publisher. Approval/signing capability is not claimed.
+
+## Preserve first resize failure before restoration, 2026-10-30
+
+User selected diagnostics as the next stable-release preparation task. Capture
+immutable local first-failure evidence before restoration can detach handles or
+replace the fit message. Distinguish frame mismatch, query/probe failures and
+layout constraints rather than infer every abort was an app rejection. Keep raw
+PID/HWND/process names local, omit titles/paths, retain existing aggregate export
+allowlist, cancellation and explicit re-snap. Increment local candidate to beta.8
+(file 0.3.0.16); published beta.7 bytes/tag stay unchanged. No Store/signing or
+permanent-install migration is included in this task.
+
+## Phase 1: quiet defaults and saved-proportion authority, 2026-10-30
+
+User authorized phase 1 of the reviewed audit only, with no stop/deploy permission.
+Implement fresh-hidden through Defaults, preserving the serializer's historical
+visible initializer for valid legacy files with no field. Do not add a duplicate
+visibility setting or rewrite user preferences. Remove automatic geometry-based
+ratio adoption; recovery must match the saved slot on all four edges. Preserve
+small physical-frame tolerance and explicit re-snap; do not add adoption/identity
+policies or a solver in this phase. Smaller recovery coverage for differently
+sized anchored windows is intentional, avoiding silent preference drift. Prepare
+beta.9 separately; compiled/hosted pure checks can run beside daily beta.8, while
+native controller tests and deployment wait for explicit approval. Existing user
+work and beta.8 diagnostics remain intact; prior published assets stay immutable.
+
+## Deploy phase 1 locally after validation, 2026-10-31
+
+User explicitly approved deployment. Back up daily beta.8, quit normally for
+isolated native validation, and restart the old executable on failure. Preserve
+settings/Startup/menu and real window frames. Fix the newly reproduced direct
+native-minimize gap rather than weaken the fixture; correct rejected asynchronous
+notification delivery using the existing bounded synchronous test route. Accept
+passed compiled/hosted lifecycle, paint/DPI and focused Compatibility evidence;
+record the input/focus-interrupted full suite as failed, without promising broad
+UI acceptance. Deploy tested beta.9 locally with provenance and mirrored source,
+verify six same windows and byte-identical preferences, and keep published tags/
+assets untouched. No push or publication follows this local authorization.

@@ -1,5 +1,142 @@
 # Handoff
 
+## Beta.9 publication authorized — 2026-10-31
+
+User requested publishing beta.9, then a description of phase 2. Review/freeze
+current source, push a normal commit, require exact-source CI, build immutable
+clean packages, validate offline package lifecycle, publish a new unsigned
+prerelease and verify public downloads. Keep daily controller and prior release
+assets unchanged. No phase-2 implementation is requested. Final publication
+evidence will supersede this preparation checkpoint.
+
+## Phase 1 deployed and verified locally — 2026-10-31
+
+User explicitly authorized local deployment. This supersedes the preceding
+phase-1 not-deployed checkpoint only for this deployment. No push/publication
+or broader future desktop changes authorized. Daily is now local beta.9/file
+0.3.0.17, EXE SHA256 16e7f6cc69a7b2c378dcdd3d5ba142bd52d812c3ff34808a460c6a7f3b255f35.
+Candidate source and prior uncommitted beta.8 work remain intact/unpushed.
+
+Native validation exposed two fixture issues and one application gap. Rejected
+PostMessage(WM_SETTINGCHANGE) now uses bounded SendMessageTimeout and a 5s refresh
+condition wait. The fixed-delay initial failure was not proof of an app timeout.
+Direct ShowWindow(SW_MINIMIZE) bypassed the existing WM_SYSCOMMAND handler; added
+WM_SIZE/SIZE_MINIMIZED handling in LauncherTab. Every failed predeployment test
+restarted original beta.8 normally. Failed evidence is retained.
+
+Passed against final source: 199137 compiled geometry/settings checks; native
+PhaseOneNativeTests compiled and actual PowerShell-hosted; LauncherUi paint/font/
+70-DPI-transition checks compiled and hosted; focused Compatibility compiled and
+hosted (first-failure logs, independent heights, 3/4-row dividers, size constraints,
+hung/query/max/aspect rejection, lifecycle and isolated Chrome). Prior phase-1
+hosted pure and offline installer checks also passed; not repeatedly rerun for
+the minimize-only change. Full compiled Integration was interrupted at flyout
+persistence by observed external foreground/mouse activity and remains failed;
+full hosted Integration was not reached. Do not report a full-suite pass.
+
+Final output: bin/phase1-deploy-20261031-100637. Native lifecycle result folders:
+phase1-native-data/f157a17918b04cdcab81c236bcc17493 and
+phase1-native-hosted/33d46a88750848c0b09e4a0c8aca6f5b. Compatibility run records:
+compatibility-data/runs/20261031T150810738Z-3efc5376 and
+hosted-compatibility/runs/20261031T150843385Z-4fc879cc. Interrupted full run:
+integration-data/runs/20261031T150658380Z-61784d81. Final source hashes retained
+as deployed-source-hashes.json under that output. Earlier attempt folders remain.
+
+Private backup: bin/phase1-deployment-backup-20261031-100810 (original beta.8 EXE,
+settings/runtime/log snapshots, frames, process command, deployment.json and
+verified.json). Helpers bin/Deploy-Phase1.ps1 and Verify-Phase1.ps1 are ignored.
+Actual new process PID30912 (transient) verified beta.9, ready/no Recovery, hidden
+bar, two owned helpers, same six exact handles and outer frames; settings bytes
+and Startup/Start-menu shortcut hashes unchanged. Fresh independent verifier
+confirmed original frames/settings and zero current-run ERROR lines. All 17 C#
+sources mirror sibling windows-tile-studio-hosted/src; its data remains separate.
+No public assets/tags changed; no new registration or Windows settings changes.
+
+Next: normal use or user's next request. Do not replay deployment/testing merely
+from historical pending instructions. Full keyboard/mouse-sensitive UI acceptance
+needs an idle approved interval; physical mixed-DPI/negative-origin displays,
+work-area/resolution changes, unplug/docking and sleep/wake remain unverified.
+Existing geometric ambiguity and later recovery/reattachment/solver phases remain
+limits/plans. Update docs with subsequent meaningful changes.
+
+## Phase 1 implemented for review; daily left running — 2026-10-30
+
+User authorized phase 1 of the feature-audit plan and explicitly prohibits stopping
+the daily controller, rearranging real apps, Windows settings changes or deploying
+a replacement without approval. Do not carry forward older broad local-deployment
+authorization. No push/publish/deploy for this task. Existing uncommitted beta.8
+diagnostics and operational documentation are preserved.
+
+Candidate beta.9/file 0.3.0.17 built only under bin/phase1-review. Defaults sets
+ShowLauncherTab=false for fresh/missing/corrupt-default configurations, while the
+serializer field initializer remains true to preserve historical legacy XML with
+an omitted field. Explicit saved true/false are unchanged. Recovery now uses
+SavedGeometryRecovery.MatchesSlot on all four saved physical edges (<16px) and
+no longer learns or saves complementary-pair row ratios. Mismatched windows need
+explicit re-snap. No solver/auto-reattachment or new setting/schema/adopt action.
+Existing same-monitor reflow, resize geometry and bar visibility guards unchanged.
+See docs/PHASE-1-RECOVERY.md for user behavior and limitations.
+
+Actually run: compiled Build -Test to separate output and in-memory Windows
+PowerShell 5.1 STA tests/GridTests.ps1 each PASS 199137 checks; offline LauncherTests
+PASS under TEMP/WtsPhase1Launch/360382a1e2024b1bb2494143f7730b7e. Hosted geometry
+result folder bin/phase1-review/hosted-geometry/bdc70cfdcaca4ad7b78c0925fb0a9cef (final harness, in-memory
+assembly-location assertion passed).
+The new tests/GridTests.ps1 initially passed a PSObject to reflection; corrected
+with ToString, then passed. No app defect or user file writes from that harness
+failure. New source-hosted geometry CI step is configured only, not remotely run.
+
+Prepared/compile-checked only: tests/PhaseOneNativeTests.cs and its hosted wrapper;
+Build -PhaseOneNative supports isolated lifecycle checks. The fixture refuses any
+existing controller, uses no-recover contexts/disposable data/window, and checks
+fresh hidden/restart, explicit shown preferences, close/minimize, nonactivating
+flyout/dismissal, unrelated settings and synthetic topology/resume. Full native
+IntegrationTests gained a hidden-bar refresh assertion and explicit visible-draft
+fixture setup. Full compiled and hosted native suites were not executed. This is
+not native startup-geometry or physical docking/sleep verification.
+
+Fresh read-only observation confirms daily PID35072 and its two owned helpers
+still running released-source-derived local beta.8, six zones, placementReady=true,
+no Recovery, hidden bar. Final executable SHA256 matches the original beta.8
+E8020B25E91A3D1F6604BFFA60D43F817F288674291EC0DAEA94FE2FCF21B25C.
+No daily exe/data/startup/menu or hosted mirror updates.
+Published beta.7 and older assets/tags unchanged. Candidate/source now differs
+from running code intentionally. Native acceptance needs explicit approval for
+an interval without the daily controller (or a separately approved desktop).
+
+Exact next steps: review diff including pre-existing beta.8 changes; after approval
+run Build.ps1 -PhaseOneNative -OutputDirectory bin/phase1-review, hosted
+PhaseOneNativeTests.ps1, then full Integration/HostedIntegration using a separate
+output and controlled source root. Native fixtures intentionally use no-recover
+to avoid adopting real apps; actual startup/reconnect recovery with only disposable
+windows still requires controlled acceptance. Physical two-monitor mixed DPI,
+negative origin/work-area changes, unplug/dock and sleep/wake remain separate.
+Do not stop/deploy/push merely because those checks are outstanding.
+
+## First-failure resize diagnostics implemented and deployed locally — 2026-10-30
+
+User selected only better failure diagnostics from stable-release preparation. Local beta.8 (file 0.3.0.16) adds immutable per-gesture RESIZE_FIRST_FAILURE before rollback, correlated RESIZE_ABORTED, individual WINDOW_PLACEMENT_FAILED and separate baseline RESIZE_RESTORE_FAILED records. Records include stage/detail, app process name/PID/transient HWND, zone/column/row, source zone/edges/pinned height divider, minimums and physical requested/actual visible frames. Source/neighbor probe and impossible-layout stages are distinct from actual frame rejection. Existing generic toast remains; use first-failure log for cause. Geometry, cancellation, explicit re-snap, quiet delivery, settings schema and aggregate export remain unchanged. No titles/paths/upload. See docs/NOTIFICATIONS.md.
+
+Validation: Build.ps1 -Test -OutputDirectory bin/resize-diagnostics passed 198574 checks, including immutable evidence against subsequent rollback/caller mutation and XML escaping. Compiled and actual PowerShell-hosted native Compatibility passed with a new maximum-size neighbor rejecting a linked width resize: one first-failure entry identifies zone2, source1/right edge, requested/actual mismatch; abort retains it, baselines restored, source requires explicit re-snap. Existing 3/4-row adjacent-pair, width-height independence, size limits, hung/timeout/max/aspect, closure/recreation and isolated Chrome checks pass; zero fixture popups. Evidence: bin/resize-diagnostics/compatibility-data/runs/20261031T014331099Z-839840b1 and hosted/runs/20261031T014403913Z-79bdc2ec. UTC directory date differs from local October30.
+
+After both modes passed, replaced daily bin/SixSlotSnap.exe with tested local candidate and mirrored all17 C# sources to sibling windows-tile-studio-hosted/src. Fresh actual controller PID35072 (transient) reports beta.8, six assignments, placementReady=true and no Recovery. Six original outer frames and both Startup/regular Start menu shortcut bytes unchanged. Settings are not byte-identical: existing startup geometry recovery changed one row pair from 0.5/0.5 to approximately 0.499537/0.500463 in profile+monitor copy. Private original EXE/settings/runtime/frame backup and deployment.json: bin/resize-diagnostics-backup-20261030-204330. Native test/deployment helper bin/Check-ResizeDiagnostics.ps1 is ignored/local.
+
+Published beta.7 and earlier GitHub assets/tags remain immutable/unsigned. This task has no Git push/release, Store/signing enrollment or permanent-install migration. Current working changes also include prior authorized operational HANDOFF/ROADMAP entries; preserve them. Next: normal use; for a recurring failure inspect correlated local RESIZE_FIRST_FAILURE before generic warnings. No need to repeat passed suites without a new change. Physical manual dragging of real apps was not performed during this task; native checks used disposable windows. Later push/release requires current-source review/provenance and explicitly requested publication.
+
+## Local discoverability and beta archive — 2026-10-30
+
+User authorized a regular Start menu shortcut and ZIP archival of older betas, keeping latest unpacked. Created current-user Programs/Windows Tile Studio.lnk using existing EXE icon and a local ignored bin/Open-Manager.ps1 launcher. It starts this installation if needed, waits up to 15 seconds for the controller, validates its executable identity, then posts SettingsCommand. Existing Startup shortcut unchanged. Shortcut targets/icon/files and PowerShell syntax verified; clicking it cold/warm was not exercised in this task. This is a local convenience link to the current development installation, not a migrated stable installer registration. Preserve its launcher if cleaning bin; replace through an explicit installation migration later.
+
+Archived ten older immediate bin/beta* folders, excluding beta7*, to bin/archives/older-betas-20261030-203853.zip. All 810 files individually SHA256-verified against ZIP streams, CRC checked, and original hashes rechecked before removing unpacked folders. Manifest is inside ZIP; sibling JSON records inventory, hashes and retained latest folders. ZIP SHA256 8cd889618b2e14e4fb99995a95dc3c7d455ed2497067f065c17ccf55d0761d31; 58,830,247 original bytes to 6,573,506 ZIP bytes. Earlier evidence paths in those ten folders now require extraction from archive. Latest beta7 folders, current executable/data, hosted source, predecessor projects and public release assets unchanged. Archive contains private test evidence; keep local/ignored, never upload as release payload. No Git push or app rebuild.
+
+Distribution advice only: retain GitHub source/releases now; consider Store as an additional future channel after MSIX/full-trust helper/window-control compatibility and certification review. Microsoft docs distinguish automatic signing for Store MSIX from publisher-signed Store MSI/EXE. No Store account, packaging migration or submission authorized/performed.
+
+## Live resizing interruption investigated and controller restarted — 2026-10-30
+
+User reported dynamic resizing stopped. Fresh process inventory found no compiled or source-hosted controller. The retained runtime file was stale (PID45516). Its log run recorded PLACEMENT_REJECTED at 20:16:04 America/Chicago, then APP_STOPPED at 20:16:13. Source inspection confirms the resize abort detaches the source and requests baseline restoration; normal shutdown records APP_STOPPED. No matching Application 1000/1001/1026 crash events in the sampled preceding two hours. The caller/reason for normal shutdown and original rejecting app are unproven; AbortResize's generic message can overwrite the specific fit issue, including a failed probe/constraint. Do not equate its text with proof of a particular app or helper failure.
+
+Restarted the unchanged released beta.7 EXE with existing data. Verified actual controller PID11968 (transient), placementReady=true, no Recovery, all six zones recovered and two owned helpers. Visible window outer frames unchanged; original Startup shortcut bytes unchanged. Startup geometry recovery updated one column's saved row ratios from 0.5/0.5 to approximately 0.498843/0.501157 (including monitor copy); this is existing recovery behavior, not byte-identical preferences. Private snapshots/result: bin/resize-check-20261030-202101. No rebuild, app code change, publication, forced real-window resize or native drag acceptance test. User should try a divider; a recurring rejection needs first-failure diagnostic capture identifying the affected zone/process, requested/actual frame and underlying outcome, while preserving cancellation and explicit re-snap safeguards. No automatic retry/adoption added.
+
 ## SignPath preparation ready for maintainer application — 2026-10-30
 
 User asked whether we can proceed with free signing or they must act. Prepared docs/CODE-SIGNING-POLICY.md, docs/SIGNPATH-APPLICATION.md, README policy link and inert examples/signpath/signing-workflow.yml. No live workflow/application submission/provider account/App authorization/secret/certificate created. Beta.7 installation/releases unchanged and unsigned. Technical preparation is being published for the application; no provider submission or signing activation is authorized.

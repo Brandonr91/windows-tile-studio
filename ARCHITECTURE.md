@@ -460,3 +460,40 @@ Publication checkpoint, 2026-10-30: beta.7 notification/build/log mechanisms abo
 ## SignPath preparation, 2026-10-30
 
 Policy/application docs and an inert GitHub-hosted proof template under examples/signpath are prepared. No active workflow/provider request/secrets/runtime/packaging changes. The template uploads a built EXE for origin verification, awaits configured manual approval, checks thumbprint/timestamp/metadata and retains proof only. It does not publish release ZIPs. Source-hosted signing and production repackaging remain separate work. Beta.7 is unsigned.
+
+## Local resize failure evidence (beta.8 candidate)
+
+SixSlotSnap captures failed frame reads, minimum queries/limits, helper placement,
+actual-frame verification, unavailable source/neighbor probes and impossible
+adjacent constraints. Per-gesture WindowFailureTrace snapshots the first payload
+before rollback; later restoration failures cannot mutate it. Correlated local
+WARN records include source edges, pinned divider, physical frames and live
+process/zone identifiers. This instrumentation does not alter geometry decisions,
+retry/cancellation, notification delivery or aggregate diagnostic exports. See
+docs/NOTIFICATIONS.md and latest HANDOFF for verified/deployed scope.
+
+## Phase-1 review candidate, beta.9 (not deployed)
+
+AppSettings.Defaults explicitly sets ShowLauncherTab=false; the field initializer
+stays true for historical valid XML omitting the field. Existing explicit values
+and clone semantics are unchanged; schema remains 1. RecoverAssignments uses the
+pure SavedGeometryRecovery.MatchesSlot predicate on all four saved edges with
+physical-pixel tolerance below 16. Complementary-pair inference and writes to row
+ratios are removed. Recovery connects ownership only; explicit re-snap handles
+mismatches. Other reflow/resize mechanisms are unchanged. Geometric ambiguity
+remains a limit. tests/GridTests.ps1 compiles app+pure tests in memory, invokes a
+test-root-aware entry point and creates no controller. Focused native lifecycle
+fixtures are prepared/compile-checked, not executed. Latest HANDOFF distinguishes
+candidate verification from the unchanged daily beta.8 and published beta.7.
+
+## Phase-1 local deployment and native correction, 2026-10-31
+
+Authorized beta.9 deployment is complete; prior not-deployed statements above
+are historical. LauncherTab also handles WM_SIZE/SIZE_MINIMIZED so direct
+ShowWindow(SW_MINIMIZE) follows the same persisted hide-to-tray behavior as
+WM_SYSCOMMAND minimize/WM_CLOSE. Native lifecycle and paint/DPI tests pass compiled
+and hosted; focused Compatibility also passes both modes. The new native fixture
+uses bounded SendMessageTimeout plus a refresh-condition wait for synthetic
+notifications. Full input-sensitive integration is not a pass. Actual daily restart
+preserved six frames/assignments/settings and confirms saved-proportion recovery
+on this installation; physical topology/power limits remain.

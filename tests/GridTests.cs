@@ -58,9 +58,39 @@ class GridTests {
             Check(g.HeightAffectedSlots.Length<=2,"An adjustment resized more than one height pair");
         }
     }
+    static void RecoveryGeometry() {
+        foreach(int columns in new[]{1,2,3,4}) foreach(int rows in new[]{1,2,3,4}) {
+            var profile=LayoutProfile.Create("recovery","Saved recovery",columns,rows);
+            if(rows==2)profile.Columns[0].Rows=new System.Collections.Generic.List<double>{0.31,0.69};
+            var model=new LayoutModel(profile){Work=new SixSlotSnap.RECT{L=-5120,T=-160,R=0,B=1952}};
+            var before=profile.Clone();
+            for(int slot=0;slot<profile.SlotCount;slot++) {
+                var exact=model.RectFor(slot);Check(SavedGeometryRecovery.MatchesSlot(model,slot,exact),"Exact saved slot was not recovered");
+                var rounding=exact;rounding.B-=1;Check(SavedGeometryRecovery.MatchesSlot(model,slot,rounding),"Physical frame rounding prevented recovery");
+                var tolerance=exact;tolerance.B-=16;Check(!SavedGeometryRecovery.MatchesSlot(model,slot,tolerance),"Recovery adopted an out-of-tolerance frame");
+                var moved=exact;moved.L+=160;moved.R+=160;Check(!SavedGeometryRecovery.MatchesSlot(model,slot,moved),"Recovery adopted a moved window");
+                var wrongSplit=exact;wrongSplit.B-=180;Check(!SavedGeometryRecovery.MatchesSlot(model,slot,wrongSplit),"Anchored but differently sized window changed ownership");
+            }
+            Check(profile.GeometryMatches(before),"Recovery matching rewrote saved proportions");
+            for(int c=0;c<columns;c++)Check(profile.Columns[c].Rows.SequenceEqual(before.Columns[c].Rows),"Recovery changed exact saved row weights");
+        }
+    }
     static void Config(string root) {
         Directory.CreateDirectory(root); string path=Path.Combine(root,"test-settings.xml");
         var s=AppSettings.Defaults(); s.Validate(); SettingsStore.Save(path,s);
+        Check(!s.ShowLauncherTab && !s.Clone().ShowLauncherTab,"Fresh settings/clone must hide the bar");
+        string freshWarning;var fresh=SettingsStore.Load(Path.Combine(root,"not-created.xml"),out freshWarning);
+        Check(freshWarning==null&&!fresh.ShowLauncherTab,"Missing settings must use the hidden fresh default");
+        foreach(bool visible in new[]{true,false}) {
+            s.ShowLauncherTab=visible;SettingsStore.Save(path,s);string savedXml=File.ReadAllText(path);string visibilityWarning;
+            var savedVisibility=SettingsStore.Load(path,out visibilityWarning);
+            Check(visibilityWarning==null&&savedVisibility.ShowLauncherTab==visible&&savedVisibility.Clone().ShowLauncherTab==visible,"Upgrade/clone changed an explicit visibility preference");
+            Check(File.ReadAllText(path)==savedXml,"Loading visibility rewrote saved settings");
+        }
+        var legacyVisibility=System.Xml.Linq.XElement.Load(path);legacyVisibility.Element("ShowLauncherTab").Remove();legacyVisibility.Save(path);
+        string legacyBytes=File.ReadAllText(path);string legacyWarning;var legacyLoaded=SettingsStore.Load(path,out legacyWarning);
+        Check(legacyWarning==null&&legacyLoaded.ShowLauncherTab&&File.ReadAllText(path)==legacyBytes,"Legacy omitted visibility lost its historical default or changed bytes");
+        SettingsStore.Save(path,s);
         var renamed=s.Profiles[0].Clone(); renamed.Name="Appearance-only example";
         Check(s.Profiles[0].GeometryMatches(renamed),"A renamed layout must not trigger geometry reflow");
         renamed.Columns[0].Rows[0]+=0.05;
@@ -241,12 +271,14 @@ class GridTests {
         var missing=new StartupRegistration(new StartupLaunchSpec{Executable=app,DataDirectory=root,SourceScript=Path.Combine(root,"missing.ps1")},memory);RejectInvalid(()=>missing.Enable(true),"Missing hosted source was registered");
     }
     static void RejectInvalid(Action action,string reason){try{action();}catch(InvalidOperationException){checks++;return;}throw new Exception(reason);}
-    static int Main() {
+    static int Main() { return Run(AppDomain.CurrentDomain.BaseDirectory); }
+    public static int Run(string workDirectory) {
         try {
             foreach(var p in AppSettings.Defaults().Profiles) { Exercise(p,0,0); Exercise(p,-5120,40); }
             for(int c=1;c<=4;c++) for(int r=1;r<=4;r++) Exercise(LayoutProfile.Create("test","Test",c,r),0,0);
             var ragged=LayoutProfile.Create("ragged","Mixed column rows",3,2); ragged.Columns[1].Rows.Add(1); ragged.Columns[2].Rows.RemoveAt(1); Exercise(ragged,-5120,-2160);
-            Config(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            RecoveryGeometry();
+            Config(Path.Combine(workDirectory,"test-data"));
             foreach(bool quiet in new[]{false,true}) {
                 var messages=new System.Collections.Generic.List<string>();int popups=0;
                 var delivery=new NotificationDelivery(quiet,messages.Add,delegate(int duration,string title,string text,ToolTipIcon icon){popups++;});
@@ -254,7 +286,7 @@ class GridTests {
                 delivery.Post(1000,"Window does not fit","Log-only outcome",ToolTipIcon.Warning,false);
                 if(messages.Count!=3||delivery.LoggedCount!=3||popups!=(quiet?0:2)||delivery.PopupCount!=popups)throw new Exception("Notification routing lost logs or displayed a quiet warning.");
             }
-            string bookkeeping=Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"run-record-tests",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(bookkeeping);
+            string bookkeeping=Path.Combine(workDirectory,"run-record-tests",Guid.NewGuid().ToString("N"));Directory.CreateDirectory(bookkeeping);
             File.WriteAllText(Path.Combine(bookkeeping,"integration-error.txt"),"historical evidence");
             var firstRun=new TestRunRecord(bookkeeping,"Fixture","Compiled");File.WriteAllText(Path.Combine(firstRun.DirectoryPath,"integration-error.txt"),"fixture failure");firstRun.Complete(false);
             var secondRun=new TestRunRecord(bookkeeping,"Fixture","Hosted");
@@ -264,15 +296,20 @@ class GridTests {
             File.WriteAllText(Path.Combine(secondRun.DirectoryPath,"integration-result.txt"),"PASS");secondRun.Complete(true);
             latest=System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml"));Check((string)latest.Attribute("status")=="passed"&&(string)latest.Attribute("id")==secondRun.Id&&File.Exists(Path.Combine(firstRun.DirectoryPath,"integration-error.txt")),"Passing run lost historical failure or latest identity");
             var interrupted=new TestRunRecord(bookkeeping,"Fixture","Compiled");Check((string)System.Xml.Linq.XElement.Load(Path.Combine(bookkeeping,"latest-run.xml")).Attribute("status")=="running","Interrupted run left an old PASS current");
+            var trace=new WindowFailureTrace();var originalFailure=new System.Xml.Linq.XElement("WindowFailure",new System.Xml.Linq.XAttribute("app","fixture & name"),new System.Xml.Linq.XAttribute("stage","frame_verification"));
+            Check(trace.Record(originalFailure),"First resize failure was not accepted");string frozen=trace.First;
+            originalFailure.SetAttributeValue("stage","mutated");
+            Check(!trace.Record(new System.Xml.Linq.XElement("RollbackFailure"))&&trace.First==frozen,"Rollback or caller mutation replaced original resize failure");
+            Check((string)System.Xml.Linq.XElement.Parse(frozen).Attribute("app")=="fixture & name","Failure context was not XML escaped");
             string logFolder=Path.Combine(bookkeeping,"log");Directory.CreateDirectory(logFolder);var logger=new LocalStatusLog(logFolder,"fixture-version");
             Check(logger.Write("WARN","FIXTURE_EXPECTED","line one\nline two"),"Structured log write failed");string structured=File.ReadAllText(Path.Combine(logFolder,"status.log"));
             Check(structured.Contains("level=WARN code=FIXTURE_EXPECTED version=fixture-version run="+logger.RunId)&&File.ReadAllLines(Path.Combine(logFolder,"status.log")).Length==1&&structured.Contains("line one\\nline two"),"Log context or single-line framing failed");
             File.WriteAllText(Path.Combine(bookkeeping,"not-a-directory"),"fixture");Check(!new LocalStatusLog(Path.Combine(bookkeeping,"not-a-directory"),"fixture").Write("ERROR","FIXTURE","unwritable destination"),"Unwritable log escaped containment");
             HeightPair();
             MinimumConstraints();
-            Monitors(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
-            VisualDrafts();Portable(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
-            WorkspacesAndStartup(Path.Combine(AppDomain.CurrentDomain.BaseDirectory,"test-data"));
+            Monitors(Path.Combine(workDirectory,"test-data"));
+            VisualDrafts();Portable(Path.Combine(workDirectory,"test-data"));
+            WorkspacesAndStartup(Path.Combine(workDirectory,"test-data"));
             Console.WriteLine("PASS: layout geometry, independent row dividers, mixed row counts, settings round-trip/recovery, duplicate hotkeys, and legacy migration ("+checks+" checks). No desktop windows moved."); return 0;
         } catch(Exception e) { Console.Error.WriteLine(e); return 1; }
     }

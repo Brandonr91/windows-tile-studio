@@ -1,5 +1,12 @@
 # Display support checkpoint
 
+Local beta.9 review update: recovery now matches all four saved slot edges and
+preserves saved proportions; it no longer learns row weights from complementary
+window frames. Mismatches require an explicit re-snap. Existing same-monitor
+work-area reflow remains. Deployed locally with approval on October 31; physical
+docking/sleep acceptance remains unverified. See
+[phase-1 behavior and evidence](PHASE-1-RECOVERY.md).
+
 Phase 4, local `0.3.0-preview.4`, 2026-10-27. This is a preview, with the
 hardware coverage below; it is not a multi-monitor production certification.
 

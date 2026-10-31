@@ -38,6 +38,7 @@ public class AppSettings {
     public AppearanceMode Appearance=AppearanceMode.System;
     public int Version=1;
     public string ActiveProfileId="six-grid";
+    // Legacy XML without this field retains its historical visible default.
     public bool ShowLauncherTab=true;
     public bool LauncherPositionSet;
     public bool LauncherPositionLocked;
@@ -47,7 +48,7 @@ public class AppSettings {
     public List<LayoutProfile> Profiles=new List<LayoutProfile>();
     public List<MonitorConfiguration> Monitors=new List<MonitorConfiguration>();
     public static AppSettings Defaults() {
-        var s=new AppSettings();
+        var s=new AppSettings{ShowLauncherTab=false};
         s.Profiles.Add(LayoutProfile.Create("six-grid","Six windows",3,2));
         s.Profiles.Add(LayoutProfile.Create("two-columns","Two columns",2,1));
         s.Profiles.Add(LayoutProfile.Create("four-grid","Four windows",2,2));

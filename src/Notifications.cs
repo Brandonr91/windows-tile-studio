@@ -2,6 +2,7 @@ using System;
 using System.Windows.Forms;
 using System.IO;
 using System.Globalization;
+using System.Xml.Linq;
 
 public sealed class LocalStatusLog {
     readonly string path,version;
@@ -27,5 +28,14 @@ public sealed class NotificationDelivery {
         string code=title=="Settings recovery"?"SETTINGS_RECOVERY":title=="Window does not fit"?"PLACEMENT_REJECTED":title=="Linked resizing unavailable"?"RESIZE_HOOK_UNAVAILABLE":"NOTIFICATION";
         log(icon==ToolTipIcon.Error?"ERROR":icon==ToolTipIcon.Warning?"WARN":"INFO",code,"Notification ["+title+"] "+message);LoggedCount++;
         if(!Quiet&&popup){show(duration,title,message,icon);PopupCount++;}
+    }
+}
+
+// Immutable local evidence. Restoration failures must never replace the cause.
+public sealed class WindowFailureTrace {
+    public string First {get;private set;}
+    public bool Record(XElement evidence) {
+        if(First!=null)return false;
+        First=evidence.ToString(SaveOptions.DisableFormatting);return true;
     }
 }

@@ -87,7 +87,7 @@ public class HotkeyRegistry : IDisposable {
 }
 
 public partial class SixSlotSnap : ApplicationContext {
-    public const string ProductVersion="0.3.0-beta.7";
+    public const string ProductVersion="0.3.0-beta.9";
     public static Icon CreateStudioIcon() {
         using(var bitmap=new Bitmap(32,32)) using(var graphics=Graphics.FromImage(bitmap)) {
             graphics.Clear(Color.Transparent);
@@ -134,6 +134,28 @@ public partial class SixSlotSnap : ApplicationContext {
     bool resizeEnding,resizeAttempted;
     LayoutProfile resizeStartProfile;
     string lastPlacementIssue;
+    string resizeDiagnosticId,resizeEdges="none";
+    WindowFailureTrace resizeFailure;
+    bool resizeRestoring;
+    static string FrameText(RECT? frame) { return frame.HasValue?string.Join(",",new[]{frame.Value.L,frame.Value.T,frame.Value.R,frame.Value.B}):"unavailable"; }
+    void RecordWindowFailure(string stage,IntPtr window,RECT? wanted,RECT? actual,string detail,int knownSlot=-1) {
+        // Local log only: no titles, executable paths or exported diagnostic fields.
+        try {
+            uint pid;NativeMethods.GetWindowThreadProcessId(window,out pid);
+            int slot=Array.IndexOf(assigned,window);if(slot<0&&resizeDiagnosticId!=null)slot=Array.IndexOf(resizeWindows,window);
+            if(knownSlot>=0)slot=knownSlot;
+            int source=Array.IndexOf(resizeWindows,resizeSource),column,row;
+            bool located=grid.Locate(slot,out column,out row);
+            var evidence=new XElement("WindowFailure",new XAttribute("stage",stage),new XAttribute("app",ProcessName(window)),new XAttribute("pid",pid),new XAttribute("window",window.ToInt64()),
+                new XAttribute("zone",slot<0?0:slot+1),new XAttribute("column",located?column+1:0),new XAttribute("row",located?row+1:0),new XAttribute("requested",FrameText(wanted)),new XAttribute("actual",FrameText(actual)),new XAttribute("detail",detail??"unavailable"));
+            if(resizeDiagnosticId!=null) {
+                evidence.Add(new XAttribute("gesture",resizeDiagnosticId),new XAttribute("sourceZone",source<0?0:source+1),new XAttribute("sourceWindow",resizeSource.ToInt64()),new XAttribute("sourceEdges",resizeEdges),new XAttribute("heightBoundary",resizeHeightBoundary),new XAttribute("restoring",resizeRestoring));
+                evidence.Add(new XAttribute("minimums",string.Join(";",Enumerable.Range(0,grid.Profile.SlotCount).Select(i=>(i+1)+":"+grid.MinimumWidths[i]+","+grid.MinimumHeights[i]))));
+                if(!resizeRestoring&&resizeFailure.Record(evidence))Log(resizeFailure.First,"WARN","RESIZE_FIRST_FAILURE");
+            }
+            Log(evidence.ToString(SaveOptions.DisableFormatting),"WARN",resizeRestoring?"RESIZE_RESTORE_FAILED":"WINDOW_PLACEMENT_FAILED");
+        } catch(Exception e) { if(e is OutOfMemoryException)throw;Log("Failure evidence unavailable: "+e.GetType().Name,"WARN","FAILURE_CONTEXT_UNAVAILABLE"); }
+    }
     DateTime lastFitNotice;
     readonly CommandWindow receiver;
     readonly HotkeyRegistry hotkeys;
@@ -248,27 +270,16 @@ public partial class SixSlotSnap : ApplicationContext {
         } catch(IOException) {} catch(UnauthorizedAccessException) {}
     }
     void RecoverAssignments() {
-        if(!recover) return; var rects=new RECT[16];
-        for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]!=IntPtr.Zero) NativeMethods.VisibleRect(assigned[i],out rects[i]);
+        if(!recover) return;
+        // Reconnect to saved geometry only. Recovery must not learn new ratios
+        // from arbitrary current frames or resize apps to force an adoption.
         NativeMethods.EnumWindows(delegate(IntPtr window,IntPtr unused) {
             RECT rect; if(!ValidTarget(window) || !OnActiveMonitor(window) || assigned.Contains(window) || NativeMethods.IsIconic(window) || NativeMethods.IsZoomed(window) || !NativeMethods.VisibleRect(window,out rect)) return true;
             if(workspace.Sessions.Values.Any(s=>s!=workspace.Active && s.Windows.Contains(window))) return true;
-            for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]==IntPtr.Zero) {
-                RECT wanted=grid.RectFor(i); int c,r; grid.Locate(i,out c,out r); int count=grid.Profile.Columns[c].Rows.Count;
-                bool match=Near(rect,wanted);
-                if(!match && count==2) match=Math.Abs(rect.L-wanted.L)<16 && Math.Abs(rect.R-wanted.R)<16 && (r==0?Math.Abs(rect.T-grid.Work.T)<16:Math.Abs(rect.B-grid.Work.B)<16) && rect.B-rect.T<(grid.Work.B-grid.Work.T)*0.95;
-                if(match) { assigned[i]=window; rects[i]=rect; break; }
-            }
+            for(int i=0;i<grid.Profile.SlotCount;i++) if(assigned[i]==IntPtr.Zero && SavedGeometryRecovery.MatchesSlot(grid,i,rect)) {assigned[i]=window;break;}
             return true;
         },IntPtr.Zero);
-        for(int c=0;c<grid.Profile.Columns.Count;c++) if(grid.Profile.Columns[c].Rows.Count==2) {
-            int top=grid.IndexOf(c,0),bottom=grid.IndexOf(c,1);
-            if(assigned[top]!=IntPtr.Zero && assigned[bottom]!=IntPtr.Zero && Math.Abs(rects[top].B-rects[bottom].T)<16) {
-                double ratio=((rects[top].B+rects[bottom].T)/2.0-grid.Work.T)/(grid.Work.B-grid.Work.T);
-                if(ratio>=0.04 && ratio<=0.96) grid.Profile.Columns[c].Rows=new List<double>{ratio,1-ratio};
-            }
-        }
-        Log("Recovered "+assigned.Count(w=>w!=IntPtr.Zero)+" occupied zones in "+grid.Profile.Name+".");
+        Log("Recovered "+assigned.Count(w=>w!=IntPtr.Zero)+" occupied zones in "+grid.Profile.Name+"; saved proportions preserved.");
     }
     bool ReadMinimum(IntPtr window,out Size minimum) {
         minimum=Size.Empty; RECT outer,visible; IntPtr result;
@@ -287,19 +298,21 @@ public partial class SixSlotSnap : ApplicationContext {
     static bool SameFrame(RECT a,RECT b) { return Math.Abs(a.L-b.L)<=2 && Math.Abs(a.R-b.R)<=2 && Math.Abs(a.T-b.T)<=2 && Math.Abs(a.B-b.B)<=2; }
     bool ChangeWindowState(IntPtr window,int command,bool notify){string error;if(placement.Show(window,command,out error))return true;ReleaseWindow(window);FitIssue(error,notify);return false;}
     bool PlaceWindow(IntPtr window,RECT wanted,bool notify,bool queryMinimum=true) {
-        RECT outer,visible; if(!NativeMethods.GetWindowRect(window,out outer) || !NativeMethods.VisibleRect(window,out visible)) return false;
-        if(NativeMethods.IsHungAppWindow(window)) { FitIssue("The app is not responding. Try snapping it again after it responds.",notify); return false; }
+        RECT outer,visible; if(!NativeMethods.GetWindowRect(window,out outer) || !NativeMethods.VisibleRect(window,out visible)) { RecordWindowFailure("read_frame",window,wanted,null,"Could not read the window frame.");return false; }
+        if(NativeMethods.IsHungAppWindow(window)) { RecordWindowFailure("hung",window,wanted,visible,"Windows reports the app is not responding.");FitIssue("The app is not responding. Try snapping it again after it responds.",notify); return false; }
         Size minimum=Size.Empty;
-        if(queryMinimum && !ReadMinimum(window,out minimum)) { FitIssue("The app did not provide size information in time, or Windows blocked access. Try again; administrator apps may require matching privileges.",notify); return false; }
-        if(queryMinimum && (wanted.R-wanted.L<minimum.Width || wanted.B-wanted.T<minimum.Height)) { FitIssue("This app needs at least "+minimum.Width+" x "+minimum.Height+" pixels; the selected zone is "+(wanted.R-wanted.L)+" x "+(wanted.B-wanted.T)+". Choose a larger layout or enlarge its column/row.",notify); return false; }
+        if(queryMinimum && !ReadMinimum(window,out minimum)) { RecordWindowFailure("minimum_query",window,wanted,visible,"Size query timed out or access was blocked.");FitIssue("The app did not provide size information in time, or Windows blocked access. Try again; administrator apps may require matching privileges.",notify); return false; }
+        if(queryMinimum && (wanted.R-wanted.L<minimum.Width || wanted.B-wanted.T<minimum.Height)) { RecordWindowFailure("minimum_size",window,wanted,visible,"Reported minimum="+minimum.Width+","+minimum.Height);FitIssue("This app needs at least "+minimum.Width+" x "+minimum.Height+" pixels; the selected zone is "+(wanted.R-wanted.L)+" x "+(wanted.B-wanted.T)+". Choose a larger layout or enlarge its column/row.",notify); return false; }
         int l=visible.L-outer.L,t=visible.T-outer.T,r=outer.R-visible.R,b=outer.B-visible.B;
         string placementError;
         if(!placement.Position(window,wanted.L-l,wanted.T-t,wanted.R-wanted.L+l+r,wanted.B-wanted.T+t+b,0x14,out placementError)) {
-            ReleaseWindow(window);FitIssue(placementError,notify);return false;
+            RECT failed;RecordWindowFailure("placement",window,wanted,NativeMethods.VisibleRect(window,out failed)?(RECT?)failed:null,placementError);ReleaseWindow(window);FitIssue(placementError,notify);return false;
         }
         RECT actual;
-        if(!NativeMethods.VisibleRect(window,out actual) || !SameFrame(actual,wanted)) {
-            if(!placement.Position(window,outer.L,outer.T,outer.R-outer.L,outer.B-outer.T,0x14,out placementError)){ReleaseWindow(window);FitIssue(placementError,notify);return false;}
+        bool actualRead=NativeMethods.VisibleRect(window,out actual);
+        if(!actualRead || !SameFrame(actual,wanted)) {
+            RecordWindowFailure("frame_verification",window,wanted,actualRead?(RECT?)actual:null,"The actual visible frame did not match the requested frame.");
+            if(!placement.Position(window,outer.L,outer.T,outer.R-outer.L,outer.B-outer.T,0x14,out placementError)){RecordWindowFailure("frame_restore",window,null,null,placementError);ReleaseWindow(window);FitIssue(placementError,notify);return false;}
             FitIssue("The app refused the requested frame. Its previous bounds were requested again; choose a larger zone or a supported window style.",notify); return false;
         }
         return true;
@@ -309,11 +322,13 @@ public partial class SixSlotSnap : ApplicationContext {
     }
     void CancelResizeSession() {
         resizeTimer.Stop(); settleTimer.Stop(); dragging=IntPtr.Zero;
+        resizeDiagnosticId=null;resizeFailure=null;resizeRestoring=false;
         changed=false; resizeHeightBoundary=-1; resizeSource=IntPtr.Zero; if(resizeProbe!=null) resizeProbe.Cancelled=true; resizeProbe=null; resizeEnding=false; resizeAttempted=false;
         resizeWidths.Clear(); resizeHeights.Clear(); Array.Clear(resizeBaselineValid,0,16);
     }
     void BeginResizeSession(IntPtr window) {
         CancelResizeSession(); dragging=window; resizeSource=window; changed=false;
+        resizeDiagnosticId=Guid.NewGuid().ToString("N");resizeFailure=new WindowFailureTrace();resizeEdges="none";
         resizeStartProfile=grid.Profile.Clone(); Array.Clear(grid.MinimumWidths,0,16); Array.Clear(grid.MinimumHeights,0,16);
         for(int i=0;i<grid.Profile.SlotCount;i++) {
             if(assigned[i]!=IntPtr.Zero && (!NativeMethods.IsWindow(assigned[i]) || !OnActiveMonitor(assigned[i]))) assigned[i]=IntPtr.Zero;
@@ -348,6 +363,9 @@ public partial class SixSlotSnap : ApplicationContext {
         }
     }
     void AbortResize() {
+        // Capture before rollback: it can fail, detach handles and change fit text.
+        Log("gesture="+resizeDiagnosticId+" first="+(resizeFailure==null||resizeFailure.First==null?"unavailable":resizeFailure.First),"WARN","RESIZE_ABORTED");
+        resizeRestoring=true;
         IntPtr source=resizeSource;
         int retrySlot=Array.IndexOf(assigned,source);if(retrySlot>=0)SetPendingRetry(CaptureRetry(source,grid.Profile.Id,retrySlot));
         for(int i=0;i<grid.Profile.SlotCount;i++) if(resizeBaselineValid[i] && assigned[i]==resizeWindows[i] && NativeMethods.IsWindow(assigned[i]) && !NativeMethods.IsIconic(assigned[i]) && !NativeMethods.IsZoomed(assigned[i])) PlaceWindow(assigned[i],resizeBaseline[i],false,false);
@@ -398,6 +416,8 @@ public partial class SixSlotSnap : ApplicationContext {
             bool top=row>0 && Math.Abs(current.T-lastDrag.T)>1,bottom=row<grid.Profile.Columns[column].Rows.Count-1 && Math.Abs(current.B-lastDrag.B)>1;
             if(top||bottom) resizeHeightBoundary=top && (!bottom || Math.Abs(current.T-lastDrag.T)>Math.Abs(current.B-lastDrag.B))?row:row+1;
         }
+        var edges=new List<string>();if(Math.Abs(current.L-lastDrag.L)>1)edges.Add("left");if(Math.Abs(current.R-lastDrag.R)>1)edges.Add("right");if(Math.Abs(current.T-lastDrag.T)>1)edges.Add("top");if(Math.Abs(current.B-lastDrag.B)>1)edges.Add("bottom");
+        if(edges.Count>0)resizeEdges=string.Join("+",edges);
         if(resizeProbe==null || !resizeProbe.Ready) return;
         if(!resizeProbe.Applied) {
             for(int i=0;i<grid.Profile.SlotCount;i++) {
@@ -405,18 +425,19 @@ public partial class SixSlotSnap : ApplicationContext {
                 else if(!NativeMethods.IsIconic(resizeWindows[i]) && !NativeMethods.IsZoomed(resizeWindows[i])) resizeBaselineValid[i]=false;
             }
             int source=Array.IndexOf(assigned,dragging);
-            if(source<0 || !resizeBaselineValid[source]) { if(source>=0){SetPendingRetry(CaptureRetry(dragging,grid.Profile.Id,source));assigned[source]=IntPtr.Zero;} CancelResizeSession(); FitIssue("The source app did not respond to its size query. Snap it again after it responds.",true); return; }
+            if(source<0 || !resizeBaselineValid[source]) { if(source>=0){RecordWindowFailure("source_probe",dragging,grid.RectFor(source),current,"Source frame/size probe unavailable.");SetPendingRetry(CaptureRetry(dragging,grid.Profile.Id,source));assigned[source]=IntPtr.Zero;} CancelResizeSession(); FitIssue("The source app did not respond to its size query. Snap it again after it responds.",true); return; }
             resizeProbe.Applied=true;
         }
         RECT proposed=current;
         if(Math.Abs((current.R-current.L)-(lastDrag.R-lastDrag.L))>1 || Math.Abs((current.B-current.T)-(lastDrag.B-lastDrag.T))>1) resizeAttempted=true;
         if(resizeHeightBoundary>=0) { int column,row; grid.Locate(slot,out column,out row); if(resizeHeightBoundary==row) proposed.B=lastDrag.B; else proposed.T=lastDrag.T; }
         if(grid.Adjust(slot,lastDrag,proposed)) {
-            if(grid.WidthAffectedSlots.Concat(grid.HeightAffectedSlots).Any(i=>!resizeBaselineValid[i])) { AbortResize(); return; }
+            int invalid=grid.WidthAffectedSlots.Concat(grid.HeightAffectedSlots).Where(i=>!resizeBaselineValid[i]).DefaultIfEmpty(-1).First();
+            if(invalid>=0) { RecordWindowFailure("neighbor_probe",resizeWindows[invalid],grid.RectFor(invalid),resizeBaselineValid[invalid]?(RECT?)resizeBaseline[invalid]:null,"Affected zone "+(invalid+1)+" has no usable frame/size probe.",invalid);AbortResize();return; }
             if(resizeHeightBoundary<0 && grid.HeightAffectedSlots.Length==2) { int column,row; grid.Locate(grid.HeightAffectedSlots[0],out column,out row); resizeHeightBoundary=row+1; }
             changed=true; resizeWidths.UnionWith(grid.WidthAffectedSlots); resizeHeights.UnionWith(grid.HeightAffectedSlots);
         }
-        if(grid.ConstraintBlocked) { AbortResize(); return; }
+        if(grid.ConstraintBlocked) { RecordWindowFailure("layout_constraints",dragging,proposed,current,"Adjacent minimum sizes cannot fit the available layout span.");AbortResize();return; }
         if(changed) ApplyResizeFrames(false);
         // Advance only to the frame used for this adjustment. The app may move
         // again while we update neighbors; a fresh read here would consume that

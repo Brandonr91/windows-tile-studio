@@ -1,3 +1,34 @@
+## Phase 1 deployed locally, 2026-10-31
+
+User-approved beta.9 deployment completed. Fresh-hidden and saved-proportion
+recovery are active; direct API minimize now also hides/persists to tray.
+Compiled/hosted lifecycle, paint/DPI and focused Compatibility pass. Same six
+windows/frames, settings and shortcuts retained. Full input-sensitive integration
+remains incomplete after foreground/mouse interference; physical mixed-DPI,
+docking and sleep/wake acceptance remains open. See latest HANDOFF and
+[phase-1 record](docs/PHASE-1-RECOVERY.md). No push/publication. Subsequent recovery/
+reattachment/constraint phases remain plans until requested.
+
+## Phase 1 prepared for review, 2026-10-30
+
+Local beta.9 changes fresh visibility defaults and makes saved proportions
+canonical during geometric recovery. Compiled/source-hosted pure checks and
+offline launcher checks pass; native lifecycle fixtures compile but remain
+unexecuted under the user's no-stop/no-deploy restriction. Daily remains beta.8.
+See [phase-1 behavior/test plan](docs/PHASE-1-RECOVERY.md) and latest HANDOFF.
+Next gate: review, then explicitly approved native lifecycle/full compiled+hosted
+integration acceptance. No deployment/push/publication. Later phases remain plans:
+recovery coordination, opt-in identity reattachment, grid constraints, optional
+spanning, then physical acceptance/release review. Do not implement them implicitly.
+
+## Resize diagnostic milestone completed locally, 2026-10-30
+
+User selected diagnostics only. Beta.8 is implemented/tested in compiled+hosted modes and deployed to the existing daily installation; first-failure app/zone/boundary/frame evidence now survives rollback. See latest HANDOFF and docs/NOTIFICATIONS.md. Prior unidentified beta.7 event cannot be reconstructed retrospectively. Permanent installation, signing/Store feasibility and stable-release publication remain separate future work; no push/release performed.
+
+## Live resize interruption follow-up, 2026-10-30
+
+Stopped daily controller was restarted and six zones recovered without moving windows; see latest HANDOFF. Original resize rejection remains unidentified: the generic AbortResize notice does not preserve the first failing zone/app/outcome. If reproduced, add first-failure context to local logs and verify that case before changing geometry/recovery behavior. No crash or new engine defect established by this investigation; physical drag acceptance after restart is pending.
+
 ## Latest: beta.7 deployed and published, 2026-10-30
 
 The user authorized local update followed by publication; both are complete. Quiet test warnings, deep build-path handling, per-run test records and structured logs are in the released/running beta.7. See [release record](docs/RELEASE-BETA-7.md) and latest HANDOFF. Six window frames, settings and original Startup bytes were preserved. Signing needs publisher credentials; broader hardware/accessibility/long-duration limits remain. Follow the next user request; no repeat publication is pending.

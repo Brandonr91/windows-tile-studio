@@ -117,3 +117,12 @@ public class LayoutModel {
         return changed;
     }
 }
+
+// Pure recovery predicate shared by native startup/display recovery and tests.
+// Physical-pixel tolerance accepts frame rounding, never an arbitrary row split.
+public static class SavedGeometryRecovery {
+    public static bool MatchesSlot(LayoutModel model,int slot,SixSlotSnap.RECT visible) {
+        var saved=model.RectFor(slot);
+        return Math.Abs((long)visible.L-saved.L)<16 && Math.Abs((long)visible.T-saved.T)<16 && Math.Abs((long)visible.R-saved.R)<16 && Math.Abs((long)visible.B-saved.B)<16;
+    }
+}

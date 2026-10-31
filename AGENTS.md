@@ -256,3 +256,30 @@ Build/log follow-up (2026-10-30): consult docs/BUILD-AND-LOG-RELIABILITY.md. Com
 Beta.7 publication/deployment is complete as explicitly authorized on 2026-10-30. Current daily is beta.7, normal notification mode; verify actual process ownership before tests. docs/RELEASE-BETA-7.md owns frozen source/tag/artifact evidence. Never overwrite beta.7 or older release assets/tags; later documentation does not change release provenance.
 
 SignPath preparation (2026-10-30): consult docs/CODE-SIGNING-POLICY.md and docs/SIGNPATH-APPLICATION.md. No application/provider approval/account credentials/configuration exists. examples/signpath/signing-workflow.yml is inert outside .github/workflows; do not activate or submit without approved configuration and human approval. Never claim releases signed, attribution granted, MFA verified, or own verification downloads as users. Personal identity/contact, terms/privacy consent, MFA, App permissions and signing approval stay with the maintainer. Current Build-Release rebuilds unsigned EXEs; signed packaging needs a separate reviewed integration.
+
+Resize diagnostics: preserve the immutable RESIZE_FIRST_FAILURE captured before
+rollback and correlate RESIZE_ABORTED/restoration entries with the gesture/run.
+Keep process/HWND/frame evidence in local status.log only, outside aggregate
+reports/portable layouts; never add titles or executable paths. Do not change
+geometry/cancellation/re-snap behavior just to collect diagnostics. Native
+Compatibility includes a refusing-neighbor regression in compiled/hosted modes.
+
+Phase-1 audit work (2026-10-30): user now explicitly prohibits stopping the daily
+controller, rearranging real apps, changing Windows settings or deploying a
+replacement without approval. Keep candidate builds in a separate OutputDirectory.
+Build -PhaseOneNative and tests/PhaseOneNativeTests.ps1 are opt-in native fixtures
+requiring an approved interval; never stop the daily app just to run them.
+GridTests.ps1 runs pure geometry/settings in an in-memory PowerShell 5.1 host
+without a controller and is safe alongside daily operation. Preserve fresh-hidden
+versus legacy-omitted-visible defaults, and saved recovery ratios. See
+[phase-1 record](docs/PHASE-1-RECOVERY.md). Push/publish/deploy remain excluded.
+
+Local deployment checkpoint, 2026-10-31: user explicitly approved local deployment,
+including a temporary normal stop for validation. Beta.9 is now the daily build;
+source-hosted mirror matches. Settings bytes, six handles/outer frames and original
+Startup/menu links were preserved. Native lifecycle/paint/Compatibility pass in
+both modes; full compiled integration was interrupted by desktop input/focus,
+and full hosted integration was not run. Native API minimize now handles WM_SIZE
+in addition to WM_SYSCOMMAND. Preserve both paths. This approval completes this
+local deployment only; it does not authorize push/publication or future unrelated
+desktop changes. Consult latest HANDOFF and actual process state.

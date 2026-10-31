@@ -24,6 +24,11 @@ only tray Exit quits. These semantics are explained rather than made optional.
 
 ## Layouts bar
 
+Local beta.9 review candidate hides the bar for fresh configurations. Existing
+explicit preferences are retained; legacy XML without the visibility field keeps
+its historical visible default. Tray/hotkey access remains. This build was
+deployed locally with approval on October 31; see [phase-1 behavior and checks](PHASE-1-RECOVERY.md).
+
 Show/hide, reset position near the clock, and **Lock bar position** are drafts
 until Save changes. Cancel/discard retains the current preferences. Lock blocks
 dragging and position writes; normal clicks still open the flyout. An attempted

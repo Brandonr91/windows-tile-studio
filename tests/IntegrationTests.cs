@@ -103,7 +103,7 @@ class IntegrationTests {
             navigation.Navigate(Keys.Tab,true);navigation.Navigate(Keys.Enter,false);Check(selected=="wide-center" && zone==0,"Reverse layout wrap failed");
         }
         passed.Add("Direct flyout navigation checks all four directions, edge clamping, and forward/reverse layout wrapping.");
-        var original=AppSettings.Defaults(); bool saved=false;
+        var original=AppSettings.Defaults(); original.ShowLauncherTab=true; bool saved=false;
         original.LauncherPositionSet=true; original.LauncherX=456; original.LauncherY=789;
         using(var cancelled=new SnapSettingsForm(original)) {
             cancelled.StartPosition=FormStartPosition.Manual; cancelled.Location=new Point(-30000,-30000); cancelled.ShowInTaskbar=false; cancelled.Show();
@@ -213,6 +213,24 @@ class IntegrationTests {
         forms[0].MinimumSize=new Size(200,150); Pump(100);
         scenario="three-row initial placement";
         for(int i=0;i<6;i++) Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle); CheckAll();
+        scenario="first resize failure diagnostics";
+        string diagnosticLog=Path.Combine(data,"status.log");
+        int firstFailuresBefore=File.ReadAllLines(diagnosticLog).Count(line=>line.Contains("code=RESIZE_FIRST_FAILURE "));
+        var diagnosticBaseline=forms.Select(f=>Bounds(f.Handle)).ToArray();
+        forms[1].MaximumSize=forms[1].Size;
+        BeginResize(forms[0].Handle);Pump(150);var refusedWidth=Bounds(forms[0].Handle);refusedWidth.R-=80;Move(0,refusedWidth);Pump(200);NotifyWinEvent(11,forms[0].Handle,0,0);Pump(400);
+        var firstFailures=File.ReadAllLines(diagnosticLog).Where(line=>line.Contains("code=RESIZE_FIRST_FAILURE ")).ToArray();
+        Check(firstFailures.Length==firstFailuresBefore+1,"A failed gesture did not retain exactly one first failure");
+        string evidence=firstFailures.Last();var failure=XElement.Parse(evidence.Substring(evidence.IndexOf("<WindowFailure",StringComparison.Ordinal)));
+        Check((string)failure.Attribute("stage")=="frame_verification" && (int)failure.Attribute("zone")==2 && (long)failure.Attribute("window")==forms[1].Handle.ToInt64(),"Failure context lost the rejecting neighbor and outcome");
+        Check((int)failure.Attribute("sourceZone")==1 && ((string)failure.Attribute("sourceEdges")).Contains("right") && (string)failure.Attribute("requested")!=(string)failure.Attribute("actual"),"Failure context lost the source boundary or physical frames");
+        string gesture=(string)failure.Attribute("gesture");
+        Check(!string.IsNullOrEmpty(gesture)&&File.ReadAllLines(diagnosticLog).Any(line=>line.Contains("code=RESIZE_ABORTED ")&&line.Contains(gesture)&&line.Contains("frame_verification")),"Abort summary did not retain the original failure");
+        Check(!State().Elements("Zone").Any(z=>(long)z.Attribute("window")==forms[0].Handle.ToInt64()),"Rejected resize lost explicit re-snap safeguard");
+        for(int i=0;i<6;i++)Check(Equal(Bounds(forms[i].Handle),diagnosticBaseline[i]),"Failed resize changed a baseline frame");
+        forms[1].MaximumSize=Size.Empty;
+        for(int i=0;i<6;i++)Command(SixSlotSnap.SnapCommand,i+1,forms[i].Handle);CheckAll();
+        passed.Add("Rejected linked resize records one immutable first failure with neighbor/app/zone/source edge/physical frames before rollback, retains baseline frames and requires explicit re-snap.");
         for(int column=0;column<2;column++) for(int boundary=1;boundary<3;boundary++) for(int side=0;side<2;side++) {
             scenario="three-row column "+column+" boundary "+boundary+" side "+side;
             int slot=Model().IndexOf(column,boundary-1+side); var baseline=forms.Select(f=>Bounds(f.Handle)).ToArray();
@@ -385,6 +403,7 @@ class IntegrationTests {
             Check(SendMessageTimeout(receiver,(uint)notification,new IntPtr(notification==0x218?0x12:0),IntPtr.Zero,2,2000,out notificationResult)!=IntPtr.Zero,"Could not deliver display notification");
             Wait(()=>(int)State().Attribute("displayRefreshes")>refreshes,"Display notification did not refresh inventory");refreshes=(int)State().Attribute("displayRefreshes");
             Check(State().Elements("Zone").Count()==6 && State().Element("Monitors").Elements("Monitor").Any(m=>(bool)m.Attribute("connected")),"Display refresh lost assignments or monitor state");
+            Check(!(bool)State().Attribute("launcherVisible") && !(bool)State().Attribute("launcherEnabled"),"Display/resume notification revealed the hidden bar");
             for(int i=0;i<6;i++) Check(Equal(displayBaseline[i],Bounds(forms[i].Handle)),"Unchanged display notification moved a test window");
         }
         CheckAll();passed.Add("Display/work-area and synthetic resume notifications refresh live inventory without moving six assigned windows on unchanged hardware; no OS settings or power state changed.");
